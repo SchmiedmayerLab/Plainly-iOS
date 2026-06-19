@@ -1,0 +1,53 @@
+#
+# This source file is part of the Stanford AI Health Literacy iOS project
+#
+# SPDX-FileCopyrightText: 2022 Stanford University and the project authors (see CONTRIBUTORS.md)
+#
+# SPDX-License-Identifier: MIT
+#
+
+name: Static Analysis
+
+on:
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+concurrency:
+  group: Static-Analysis-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  reuse_action:
+    name: REUSE Compliance Check
+    uses: SchmiedmayerLab/.github/.github/workflows/reuse.yml@v0.2
+    permissions:
+      contents: read
+  swiftlint:
+    name: SwiftLint
+    uses: SchmiedmayerLab/.github/.github/workflows/swiftlint.yml@v0.2
+    permissions:
+      contents: read
+  periphery:
+    name: Periphery
+    uses: SchmiedmayerLab/.github/.github/workflows/periphery.yml@v0.2
+    permissions:
+      contents: read
+    with:
+      runsonlabels: '["macOS", "self-hosted"]'
+  markdownlinkcheck:
+    name: Markdown Link Check
+    uses: SchmiedmayerLab/.github/.github/workflows/markdown-links.yml@v0.2
+    permissions:
+      contents: read
+  codeql:
+    name: CodeQL
+    uses: SchmiedmayerLab/.github/.github/workflows/xcodebuild.yml@v0.2
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    with:
+      codeql: true
+      scheme: AIHealthLiteracy
+      test: false

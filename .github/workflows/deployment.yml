@@ -1,0 +1,153 @@
+#
+# This source file is part of the Stanford AI Health Literacy iOS project
+#
+# SPDX-FileCopyrightText: 2023 Stanford University
+#
+# SPDX-License-Identifier: MIT
+#
+
+name: Deployment
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: |
+          The GitHub deployment environment.
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - spineai
+          - production
+      version:
+        description: |
+          The semantic version of the app that should be released.
+        required: true
+        type: string
+      buildnumber:
+        description: |
+          Optional build number to use for deployment.
+        required: false
+        type: string
+      releasenotes:
+        description: |
+          Release notes of what changed in this version.
+        required: false
+        type: string
+        default: Bug fixes and performance improvements.
+  workflow_call:
+    inputs:
+      environment:
+        description: |
+          The GitHub deployment environment.
+        required: false
+        type: string
+        default: staging
+      version:
+        description: |
+          The semantic version of the app that should be released.
+        required: true
+        type: string
+      buildnumber:
+        description: |
+          Optional build number to use for deployment.
+        required: false
+        type: string
+      releasenotes:
+        description: |
+          Release notes of what changed in this version.
+        required: false
+        type: string
+        default: Bug fixes and performance improvements.
+
+concurrency:
+  group: deployment
+  cancel-in-progress: false
+
+jobs:
+  determineenvironment:
+    name: Determine Environment
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.determineenvironment.outputs.environment }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Determine Environment
+        id: determineenvironment
+        run: |
+          if [[ -z "${{ inputs.environment }}" ]]; then
+            echo "environment=staging" >> "$GITHUB_OUTPUT"
+            echo "environment: staging"
+          else
+            echo "environment=${{ inputs.environment }}" >> "$GITHUB_OUTPUT"
+            echo "environment: ${{ inputs.environment }}"
+          fi
+  vars:
+    name: Inject Environment Variables In Deployment Workflow
+    needs: determineenvironment
+    runs-on: ubuntu-latest
+    environment: ${{ needs.determineenvironment.outputs.environment }}
+    outputs:
+      version: ${{ steps.script.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - uses: actions-ecosystem/action-get-latest-tag@v1
+        id: get-latest-tag
+        with:
+          semver_only: true
+          initial_version: "1.0.0"
+      - id: script
+        run: |
+          echo "Injecting Environment Variables In Deployment Workflow ..."
+          if [[ -z "${{ inputs.version }}" ]]; then
+            TAG="${{ steps.get-latest-tag.outputs.tag }}"
+            TAG="${TAG#v}"
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$TAG"
+
+            PATCH=$((PATCH + 1))
+            NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+
+            echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+            echo "version: $NEW_VERSION"
+          else
+            echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+            echo "version: ${{ inputs.version }}"
+          fi
+          echo "buildnumber: ${{ inputs.buildnumber }}"
+          echo "releasenotes: ${{ inputs.releasenotes }}"
+  buildandtest:
+    name: Build and Test
+    needs: determineenvironment
+    uses: ./.github/workflows/build-and-test.yml
+    permissions:
+      actions: read
+      contents: read
+    secrets: inherit
+  iosapptestflightdeployment:
+    name: iOS App TestFlight Deployment
+    needs: [determineenvironment, vars, buildandtest]
+    uses: SchmiedmayerLab/.github/.github/workflows/xcode-deploy.yml@v0.2
+    permissions:
+      contents: read
+    with:
+      runs_on_labels: '["macOS", "self-hosted"]'
+      environment: ${{ needs.determineenvironment.outputs.environment }}
+      injected_secret_file_path: 'AIHealthLiteracy/Supporting Files/UserStudyConfig.plist'
+      setup_signing: true
+      command: fastlane deploy environment:"${{ needs.determineenvironment.outputs.environment }}" versionname:"${{ needs.vars.outputs.version }}" releasenotes:"${{ inputs.releasenotes }}" ${{ inputs.buildnumber && format('buildnumber:"{0}"', inputs.buildnumber) || '' }}
+    secrets:
+      APP_STORE_CONNECT_API_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
+      APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+      APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+      BUILD_PROVISION_PROFILE_BASE64: ${{ secrets.BUILD_PROVISION_PROFILE_BASE64 }}
+      INJECTED_SECRET_FILE_BASE64: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST_BASE64 }}
+      P12_PASSWORD: ${{ secrets.P12_PASSWORD }}

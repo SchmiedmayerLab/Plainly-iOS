@@ -1,0 +1,49 @@
+#
+# This source file is part of the Stanford AI Health Literacy iOS project
+#
+# SPDX-FileCopyrightText: 2023 Stanford University
+#
+# SPDX-License-Identifier: MIT
+#
+
+name: Build and Test
+
+on:
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+concurrency:
+  group: Build-and-Test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  app_tests:
+    name: Build and Test (App)
+    uses: SchmiedmayerLab/.github/.github/workflows/xcodebuild.yml@v0.2
+    permissions:
+      contents: read
+    with:
+      artifactname: AIHealthLiteracy.xcresult
+      runsonlabels: '["macOS", "self-hosted"]'
+      scheme: AIHealthLiteracy
+  shared_spm_pkg_tests:
+    name: Build and Test (Shared)
+    uses: SchmiedmayerLab/.github/.github/workflows/xcodebuild.yml@v0.2
+    with:
+      path: AIHealthLiteracyShared
+      runsonlabels: '["macOS", "self-hosted"]'
+      scheme: AIHealthLiteracyShared-Package
+      resultBundle: AIHealthLiteracyShared-UnitTests.xcresult
+      artifactname: AIHealthLiteracyShared-UnitTests.xcresult
+  uploadcoveragereport:
+    name: Upload Coverage Report
+    needs: [app_tests, shared_spm_pkg_tests]
+    uses: SchmiedmayerLab/.github/.github/workflows/coverage.yml@v0.2
+    permissions:
+      actions: read
+      contents: read
+    with:
+      coveragereports: AIHealthLiteracy.xcresult AIHealthLiteracyShared-UnitTests.xcresult
+    secrets:
+      token: ${{ secrets.CODECOV_TOKEN }}

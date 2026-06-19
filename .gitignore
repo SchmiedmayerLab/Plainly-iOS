@@ -1,0 +1,46 @@
+#
+# This source file is part of the Stanford AI Health Literacy iOS project
+#
+# SPDX-FileCopyrightText: 2023 Stanford University
+#
+# SPDX-License-Identifier: MIT
+#
+
+# Swift Package Manager
+*.xcodeproj
+.swiftpm
+.derivedData
+.build/
+!AIHealthLiteracy.xcodeproj
+
+# IDE related folders
+.idea
+.vscode
+
+# Xcode
+xcuserdata/
+*.ipa
+*.dSYM
+*.dSYM.zip
+
+# Other files
+.DS_Store
+.env
+
+# Tests
+report.junit
+report.html
+AIHealthLiteracy.xcresult
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+firebase-debug.log*
+firebase-debug.*.log*
+
+# Firebase cache
+.firebase/
+.vscode/

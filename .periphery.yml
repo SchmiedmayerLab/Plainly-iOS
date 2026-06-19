@@ -1,0 +1,14 @@
+#
+# This source file is part of the Stanford AI Health Literacy iOS project
+#
+# SPDX-FileCopyrightText: 2025 Stanford University
+#
+# SPDX-License-Identifier: MIT
+#
+
+project: AIHealthLiteracy.xcodeproj
+schemes:
+- AIHealthLiteracy
+report_exclude:
+- "**/GeneratedOpenAIClient/OpenAPIGenerator/GeneratedSources/**"
+- 'AIHealthLiteracyShared/**'
