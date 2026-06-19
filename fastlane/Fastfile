@@ -1,5 +1,5 @@
 #
-# This source file is part of the Stanford LLMonFHIR project
+# This source file is part of the Stanford AI Health Literacy iOS project
 #
 # SPDX-FileCopyrightText: 2023 Stanford University
 #
@@ -11,36 +11,17 @@ default_platform(:ios)
 APP_CONFIG = {
   default_environment: "staging",
   default_app_identifier: "edu.stanford.llmonfhir",
-  default_provisioningProfile: "LLMonFHIR - Stanford Biodesign Digital Health",
-  default_version_name: "0.6.1",
+  default_provisioningProfile: "AIHealthLiteracy",
+  default_version_name: "0.1.0",
   default_release_notes: "Bug fixes and performance improvements.",
-  scheme: "LLMonFHIR",
-  plist_path: "LLMonFHIR/Supporting Files/Info.plist"
+  scheme: "AIHealthLiteracy",
+  plist_path: "AIHealthLiteracy/Supporting Files/Info.plist"
 }.freeze
 
 platform :ios do
   before_all do
     ENV["FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT"] = "120"
     ENV["FASTLANE_XCODEBUILD_SETTINGS_RETRIES"] = "4"
-  end
-
-  desc "Build and test"
-  lane :test do
-    run_tests(
-      skip_build: true,
-      derived_data_path: ".derivedData",
-      code_coverage: true,
-      devices: ["iPhone 17 Pro Max"],
-      disable_slide_to_type: false,
-      concurrent_workers: 1,
-      max_concurrent_simulators: 1,
-      result_bundle: true,
-      output_directory: ".",
-      xcargs: [
-        "-skipPackagePluginValidation",
-        "-skipMacroValidation"
-      ]
-    )
   end
 
   desc "Screenshots"
@@ -79,35 +60,6 @@ platform :ios do
     end
   end
 
-  desc "CodeQL"
-  lane :codeql do
-    ENV["FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT"] = "320" # CodeQL runs on GitHub CI. We need much higher timeout here.
-    build_app(
-      scheme: APP_CONFIG[:scheme],
-      skip_archive: true,
-      skip_codesigning: true,
-      derived_data_path: ".derivedData",
-      xcargs: [
-        "-skipPackagePluginValidation",
-        "-skipMacroValidation"
-      ]
-    )
-  end
-
-  desc "Build app"
-  lane :build do
-    build_app(
-      scheme: APP_CONFIG[:scheme],
-      skip_archive: true,
-      skip_codesigning: true,
-      derived_data_path: ".derivedData",
-      xcargs: [
-        "-skipPackagePluginValidation",
-        "-skipMacroValidation"
-      ]
-    )
-  end
-
   desc "Archive app"
   lane :archive do |options|
     appidentifier = options[:appidentifier].to_s.strip.empty? ? APP_CONFIG[:default_app_identifier] : options[:appidentifier]
@@ -131,16 +83,6 @@ platform :ios do
           appidentifier => provisioningProfile
         }
       }
-    )
-  end
-
-  desc "Sign in to the App Store Connect API"
-  lane :signin do
-    app_store_connect_api_key(
-      key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
-      issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
-      key_content: ENV["APP_STORE_CONNECT_API_KEY_BASE64"],
-      is_key_content_base64: true
     )
   end
 
@@ -172,7 +114,12 @@ platform :ios do
       UI.message("No version bump needed. Current version (#{currentversion}) is greater than or equal to desired version (#{versionname}).")
     end
 
-    signin
+    app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+      key_content: ENV["APP_STORE_CONNECT_API_KEY_BASE64"],
+      is_key_content_base64: true
+    )
     
     buildnumber = options[:buildnumber].to_s.strip
     if buildnumber.empty?

@@ -1,14 +1,14 @@
 #
-# This source file is part of the Stanford LLMonFHIR project
+# This source file is part of the Stanford AI Health Literacy iOS project
 #
 # SPDX-FileCopyrightText: 2025 Stanford University
 #
 # SPDX-License-Identifier: MIT
 #
 
-project: LLMonFHIR.xcodeproj
+project: AIHealthLiteracy.xcodeproj
 schemes:
-- LLMonFHIR
+- AIHealthLiteracy
 report_exclude:
 - "**/GeneratedOpenAIClient/OpenAPIGenerator/GeneratedSources/**"
-- 'LLMonFHIRShared/**'
+- 'AIHealthLiteracyShared/**'

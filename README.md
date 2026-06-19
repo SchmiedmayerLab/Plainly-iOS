@@ -1,6 +1,6 @@
 <!--
 
-This source file is part of the Stanford LLMonFHIR project
+This source file is part of the Stanford AI Health Literacy iOS project
 
 SPDX-FileCopyrightText: 2023 Stanford University
 
@@ -8,107 +8,77 @@ SPDX-License-Identifier: MIT
 
 -->
 
-# LLMonFHIR - Demystifying Health Records
+# AIHealthLiteracy
 
-[![Deployment](https://github.com/StanfordBDHG/LLMonFHIR/actions/workflows/deployment.yml/badge.svg)](https://github.com/StanfordBDHG/LLMonFHIR/actions/workflows/deployment.yml)
-[![codecov](https://codecov.io/gh/StanfordBDHG/LLMonFHIR/branch/main/graph/badge.svg?token=9fvSAiFJUY)](https://codecov.io/gh/StanfordBDHG/LLMonFHIR)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7959850.svg)](https://doi.org/10.5281/zenodo.7959850)
-
-<table style="width: 80%">
-    <tr>
-        <td align="center" width="33.33333%">
-            <img src="Figures/0_APP_IPHONE_67_0.png" width="80%"/>
-        </td>
-        <td align="center" width="33.33333%">
-            <img src="Figures/1_APP_IPHONE_67_1.png" width="80%"/>
-        </td>
-        <td align="center" width="33.33333%">
-            <img src="Figures/2_APP_IPHONE_67_2.png" width="80%"/>
-        </td>
-    </tr>
-    <tr>
-        <td align="center">Select Multiple Studies</td>
-        <td align="center">Study-specific Content</td>
-        <td align="center">Task-driven Chat Flows</td>
-    </tr>
-</table>
+[![Deployment](https://github.com/SchmiedmayerLab/AIHealthLiteracy-iOS/actions/workflows/deployment.yml/badge.svg)](https://github.com/SchmiedmayerLab/AIHealthLiteracy-iOS/actions/workflows/deployment.yml)
+[![codecov](https://codecov.io/gh/SchmiedmayerLab/AIHealthLiteracy-iOS/branch/main/graph/badge.svg?token=9fvSAiFJUY)](https://codecov.io/gh/SchmiedmayerLab/AIHealthLiteracy-iOS)
 
 ## Study Overview
 
-This repository demonstrates how large language models can interpret and provide context around patient data in FHIR format. The LLMonFHIR application is designed as a research study to evaluate the effectiveness of conversational AI in helping users understand their health records.
-
-The study leverages the [Spezi](https://github.com/StanfordSpezi/Spezi) framework and connects to the OpenAI GPT API to interpret FHIR resources. Participants can engage with their health data through a conversational interface, ask follow-up questions, and receive AI-generated summaries and explanations tailored to their system language.
+This repository demonstrates how large language models can interpret FHIR-formatted patient data and other relevant clinical context. The application is designed as a research study to evaluate the effectiveness of conversational AI in helping users understand their health records. Participants can engage with their health data through a conversational interface, ask follow-up questions, and receive AI-generated summaries and explanations tailored to their system language.
 
 ## Disclaimer
 
-LLMonFHIR is an experimental iOS app. It is designed for general informational purposes, providing users a platform to interact with health records stored in Apple Health using OpenAI models.
+AIHealthLiteracy is an experimental iOS app. It is designed for general informational purposes, providing users with a platform to interact with health records stored in Apple Health using OpenAI models.
 
-- **Not a Substitute for Professional Advice:** LLMonFHIR is not intended as a substitute for professional medical advice, diagnosis, or treatment.
+- **Not a Substitute for Professional Advice:** AIHealthLiteracy is not intended as a substitute for professional medical advice, diagnosis, or treatment.
 
-- **Limitations of AI Models:** Remember, AI models can sometimes make mistakes or generate misleading information. Always cross-check and verify the information provided.
+- **Limitations of AI Models:** AI models can sometimes make mistakes or generate misleading information. Always cross-check and verify the information provided.
 
-- **Use at Your Own Risk:** Any use of LLMonFHIR is at the user's own risk. Always consult a qualified healthcare provider for personalized advice regarding your health and well-being.
+- **Use at Your Own Risk:** Any use of AIHealthLiteracy is at the user's own risk. Always consult a qualified healthcare provider for personalized advice regarding your health and well-being.
 
 - **Demonstration Only:** This app is intended for demonstration only and should not be used to process any personal health information.
 
 Remember that your health data will be sent to OpenAI for processing.
-Please inspect and carefully read the [OpenAI API data usage policies and settings](https://openai.com/policies/api-data-usage-policies) accordingly.
+Please review the [OpenAI API data usage policies and settings](https://openai.com/policies/api-data-usage-policies) accordingly.
 
 
 ## HealthKit Access
 
-LLMonFHIR requires access to the FHIR health records stored in the Apple Health app. You have the control to select the different types of health records you wish to inspect in LLMonFHIR.
+AIHealthLiteracy requires access to the FHIR health records stored in the Apple Health app. You can select the different types of health records you wish to inspect in AIHealthLiteracy.
 
-In case no health records are available, please follow the instructions to connect and retrieve your health records from your provider. If your health records are visible in the Apple Health app, please ensure that LLMonFHIR has access to your health records in the Apple Health App. You can find these settings in the privacy section of your profile in Apple Health.
+If no health records are available, follow the instructions to connect and retrieve your health records from your provider. If your health records are visible in the Apple Health app, ensure that AIHealthLiteracy has access to your health records in the Apple Health app. You can find these settings in the privacy section of your profile in Apple Health.
 
 > [!TIP]
-> You can also use a set of [Synthea](https://pubmed.ncbi.nlm.nih.gov/29025144/)-based patients loaded from [SpeziFHIR](https://github.com/StanfordSpezi/SpeziFHIR) ([SpeziFHIRMockPatients](https://github.com/StanfordSpezi/SpeziFHIR/tree/main/Sources/SpeziFHIRMockPatients)) to test out the application without the need to connect it to HealthKit. You can select the synthetic patients in the account settings view of the application.
-
-## Application Structure
-
-The Spezi Template Application uses a modularized structure using the [Spezi modules](https://swiftpackageindex.com/StanfordSpezi) enabled by the Swift Package Manager.
-
-The application uses the FHIR standard to provide a shared repository for data exchanged between different modules.
-You can learn more about the Spezi standards-based software architecture in the [Spezi documentation](https://github.com/StanfordSpezi/Spezi).
-
+> You can also use a set of [Synthea](https://pubmed.ncbi.nlm.nih.gov/29025144/)-based patients to test out the application without the need to connect it to HealthKit. You can select the synthetic patients in the account settings view of the application.
 
 ## Build and Run the Application
 
-You can build and run the application using [Xcode](https://developer.apple.com/xcode/) by opening up the **LLMonFHIR.xcodeproj**.
+You can build and run the application using [Xcode](https://developer.apple.com/xcode/) by opening **AIHealthLiteracy.xcodeproj**.
 
-When running LLMonFHIR via Xcode, you can use the `--mode` CLI flag to control the behaviour of the app (configurable via the Run scheme):
-- `--mode standalone` performs a regular launch, where LLMonFHIR can be used with a custom OpenAI API key to use the chat mode;
-- `--mode study:<study-id>` launches LLMonFHIR into its study mode, loads the study with the specified id from the UserStudyConfig.plist file, and automatically opens it;
-- `--mode study` launches LLMonFHIR into its study mode, showing a "Scan QR Code" button to select and open a study.
+When running AIHealthLiteracy via Xcode, you can use the `--mode` CLI flag to control the behavior of the app (configurable via the Run scheme):
+- `--mode standalone` performs a regular launch, where AIHealthLiteracy can be used with a custom OpenAI API key to use the chat mode;
+- `--mode study:<study-id>` launches AIHealthLiteracy into its study mode, loads the study with the specified ID from the UserStudyConfig.plist file, and automatically opens it;
+- `--mode study` launches AIHealthLiteracy into its study mode, showing a "Scan QR Code" button to select and open a study.
 
 
-### UserStudyConfig.plist file
+### UserStudyConfig.plist File
 
-LLMonFHIR contains a UserStudyConfig.plist file, which is loaded on launch, and used to configure the app and populate it with studies.
+AIHealthLiteracy contains a UserStudyConfig.plist file, which is loaded on launch and used to configure the app and populate it with studies.
 The UserStudyConfig.plist file contains the following:
-- Firebase configuration: used, if present, to connect the app to a Firebase environment, which is used to upload study reports
-- app launch mode: used to control how the app should behave upon launch (e.g., whether the study-only mode should be enabled, and optionally to also directly launch a study)
+- Firebase configuration: used, if present, to connect the app to a Firebase environment for uploading study reports
+- app launch mode: used to control how the app should behave upon launch (e.g., whether study-only mode should be enabled and whether to directly launch a study)
 - list of available studies (see the `Study` type within the iOS codebase for more details)
 
-The UserStudyConfig.plist file bundled with the repo is missing some data (the OpenAI key, the Firebase credentials, and the study report encryption key).
-You can use the `export-config` tool in the LLMonFHIRShared folder to generate a complete config file:
+The UserStudyConfig.plist file bundled with the repository is missing some data (the OpenAI key, the Firebase credentials, and the study report encryption key).
+You can use the `export-config` tool in the AIHealthLiteracyShared folder to generate a complete config file:
 ```bash
-swift run LLMonFHIRCLI export-config \
+swift run AIHealthLiteracyCLI export-config \
     -f ~/GoogleService-Info.plist \
-    -o edu.stanford.LLMonFHIR.study1:sk-123 \
-    -o edu.stanford.LLMonFHIR.study2:sk-456 \
-    -k edu.stanford.LLMonFHIR.study1:./public_key1.pem \
-    -k edu.stanford.LLMonFHIR.study2:./public_key2.pem \
-    ../LLMonFHIR/Supporting\ Files/UserStudyConfig.plist
+    -o edu.stanford.aihealthliteracy.study1:sk-123 \
+    -o edu.stanford.aihealthliteracy.study2:sk-456 \
+    -k edu.stanford.aihealthliteracy.study1:./public_key1.pem \
+    -k edu.stanford.aihealthliteracy.study2:./public_key2.pem \
+    ../AIHealthLiteracy/Supporting\ Files/UserStudyConfig.plist
 ```
 
-Some of the flags use a `-x <studyId>:<value>` format and can be specified multiple times, to specify each study's value.
-You can also add one entry that uses `*` as the study id, in order to define a default value for all studies not explicitly listed.
-(E.g., `-o '*':$OPENAI_KEY` would define the OpenAI key used by all studies that don't have a `-o` entry of their own.)
+Some flags use a `-x <studyId>:<value>` format and can be specified multiple times to specify each study's value.
+You can also add one entry that uses `*` as the study ID to define a default value for all studies not explicitly listed.
+For example, `-o '*':$OPENAI_KEY` would define the OpenAI key used by all studies that don't have a `-o` entry of their own.
 
 ### Study Report File Encryption
 
-The report files generated form the usability study are optionally encrypted, using the public key stored in UserStudyConfig.plist.
+The report files generated from the usability study are optionally encrypted using the public key stored in UserStudyConfig.plist.
 
 You can generate a public/private key pair using the following commands:
 ```bash
@@ -119,34 +89,34 @@ openssl genpkey -algorithm X25519 -out private_key.pem
 openssl pkey -in private_key.pem -pubout -out public_key.pem
 ```
 
-Use the `export-config` tool showcased above to place your public key in the user study config file:.
+Use the `export-config` tool shown above to place your public key in the user study config file:
 
-In order to decrypt a report file created by the app, you can use the `decrypt-study-report` tool in the LLMonFHIRShared folder:
+To decrypt a report file created by the app, you can use the `decrypt-study-report` tool in the AIHealthLiteracyShared folder:
 ```bash
-swift run LLMonFHIRCLI decrypt-study-report -k private_key.pem studyReport report.json
+swift run AIHealthLiteracyCLI decrypt-study-report -k private_key.pem studyReport report.json
 ```
 
 
-## Network-local privacy-focused Fog LLM Mode
+## Network-Local Privacy-Focused Fog LLM Mode
 
-LLMonFHIR can run LLM inference for resource summarization and interpretation on nearby machines in your local network, called fog nodes, instead of only on-device or in the cloud.
+AIHealthLiteracy can run LLM inference for resource summarization and interpretation on nearby machines, called fog nodes, on your local network instead of only on-device or in the cloud.
 The app discovers a fog node via mDNS, connects to it, and streams model responses back while dispatching inference tasks.
-This setup provides low latency, strong performance, and improved privacy, since models run on your own hardware inside your own network.
+This setup provides low latency, strong performance, and improved privacy because models run on your own hardware within your own network.
 
 For instructions on running a minimal Docker-based fog node on Linux or macOS, see [FogNode/README.md](FogNode/README.md).
 
 
 ## Session Simulation
 
-The LLMonFHIRShared sub-package contains a tool that allows simulating user chat sessions.
+The AIHealthLiteracyShared subpackage contains a tool that lets you simulate user chat sessions.
 
-During a simulated chat session, the LLM is provided the same context and data it would be during normal usage of the app, except that the inputs (both the patient's health records, as well as the questions being asked by the user) are pre-defined.
-This allows evaluating how different models (or even the same model, across multiple conversations) will handle various scenarios and situations.
+During a simulated chat session, the LLM is provided with the same context and data it would receive during normal app usage, except that the inputs (both the patient's health records and the questions being asked by the user) are predefined.
+This allows you to evaluate how different models (or even the same model across multiple conversations) handle various scenarios and situations.
 
-For each simulated session, a report file is generated with the same structure as the report files generated for regular usage sessions in the app.
+For each simulated session, a report file is generated with the same structure as the report files generated during regular app sessions.
 
 ```bash
-swift run LLMonFHIRCLI simulate-session config.json output/
+swift run AIHealthLiteracyCLI simulate-session config.json output/
 ```
 
 Session simulation is controlled via a JSON config file. **API credentials are never stored in the config file** — they are read from environment variables at runtime:
@@ -176,12 +146,12 @@ Each entry in the JSON config defines the parameters of one simulation:
 - `name` *(optional)* — human-readable label used as the output filename prefix
 - `customSystemPrompt` *(optional)* — custom system prompt, replaces the study's default system prompt
 
-The example config below performs 6 simulated runs of the `edu.stanford.LLMonFHIR.gynStudy` study, 3 each using GPT-4o and GPT-4o-mini, against two different backends:
+The example config below performs six simulated runs of the `edu.stanford.aihealthliteracy.gynStudy` study, three each using GPT-4o and GPT-4o-mini, against two different backends:
 ```json
 [{
     "numberOfRuns": 3,
     "name": "gyn-gpt4o-openai",
-    "studyId": "edu.stanford.LLMonFHIR.gynStudy",
+    "studyId": "edu.stanford.aihealthliteracy.gynStudy",
     "bundleName": "Elena Kim",
     "model": "gpt-4o",
     "temperature": 1,
@@ -193,7 +163,7 @@ The example config below performs 6 simulated runs of the `edu.stanford.LLMonFHI
 }, {
     "numberOfRuns": 3,
     "name": "gyn-gpt4o-firebase",
-    "studyId": "edu.stanford.LLMonFHIR.gynStudy",
+    "studyId": "edu.stanford.aihealthliteracy.gynStudy",
     "bundleName": "Elena Kim",
     "model": "gpt-4o",
     "temperature": 1,
@@ -210,27 +180,32 @@ Run with the appropriate credentials:
 ```bash
 # OpenAI
 OPENAI_API_KEY=sk-proj-...
-swift run LLMonFHIRCLI simulate-session config.json output/
+swift run AIHealthLiteracyCLI simulate-session config.json output/
 ```
 
 ```bash
 # Firebase (production)
 GOOGLE_CREDENTIALS_PLIST=~/GoogleService-Info.plist
-swift run LLMonFHIRCLI simulate-session config.json output/
+swift run AIHealthLiteracyCLI simulate-session config.json output/
 ```
 
 ```bash
 # Firebase emulator (no credentials needed)
 FIREBASE_PROJECT_ID=...
-swift run LLMonFHIRCLI simulate-session config.json output/
+swift run AIHealthLiteracyCLI simulate-session config.json output/
 ```
 
 Reports are saved to a timestamped subdirectory inside the output directory, named `<index>-<name>-<run>.json` (e.g. `00-gyn-gpt4o-openai-1.json`).
 
 
-## Contributors & License
+## Contributing
 
-This project is based on [Spezi](https://github.com/StanfordSpezi/Spezi) framework and builds on top of the [Stanford Spezi Template Application](https://github.com/StanfordSpezi/SpeziTemplateApplication) provided using the MIT license.
-You can find a list of contributors in the `CONTRIBUTORS.md` file.
+Contributions to this project are welcome. Please read the [contribution guidelines](https://github.com/SchmiedmayerLab/.github/blob/main/CONTRIBUTING.md) and the [Contributor Covenant Code of Conduct](https://github.com/SchmiedmayerLab/.github/blob/main/CODE_OF_CONDUCT.md) first.
 
-The LLMonFHIR project, Spezi Template Application, and the Spezi framework are licensed under the MIT license.
+
+## License
+
+This project is licensed under the MIT License. See [Licenses](https://github.com/SchmiedmayerLab/AIHealthLiteracy-iOS/tree/main/LICENSES) for more information.
+
+![Stanford and Stanford Medicine logos](https://raw.githubusercontent.com/SchmiedmayerLab/.github/main/assets/stanford-footer-light.png#gh-light-mode-only)
+![Stanford and Stanford Medicine logos](https://raw.githubusercontent.com/SchmiedmayerLab/.github/main/assets/stanford-footer-dark.png#gh-dark-mode-only)

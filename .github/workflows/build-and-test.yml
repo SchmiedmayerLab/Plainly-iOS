@@ -1,5 +1,5 @@
 #
-# This source file is part of the Stanford LLMonFHIR project
+# This source file is part of the Stanford AI Health Literacy iOS project
 #
 # SPDX-FileCopyrightText: 2023 Stanford University
 #
@@ -20,29 +20,30 @@ concurrency:
 jobs:
   app_tests:
     name: Build and Test (App)
-    uses: StanfordBDHG/.github/.github/workflows/xcodebuild-or-fastlane.yml@v2
+    uses: SchmiedmayerLab/.github/.github/workflows/xcodebuild.yml@v0.2
     permissions:
       contents: read
     with:
-      artifactname: LLMonFHIR.xcresult
+      artifactname: AIHealthLiteracy.xcresult
       runsonlabels: '["macOS", "self-hosted"]'
-      fastlanelane: test
+      scheme: AIHealthLiteracy
   shared_spm_pkg_tests:
     name: Build and Test (Shared)
-    uses: StanfordBDHG/.github/.github/workflows/xcodebuild-or-fastlane.yml@v2
+    uses: SchmiedmayerLab/.github/.github/workflows/xcodebuild.yml@v0.2
     with:
-      path: LLMonFHIRShared
+      path: AIHealthLiteracyShared
       runsonlabels: '["macOS", "self-hosted"]'
-      scheme: LLMonFHIRShared-Package
-      resultBundle: LLMonFHIRShared-UnitTests.xcresult
-      artifactname: LLMonFHIRShared-UnitTests.xcresult
+      scheme: AIHealthLiteracyShared-Package
+      resultBundle: AIHealthLiteracyShared-UnitTests.xcresult
+      artifactname: AIHealthLiteracyShared-UnitTests.xcresult
   uploadcoveragereport:
     name: Upload Coverage Report
     needs: [app_tests, shared_spm_pkg_tests]
-    uses: StanfordBDHG/.github/.github/workflows/create-and-upload-coverage-report.yml@v2
+    uses: SchmiedmayerLab/.github/.github/workflows/coverage.yml@v0.2
     permissions:
+      actions: read
       contents: read
     with:
-      coveragereports: LLMonFHIR.xcresult LLMonFHIRShared-UnitTests.xcresult
+      coveragereports: AIHealthLiteracy.xcresult AIHealthLiteracyShared-UnitTests.xcresult
     secrets:
       token: ${{ secrets.CODECOV_TOKEN }}

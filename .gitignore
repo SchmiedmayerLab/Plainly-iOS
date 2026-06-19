@@ -1,5 +1,5 @@
 #
-# This source file is part of the Stanford LLMonFHIR project
+# This source file is part of the Stanford AI Health Literacy iOS project
 #
 # SPDX-FileCopyrightText: 2023 Stanford University
 #
@@ -11,7 +11,7 @@
 .swiftpm
 .derivedData
 .build/
-!LLMonFHIR.xcodeproj
+!AIHealthLiteracy.xcodeproj
 
 # IDE related folders
 .idea
@@ -30,7 +30,7 @@ xcuserdata/
 # Tests
 report.junit
 report.html
-LLMonFHIR.xcresult
+AIHealthLiteracy.xcresult
 
 # Logs
 logs
