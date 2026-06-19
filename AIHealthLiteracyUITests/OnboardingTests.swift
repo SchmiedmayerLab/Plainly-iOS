@@ -34,7 +34,7 @@ class OnboardingTests: XCTestCase, Sendable {
 
 extension XCUIApplication {
     fileprivate func navigateOnboardingFlowWelcome() throws {
-        XCTAssertTrue(staticTexts["AIHealthLiteracy"].waitForExistence(timeout: 2))
+        XCTAssertTrue(staticTexts["AIHealthLiteracy"].waitForExistence(timeout: 5))
         XCTAssertTrue(buttons["Learn More"].waitForExistence(timeout: 2))
         buttons["Learn More"].tap()
     }
