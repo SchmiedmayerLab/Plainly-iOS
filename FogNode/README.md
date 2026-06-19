@@ -116,4 +116,4 @@ docker volume rm <your_volume_name>
 For TLS termination, authorization, and more robust deployments (including cert management and token‑based auth), use the SpeziLLM Fog Node guides:
 
 - SpeziLLM Fog Node: https://github.com/StanfordSpezi/SpeziLLM/tree/main/FogNode
-- SpeziLLMFog docs: https://swiftpackageindex.com/StanfordSpezi/SpeziLLM/documentation/spezillmfog
+- SpeziLLMFog docs: https://github.com/StanfordSpezi/SpeziLLM/tree/main/Sources/SpeziLLMFog
