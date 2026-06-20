@@ -66,7 +66,7 @@ on:
         default: Bug fixes and performance improvements.
 
 concurrency:
-  group: deployment
+  group: ${{ github.workflow }}
   cancel-in-progress: false
 
 jobs:

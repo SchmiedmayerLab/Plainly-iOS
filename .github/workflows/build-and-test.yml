@@ -14,8 +14,8 @@ on:
   workflow_call:
 
 concurrency:
-  group: Build-and-Test-${{ github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   app_tests:
@@ -24,18 +24,16 @@ jobs:
     permissions:
       contents: read
     with:
-      artifactname: AIHealthLiteracy.xcresult
       runsonlabels: '["macOS", "self-hosted"]'
       scheme: AIHealthLiteracy
   shared_spm_pkg_tests:
     name: Build and Test (Shared)
     uses: SchmiedmayerLab/.github/.github/workflows/xcodebuild.yml@v0.2
+    permissions:
+      contents: read
     with:
       path: AIHealthLiteracyShared
       runsonlabels: '["macOS", "self-hosted"]'
-      scheme: AIHealthLiteracyShared-Package
-      resultBundle: AIHealthLiteracyShared-UnitTests.xcresult
-      artifactname: AIHealthLiteracyShared-UnitTests.xcresult
   uploadcoveragereport:
     name: Upload Coverage Report
     needs: [app_tests, shared_spm_pkg_tests]
@@ -44,6 +42,6 @@ jobs:
       actions: read
       contents: read
     with:
-      coveragereports: AIHealthLiteracy.xcresult AIHealthLiteracyShared-UnitTests.xcresult
+      coveragereports: AIHealthLiteracy.xcresult AIHealthLiteracyShared.xcresult
     secrets:
       token: ${{ secrets.CODECOV_TOKEN }}
