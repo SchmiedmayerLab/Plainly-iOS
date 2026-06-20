@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 
 # AIHealthLiteracy
 
-[![Deployment](https://github.com/SchmiedmayerLab/AIHealthLiteracy-iOS/actions/workflows/deployment.yml/badge.svg)](https://github.com/SchmiedmayerLab/AIHealthLiteracy-iOS/actions/workflows/deployment.yml)
 [![codecov](https://codecov.io/gh/SchmiedmayerLab/AIHealthLiteracy-iOS/branch/main/graph/badge.svg?token=9fvSAiFJUY)](https://codecov.io/gh/SchmiedmayerLab/AIHealthLiteracy-iOS)
 
 ## Study Overview
@@ -95,16 +94,6 @@ To decrypt a report file created by the app, you can use the `decrypt-study-repo
 ```bash
 swift run AIHealthLiteracyCLI decrypt-study-report -k private_key.pem studyReport report.json
 ```
-
-
-## Network-Local Privacy-Focused Fog LLM Mode
-
-AIHealthLiteracy can run LLM inference for resource summarization and interpretation on nearby machines, called fog nodes, on your local network instead of only on-device or in the cloud.
-The app discovers a fog node via mDNS, connects to it, and streams model responses back while dispatching inference tasks.
-This setup provides low latency, strong performance, and improved privacy because models run on your own hardware within your own network.
-
-For instructions on running a minimal Docker-based fog node on Linux or macOS, see [FogNode/README.md](FogNode/README.md).
-
 
 ## Session Simulation
 
@@ -205,7 +194,7 @@ Contributions to this project are welcome. Please read the [contribution guideli
 
 ## License
 
-This project is licensed under the MIT License. See [Licenses](https://github.com/SchmiedmayerLab/AIHealthLiteracy-iOS/tree/main/LICENSES) for more information.
+This project is licensed under the MIT License. See [Licenses](LICENSES) for more information.
 
 ![Stanford and Stanford Medicine logos](https://raw.githubusercontent.com/SchmiedmayerLab/.github/main/assets/stanford-footer-light.png#gh-light-mode-only)
 ![Stanford and Stanford Medicine logos](https://raw.githubusercontent.com/SchmiedmayerLab/.github/main/assets/stanford-footer-dark.png#gh-dark-mode-only)
