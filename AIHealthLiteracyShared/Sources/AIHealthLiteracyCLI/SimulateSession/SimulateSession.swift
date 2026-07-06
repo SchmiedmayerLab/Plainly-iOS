@@ -6,6 +6,7 @@
 // SPDX-License-Identifier: MIT
 //
 
+// swiftlint:disable attributes
 
 import AIHealthLiteracyShared
 import ArgumentParser
@@ -29,6 +30,7 @@ struct SimulateSession: AsyncParsableCommand {
                                              Inferred from the environment when omitted (see below).
               name                (optional) Human-readable label used as the output filename prefix.
               customSystemPrompt  (optional) Custom system prompt text.
+              customResourcePrompt (optional) Custom prompt for summarizing individual FHIR resources.
 
             API credentials are never stored in the config file. They are read from the environment:
 
@@ -58,10 +60,12 @@ struct SimulateSession: AsyncParsableCommand {
             """#
     )
 
-    @Argument(help: "Path to the JSON config file describing the sessions to simulate.") var inputUrl: URL
+    @Argument(help: "Path to the JSON config file describing the sessions to simulate.")
+    var inputUrl: URL
 
-    @Argument(help: "Directory where output report files will be written.") var outputUrl: URL
-
+    @Argument(help: "Directory where output report files will be written.")
+    var outputUrl: URL
+    
     @MainActor
     func run() async throws {
         let configs = try JSONDecoder().decode(
@@ -84,12 +88,7 @@ struct SimulateSession: AsyncParsableCommand {
             for (configIdx, config) in configs.enumerated() {
                 for runIdx in 0..<config.numberOfRuns {
                     taskGroup.addTask {
-                        await self.runConfiguration(
-                            config,
-                            configIdx: configIdx,
-                            runIdx: runIdx,
-                            outputUrl: outputUrl
-                        )
+                        await self.runConfiguration(config, configIdx: configIdx, runIdx: runIdx)
                     }
                 }
             }
@@ -108,12 +107,7 @@ struct SimulateSession: AsyncParsableCommand {
         }
     }
 
-    private func runConfiguration(
-        _ config: SimulatedSessionConfig,
-        configIdx: Int,
-        runIdx: Int,
-        outputUrl: URL
-    ) async -> Bool {
+    private func runConfiguration(_ config: SimulatedSessionConfig, configIdx: Int, runIdx: Int) async -> Bool {
         var sessionDesc = "Session \(configIdx) - Run \(runIdx + 1)"
         do {
             let simulator = try await SessionSimulator(config: config, runIdx: runIdx)
