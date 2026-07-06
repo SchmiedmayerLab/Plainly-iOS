@@ -39,6 +39,9 @@ struct SimulatedSessionConfig: Sendable {
     /// Optional human-readable name for this config, used as the output filename prefix.
     let name: String?
 
+    /// Optional free-form comment describing this config, propagated to the output report.
+    let comment: String?
+
     /// Optional custom system prompt text.
     let customSystemPrompt: String?
 
@@ -80,6 +83,7 @@ extension SimulatedSessionConfig: DecodableWithConfiguration {
     private enum CodingKeys: String, CodingKey {
         case numberOfRuns
         case name
+        case comment
         case studyId
         case bundleName
         case service
@@ -94,6 +98,7 @@ extension SimulatedSessionConfig: DecodableWithConfiguration {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.numberOfRuns = try container.decode(Int.self, forKey: .numberOfRuns)
         self.name = try container.decodeIfPresent(String.self, forKey: .name)
+        self.comment = try container.decodeIfPresent(String.self, forKey: .comment)
         self.model = try container.decode(LLMOpenAIParameters.ModelType.self, forKey: .model)
         self.temperature = try container.decode(Double.self, forKey: .temperature)
         self.service = try Self.inferService(from: container)
@@ -103,7 +108,7 @@ extension SimulatedSessionConfig: DecodableWithConfiguration {
             throw DecodingError.dataCorrupted(.init(codingPath: [], debugDescription: "Unable to find study with id '\(studyId)'"))
         }
         self.study = study
-        bundleInputName = try container.decode(String.self, forKey: .bundleName)
+        self.bundleInputName = try container.decode(String.self, forKey: .bundleName)
         let url = URL(filePath: bundleInputName, relativeTo: configuration.configFileUrl?.deletingLastPathComponent())
         if FileManager.default.itemExists(at: url) && !FileManager.default.isDirectory(at: url) {
             bundle = try JSONDecoder().decode(ModelsR4.Bundle.self, from: Data(contentsOf: url))

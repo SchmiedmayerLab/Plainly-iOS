@@ -29,6 +29,7 @@ struct SimulateSession: AsyncParsableCommand {
               service             (optional) Backend: "OpenAI", "Firebase", or "Firebase-Emulator".
                                              Inferred from the environment when omitted (see below).
               name                (optional) Human-readable label used as the output filename prefix.
+              comment             (optional) Free-form note propagated to the output report's metadata.
               customSystemPrompt  (optional) Custom system prompt text.
               customResourcePrompt (optional) Custom prompt for summarizing individual FHIR resources.
 
