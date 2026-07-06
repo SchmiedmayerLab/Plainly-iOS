@@ -1,0 +1,10 @@
+{
+  "name": "conversation-feedback",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Generator + self-contained HTML app for reviewing LLMonFHIR StudyReport conversations.",
+  "scripts": {
+    "build": "npx tsx build.ts"
+  }
+}
