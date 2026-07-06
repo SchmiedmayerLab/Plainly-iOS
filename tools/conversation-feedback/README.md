@@ -1,3 +1,13 @@
+<!--
+
+This source file is part of the Stanford AI Health Literacy iOS project
+
+SPDX-FileCopyrightText: 2026 Stanford University
+
+SPDX-License-Identifier: MIT
+
+-->
+
 # Conversation Feedback tool
 
 A replacement for the multi-sheet Excel review workbooks. It produces **one

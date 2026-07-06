@@ -6,8 +6,6 @@
 // SPDX-License-Identifier: MIT
 //
 
-// swiftlint:disable attributes
-
 import AIHealthLiteracyShared
 import ArgumentParser
 import Foundation
@@ -61,12 +59,10 @@ struct SimulateSession: AsyncParsableCommand {
             """#
     )
 
-    @Argument(help: "Path to the JSON config file describing the sessions to simulate.")
-    var inputUrl: URL
+    @Argument(help: "Path to the JSON config file describing the sessions to simulate.") var inputUrl: URL
 
-    @Argument(help: "Directory where output report files will be written.")
-    var outputUrl: URL
-    
+    @Argument(help: "Directory where output report files will be written.") var outputUrl: URL
+
     @MainActor
     func run() async throws {
         let configs = try JSONDecoder().decode(
@@ -90,8 +86,8 @@ struct SimulateSession: AsyncParsableCommand {
                 for runIdx in 0..<config.numberOfRuns {
                     taskGroup.addTask {
                         await self.runConfiguration(
-                            config, 
-                            configIdx: configIdx, 
+                            config,
+                            configIdx: configIdx,
                             runIdx: runIdx,
                             outputUrl: outputUrl
                         )
@@ -113,7 +109,12 @@ struct SimulateSession: AsyncParsableCommand {
         }
     }
 
-    private func runConfiguration(_ config: SimulatedSessionConfig, configIdx: Int, runIdx: Int, outputUrl: URL) async -> Bool {
+    private func runConfiguration(
+        _ config: SimulatedSessionConfig,
+        configIdx: Int,
+        runIdx: Int,
+        outputUrl: URL
+    ) async -> Bool {
         var sessionDesc = "Session \(configIdx) - Run \(runIdx + 1)"
         do {
             let simulator = try await SessionSimulator(config: config, runIdx: runIdx)
