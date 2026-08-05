@@ -56,7 +56,9 @@ final class AIHealthLiteracyDelegate: SpeziAppDelegate {
                     let _ = () // swiftlint:disable:this redundant_discardable_let
                 case .standalone, .test:
                     LLMFogPlatform(configuration: .init(host: "spezillmfog.local", connectionType: .http, authToken: .none))
+                    #if MLX
                     LLMLocalPlatform()
+                    #endif
                 }
             }
         }

@@ -6,6 +6,7 @@
 // SPDX-License-Identifier: MIT
 //
 
+#if MLX
 import SpeziLLMLocalDownload
 import SpeziViews
 import SwiftUI
@@ -28,3 +29,4 @@ struct LLMLocalDownload: View {
 #Preview {
     LLMLocalDownload()
 }
+#endif

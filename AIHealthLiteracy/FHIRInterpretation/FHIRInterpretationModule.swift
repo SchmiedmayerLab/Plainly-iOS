@@ -50,9 +50,13 @@ final class FHIRInterpretationModule: Module, EnvironmentAccessible, @unchecked 
                 parameters: .init(modelType: fogModel)
             )
         case .local:
+            #if MLX
             LLMLocalSchema(
                 model: .llama3_2_3B_4bit // always use the Llama 3.2 3B model as we can guarantee that it runs well on modern devices
             )
+            #else
+            fatalError("Usage of the local llm source requires MLX to be enabled")
+            #endif
         }
     }
     

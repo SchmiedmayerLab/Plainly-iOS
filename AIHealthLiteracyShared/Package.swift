@@ -23,23 +23,20 @@ let package = Package(
         .executable(name: "AIHealthLiteracyCLI", targets: ["AIHealthLiteracyCLI"])
     ],
     dependencies: [
-        .package(url: "https://github.com/StanfordSpezi/SpeziFoundation.git", from: "2.7.2"),
+        .package(url: "https://github.com/SchmiedmayerLab/Spezi.git", from: "0.1.7"),
         .package(url: "https://github.com/apple/FHIRModels.git", .upToNextMinor(from: "0.8.0")),
-        .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.7.0"),
-        .package(url: "https://github.com/StanfordSpezi/SpeziLLM.git", from: "0.13.8"),
-        .package(url: "https://github.com/StanfordSpezi/SpeziStorage.git", from: "2.1.4"),
-        .package(url: "https://github.com/StanfordSpezi/SpeziFHIR.git", from: "0.10.0")
+        .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.7.0")
     ],
     targets: [
         .target(
             name: "AIHealthLiteracyShared",
             dependencies: [
-                .product(name: "SpeziFoundation", package: "SpeziFoundation"),
+                .product(name: "SpeziFoundation", package: "Spezi"),
                 .product(name: "ModelsR4", package: "FHIRModels"),
-                .product(name: "SpeziLLM", package: "SpeziLLM"),
-                .product(name: "SpeziLLMOpenAI", package: "SpeziLLM"),
-                .product(name: "SpeziLocalStorage", package: "SpeziStorage"),
-                .product(name: "SpeziFHIR", package: "SpeziFHIR")
+                .product(name: "SpeziLLM", package: "Spezi"),
+                .product(name: "SpeziLLMOpenAI", package: "Spezi"),
+                .product(name: "SpeziLocalStorage", package: "Spezi"),
+                .product(name: "SpeziFHIR", package: "Spezi")
             ],
             resources: [
                 .copy("Resources/Synthetic Patients")
