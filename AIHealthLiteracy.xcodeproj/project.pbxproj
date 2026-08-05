@@ -18,8 +18,8 @@
 		3A3B67303023AC1B00C229B0 /* SpeziFirebaseConfiguration in Frameworks */ = {isa = PBXBuildFile; productRef = 3A3B672F3023AC1B00C229B0 /* SpeziFirebaseConfiguration */; };
 		3A3B67323023ACC200C229B0 /* SpeziFirebaseAccountStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 3A3B67313023ACC200C229B0 /* SpeziFirebaseAccountStorage */; };
 		3A3B67343023ACCB00C229B0 /* SpeziFirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 3A3B67333023ACCB00C229B0 /* SpeziFirebaseStorage */; };
-		3AE46E0830239C0B00295027 /* SpeziTesting in Frameworks */ = {isa = PBXBuildFile; productRef = 3AE46E0730239C0B00295027 /* SpeziTesting */; };
-		3AE46E0A30239C0B00295027 /* XCTSpezi in Frameworks */ = {isa = PBXBuildFile; productRef = 3AE46E0930239C0B00295027 /* XCTSpezi */; };
+		3AE46E1030239C0B00295027 /* XCTHealthKit in Frameworks */ = {isa = PBXBuildFile; productRef = 3AE46E1130239C0B00295027 /* XCTHealthKit */; };
+		3AE46E1230239C0B00295027 /* XCTestExtensions in Frameworks */ = {isa = PBXBuildFile; productRef = 3AE46E1330239C0B00295027 /* XCTestExtensions */; };
 		802641E02F638893006A1D76 /* XCTSpeziQuestionnaire in Frameworks */ = {isa = PBXBuildFile; productRef = 802641DF2F638893006A1D76 /* XCTSpeziQuestionnaire */; };
 		803D16682F30DA3C0060B931 /* AIHealthLiteracyStudyDefinitions in Frameworks */ = {isa = PBXBuildFile; productRef = 803D16672F30DA3C0060B931 /* AIHealthLiteracyStudyDefinitions */; };
 		80525CB12F8CFC410046D600 /* SpeziFHIR in Frameworks */ = {isa = PBXBuildFile; productRef = 9733FC562B60E5FB0024F12C /* SpeziFHIR */; };
@@ -154,8 +154,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3AE46E0A30239C0B00295027 /* XCTSpezi in Frameworks */,
-				3AE46E0830239C0B00295027 /* SpeziTesting in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -163,6 +161,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3AE46E1030239C0B00295027 /* XCTHealthKit in Frameworks */,
+				3AE46E1230239C0B00295027 /* XCTestExtensions in Frameworks */,
 				802641E02F638893006A1D76 /* XCTSpeziQuestionnaire in Frameworks */,
 				8098C1522F6EE891007FC944 /* XCTSpeziQuestionnaire in Frameworks */,
 			);
@@ -337,6 +337,8 @@
 			);
 			name = AIHealthLiteracyUITests;
 			packageProductDependencies = (
+				3AE46E1130239C0B00295027 /* XCTHealthKit */,
+				3AE46E1330239C0B00295027 /* XCTestExtensions */,
 				802641DF2F638893006A1D76 /* XCTSpeziQuestionnaire */,
 				8098C1512F6EE891007FC944 /* XCTSpeziQuestionnaire */,
 			);
@@ -787,14 +789,6 @@
 			repositoryURL = "https://github.com/SchmiedmayerLab/Spezi";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 0.1.0;
-			};
-		};
-		3AE46E0430239C0B00295027 /* XCRemoteSwiftPackageReference "Spezi" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/SchmiedmayerLab/Spezi";
-			requirement = {
-				kind = upToNextMajorVersion;
 				minimumVersion = 0.1.7;
 			};
 		};
@@ -872,15 +866,15 @@
 			package = 3A3B67223023ABD400C229B0 /* XCRemoteSwiftPackageReference "Spezi" */;
 			productName = SpeziFirebaseStorage;
 		};
-		3AE46E0730239C0B00295027 /* SpeziTesting */ = {
+		3AE46E1130239C0B00295027 /* XCTHealthKit */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 3AE46E0430239C0B00295027 /* XCRemoteSwiftPackageReference "Spezi" */;
-			productName = SpeziTesting;
+			package = 3A3B67223023ABD400C229B0 /* XCRemoteSwiftPackageReference "Spezi" */;
+			productName = XCTHealthKit;
 		};
-		3AE46E0930239C0B00295027 /* XCTSpezi */ = {
+		3AE46E1330239C0B00295027 /* XCTestExtensions */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 3AE46E0430239C0B00295027 /* XCRemoteSwiftPackageReference "Spezi" */;
-			productName = XCTSpezi;
+			package = 3A3B67223023ABD400C229B0 /* XCRemoteSwiftPackageReference "Spezi" */;
+			productName = XCTestExtensions;
 		};
 		44E18E872CEBEC9500829A26 /* SpeziLLM */ = {
 			isa = XCSwiftPackageProductDependency;

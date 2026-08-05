@@ -48,6 +48,6 @@ jobs:
       actions: read
       contents: read
     with:
-      codeql: true
+      codeql: false
       scheme: AIHealthLiteracy
       test: false
