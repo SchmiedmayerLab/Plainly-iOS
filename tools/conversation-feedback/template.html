@@ -381,8 +381,8 @@ SPDX-License-Identifier: MIT
   <div class="header-inner">
     <div class="brand">Conversation Feedback<small>SpineAI / LLMonFHIR review</small></div>
     <div class="reviewer-fields">
-      <input id="reviewerName" type="text" placeholder="Your name" autocomplete="name" />
-      <input id="reviewerEmail" type="email" placeholder="Your email" autocomplete="email" />
+      <input id="reviewerName" type="text" placeholder="Your name" autocomplete="name" aria-label="Your name" />
+      <input id="reviewerEmail" type="email" placeholder="Your email" autocomplete="email" aria-label="Your email" />
     </div>
     <div class="header-spacer"></div>
     <span class="progress-chip" id="progressChip">0 / 0 answered</span>
@@ -432,6 +432,7 @@ SPDX-License-Identifier: MIT
     if (children) for (const c of [].concat(children)) if (c != null) n.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
     return n;
   };
+  const metaField = (label, value) => el("span", {}, [label + " ", el("code", { text: value })]);
   const basename = (p) => (p ? String(p).split("/").pop().replace(/\.[^.]+$/, "") : "");
   const hashStr = (s) => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
 
@@ -820,10 +821,10 @@ SPDX-License-Identifier: MIT
     const head = el("div", { class: "conv-header" });
     head.appendChild(el("h1", { text: conv.title }));
     const meta = el("div", { class: "meta" });
-    meta.appendChild(el("span", { html: `Conversation <code>${conv.id}</code>` }));
-    if (conv.comment) meta.appendChild(el("span", { html: `Patient <code>${conv.patient}</code>` }));
-    if (conv.studyID) meta.appendChild(el("span", { html: `Study <code>${conv.studyID}</code>` }));
-    if (conv.model) meta.appendChild(el("span", { html: `Model <code>${conv.model}</code>` }));
+    meta.appendChild(metaField("Conversation", conv.id));
+    if (conv.comment) meta.appendChild(metaField("Patient", conv.patient));
+    if (conv.studyID) meta.appendChild(metaField("Study", conv.studyID));
+    if (conv.model) meta.appendChild(metaField("Model", conv.model));
     if (conv.startTime != null) meta.appendChild(el("span", { text: "Started " + fmtTime(conv.startTime) }));
     meta.appendChild(el("span", { text: `${conv.turns.length} answers to review` }));
     head.appendChild(meta);

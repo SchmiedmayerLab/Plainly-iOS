@@ -8,8 +8,7 @@
     "noEmit": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
-    "types": ["node"],
-    "typeRoots": ["../../functions/node_modules/@types"]
+    "types": ["node"]
   },
   "include": ["build.ts"]
 }

@@ -51,7 +51,7 @@ struct SimulatedSessionConfig: Sendable {
     /// The questions that should be asked by the simulated patient.
     let userQuestions: [String]
 
-    /// The effective system prompt: the study's default prompt with any suffix appended.
+    /// The effective system prompt: `customSystemPrompt` if provided, replacing the study's default entirely; otherwise the study's default.
     var systemPrompt: FHIRPrompt {
         guard let prompt = customSystemPrompt, !prompt.isEmpty else {
             return study.interpretMultipleResourcesPrompt

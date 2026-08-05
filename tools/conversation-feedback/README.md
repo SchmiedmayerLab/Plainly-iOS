@@ -33,8 +33,8 @@ Input is the LLMonFHIR **`StudyReport`** export format — the `NN-session-1.jso
 under `LLMonFHIRShared/.run/output/<timestamp>/`.
 
 ```bash
-# from anywhere; tsx is already a devDependency in ../../functions
-npx tsx tools/conversation-feedback/build.ts \
+# from tools/conversation-feedback, after `npm install`
+npx tsx build.ts \
   /path/to/LLMonFHIRShared/.run/output/2026-04-14T164536.759Z \
   -o reviewer.html
 ```

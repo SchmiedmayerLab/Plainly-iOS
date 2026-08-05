@@ -18,9 +18,10 @@
  *   npx tsx build.ts ../../.run/output/2026-04-14T164536.759Z -o reviewer.html
  *   npx tsx build.ts a.json b.json c.json -o batch.html
  *
- * No third-party dependencies — Node built-ins only. The generated file also
- * accepts drag-and-drop / file-picker loading, so parsing lives in the browser;
- * this script only embeds the raw reports.
+ * The script itself imports no third-party npm packages — Node built-ins only —
+ * though running it requires the `tsx` dev dependency (see package.json) to execute
+ * TypeScript directly. The generated file also accepts drag-and-drop / file-picker
+ * loading, so parsing lives in the browser; this script only embeds the raw reports.
  */
 
 import { readFileSync, writeFileSync, readdirSync, statSync } from "node:fs";
@@ -43,8 +44,16 @@ function parseArgs(argv: string[]): Args {
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "-o" || a === "--output") {
+      if (i + 1 >= argv.length) {
+        console.error("Error: -o/--output requires a path.");
+        printUsageAndExit(1);
+      }
       output = argv[++i];
     } else if (a === "-t" || a === "--template") {
+      if (i + 1 >= argv.length) {
+        console.error("Error: -t/--template requires a path.");
+        printUsageAndExit(1);
+      }
       template = argv[++i];
     } else if (a === "-h" || a === "--help") {
       printUsageAndExit(0);
