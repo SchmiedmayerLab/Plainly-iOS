@@ -1,5 +1,5 @@
 #
-# This source file is part of the Stanford AI Health Literacy iOS project
+# This source file is part of the Plainly iOS project
 #
 # SPDX-FileCopyrightText: 2023 Stanford University
 #
@@ -12,5 +12,11 @@ authors:
 - family-names: "Schmiedmayer"
   given-names: "Paul"
   orcid: "https://orcid.org/0000-0002-8607-9148"
-title: "AI Health Literacy iOS"
-url: "https://github.com/SchmiedmayerLab/AIHealthLiteracy"
+- family-names: "Kollmer"
+  given-names: "Lukas"
+  orcid: "https://orcid.org/0000-0002-1065-1320"
+- family-names: "Kraft"
+  given-names: "Paul Johannes"
+  orcid: "https://orcid.org/0000-0001-8157-8151"
+title: "Plainly"
+url: "https://github.com/SchmiedmayerLab/Plainly-iOS"

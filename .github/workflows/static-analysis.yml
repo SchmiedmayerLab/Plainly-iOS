@@ -1,5 +1,5 @@
 #
-# This source file is part of the Stanford AI Health Literacy iOS project
+# This source file is part of the Plainly iOS project
 #
 # SPDX-FileCopyrightText: 2022 Stanford University and the project authors (see CONTRIBUTORS.md)
 #
@@ -49,5 +49,5 @@ jobs:
       contents: read
     with:
       codeql: true
-      scheme: AIHealthLiteracy
+      scheme: Plainly
       test: false

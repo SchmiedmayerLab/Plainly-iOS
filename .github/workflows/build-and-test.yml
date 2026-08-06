@@ -1,5 +1,5 @@
 #
-# This source file is part of the Stanford AI Health Literacy iOS project
+# This source file is part of the Plainly iOS project
 #
 # SPDX-FileCopyrightText: 2023 Stanford University
 #
@@ -25,14 +25,14 @@ jobs:
       contents: read
     with:
       runsonlabels: '["macOS", "self-hosted"]'
-      scheme: AIHealthLiteracy
+      scheme: Plainly
   shared_spm_pkg_tests:
     name: Build and Test (Shared)
     uses: SchmiedmayerLab/.github/.github/workflows/xcodebuild.yml@v0.2
     permissions:
       contents: read
     with:
-      path: AIHealthLiteracyShared
+      path: PlainlyShared
       runsonlabels: '["macOS", "self-hosted"]'
   uploadcoveragereport:
     name: Upload Coverage Report
@@ -42,6 +42,6 @@ jobs:
       actions: read
       contents: read
     with:
-      coveragereports: AIHealthLiteracy.xcresult AIHealthLiteracyShared.xcresult
+      coveragereports: Plainly.xcresult PlainlyShared.xcresult
     secrets:
       token: ${{ secrets.CODECOV_TOKEN }}

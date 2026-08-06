@@ -1,6 +1,6 @@
 <!--
 
-This source file is part of the Stanford AI Health Literacy iOS project
+This source file is part of the Plainly iOS project
 
 SPDX-FileCopyrightText: 2026 Stanford University
 
@@ -29,13 +29,13 @@ exports as a JSON file we can read programmatically.
 
 ## Generating a file to send
 
-Input is the LLMonFHIR **`StudyReport`** export format — the `NN-session-1.json` files
-under `LLMonFHIRShared/.run/output/<timestamp>/`.
+Input is the Plainly **`StudyReport`** export format — the `NN-session-1.json` files
+under `PlainlyShared/.run/output/<timestamp>/`.
 
 ```bash
 # from tools/conversation-feedback, after `npm install`
 npx tsx build.ts \
-  /path/to/LLMonFHIRShared/.run/output/2026-04-14T164536.759Z \
+  /path/to/PlainlyShared/.run/output/2026-04-14T164536.759Z \
   -o reviewer.html
 ```
 
@@ -78,7 +78,7 @@ The reviewer can also **drag additional `StudyReport` JSON files** onto the page
     {
       "conversationId": "00-session-1",
       "comment": "Diabetes follow-up scenario",
-      "studyID": "edu.stanford.LLMonFHIR.spineAI",
+      "studyID": "edu.stanford.plainly.spineAI",
       "patientBundle": "bundles/Rickie717_Ebert178.json",
       "model": "gpt-5.4",
       "answers": [

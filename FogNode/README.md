@@ -1,6 +1,6 @@
 <!--
 
-This source file is part of the Stanford AI Health Literacy iOS project
+This source file is part of the Plainly iOS project
 
 SPDX-FileCopyrightText: 2023 Stanford University
 
@@ -8,9 +8,9 @@ SPDX-License-Identifier: MIT
 
 -->
 
-# AIHealthLiteracy Fog Node Setup
+# Plainly Fog Node Setup
 
-This README explains how to spin up a simple Fog Node for AIHealthLiteracy using Docker on Linux or macOS. If the Fog Node mode is picked during the AIHealthLiteracy setup, AIHealthLiteracy sends LLM requests to a node on your local network instead of running on‑device or using a cloud provider.
+This README explains how to spin up a simple Fog Node for Plainly using Docker on Linux or macOS. If the Fog Node mode is picked during the Plainly setup, Plainly sends LLM requests to a node on your local network instead of running on‑device or using a cloud provider.
 
 This setup is intentionally minimal: it does not include an authorization service and does not secure traffic with TLS. For production‑ready guidance (authN/Z and TLS), see the SpeziLLM Fog Node documentation:
 
@@ -26,14 +26,14 @@ The `docker-compose.yml` in this directory starts:
 - Ollama LLM inference service (models are persisted in the `ollama_storage` Docker volume).
 - Avahi (Linux only) to advertise the Fog service via mDNS on the local network.
 
-AIHealthLiteracy defaults to the host `spezillmfog.local` with HTTP and no auth, matching this compose file. No changes in the app are required when using these defaults.
+Plainly defaults to the host `spezillmfog.local` with HTTP and no auth, matching this compose file. No changes in the app are required when using these defaults.
 
 
 ## Prerequisites
 
 - Docker and Docker Compose installed on Linux or macOS.
-- Network access between the device running the AIHealthLiteracy app and the machine hosting the Fog Node (Devices must be connected to the **same network and subnet** with IP-level reachability).
-- mDNS advertisement and discovery allowed on the network (required to resolve `.local` hostnames between AIHealthLiteracy and the Fog Node).
+- Network access between the device running the Plainly app and the machine hosting the Fog Node (Devices must be connected to the **same network and subnet** with IP-level reachability).
+- mDNS advertisement and discovery allowed on the network (required to resolve `.local` hostnames between Plainly and the Fog Node).
 
 
 ## Quick Start
@@ -72,11 +72,11 @@ Keep this command running while you use the Fog Node. Stop with `Ctrl+C` when fi
 
 
 
-## Use with AIHealthLiteracy
+## Use with Plainly
 
-- Build and run the AIHealthLiteracy app on a physical device (the iOS simulator is not supported).
+- Build and run the Plainly app on a physical device (the iOS simulator is not supported).
 - Choose the Fog option during onboarding or change it within the app's settings. With the defaults in this repo, the app discovers the `spezillmfog.local` fog node via a connection over HTTP with no auth.
-- As long as the Fog Node is reachable on your local network and the selected model in the AIHealthLiteracy app (e.g., `llama3.1:8b`) is pulled on the fog node, you’re set.
+- As long as the Fog Node is reachable on your local network and the selected model in the Plainly app (e.g., `llama3.1:8b`) is pulled on the fog node, you’re set.
 
 
 ## Notes and Limitations

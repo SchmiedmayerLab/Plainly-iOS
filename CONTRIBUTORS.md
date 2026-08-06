@@ -1,6 +1,6 @@
 <!--
 
-This source file is part of the Stanford AI Health Literacy iOS project
+This source file is part of the Plainly iOS project
 
 SPDX-FileCopyrightText: 2023 Stanford University
 
@@ -8,10 +8,12 @@ SPDX-License-Identifier: MIT
 
 -->
 
-AIHealthLiteracy Contributors
+Plainly Contributors
 =================================
 
 * [Paul Schmiedmayer](https://github.com/PSchmiedmayer)
+* [Lukas Kollmer](https://github.com/lukaskollmer)
+* [Paul Johannes Kraft](https://github.com/pauljohanneskraft)
 
 ## Attributions
 

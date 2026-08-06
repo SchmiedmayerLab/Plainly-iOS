@@ -5,11 +5,11 @@ path = [
     "fastlane/metadata/**",
     "fastlane/screenshots/**",
     "Figures/**",
-    "AIHealthLiteracy.xcodeproj/**",
-    "AIHealthLiteracy/Resources/**",
-    "AIHealthLiteracy/Supporting Files/**",
-    "AIHealthLiteracyShared/Sources/AIHealthLiteracyShared/Resources/**",
-    "AIHealthLiteracyShared/Tests/AIHealthLiteracySharedTests/Resources/*"
+    "Plainly.xcodeproj/**",
+    "Plainly/Resources/**",
+    "Plainly/Supporting Files/**",
+    "PlainlyShared/Sources/PlainlyShared/Resources/**",
+    "PlainlyShared/Tests/PlainlySharedTests/Resources/*"
 ]
 SPDX-FileCopyrightText = "2025 Stanford University and the project authors (see CONTRIBUTORS.md)"
 SPDX-License-Identifier = "MIT"

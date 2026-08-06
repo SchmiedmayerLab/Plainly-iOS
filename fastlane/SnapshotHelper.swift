@@ -1,5 +1,5 @@
 //
-// This source file is part of the Stanford AI Health Literacy iOS project
+// This source file is part of the Plainly iOS project
 // Generated from `fastlane snapshot init` and originally authored by Felix Krause on 10/8/15
 //
 // SPDX-FileCopyrightText: 2023 Stanford University
