@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Generator + self-contained HTML app for reviewing LLMonFHIR StudyReport conversations.",
+  "description": "Generator + self-contained HTML app for reviewing Plainly StudyReport conversations.",
   "scripts": {
     "build": "tsx build.ts"
   },

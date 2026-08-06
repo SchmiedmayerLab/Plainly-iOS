@@ -13,7 +13,7 @@ LABEL org.opencontainers.image.authors="Philipp Zagar <zagar@stanford.edu>" \
       org.opencontainers.image.title="stanfordspezi/avahi" \
       org.opencontainers.image.description="Avahi advertising services via mDNS" \
       org.opencontainers.image.url="https://ghcr.io/stanfordspezi/avahi" \
-      org.opencontainers.image.source="https://github.com/SchmiedmayerLab/AIHealthLiteracy"
+      org.opencontainers.image.source="https://github.com/SchmiedmayerLab/Plainly"
 
 # Install Avahi daemon without dbus dependency
 RUN apk --no-cache --no-progress add avahi

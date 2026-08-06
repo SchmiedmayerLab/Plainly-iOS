@@ -1,5 +1,5 @@
 #
-# This source file is part of the Stanford AI Health Literacy iOS project
+# This source file is part of the Plainly iOS project
 #
 # SPDX-FileCopyrightText: 2023 Stanford University
 #
@@ -139,7 +139,7 @@ jobs:
     with:
       runs_on_labels: '["macOS", "self-hosted"]'
       environment: ${{ needs.determineenvironment.outputs.environment }}
-      injected_secret_file_path: 'AIHealthLiteracy/Supporting Files/UserStudyConfig.plist'
+      injected_secret_file_path: 'Plainly/Supporting Files/UserStudyConfig.plist'
       setup_signing: true
       command: fastlane deploy environment:"${{ needs.determineenvironment.outputs.environment }}" versionname:"${{ needs.vars.outputs.version }}" releasenotes:"${{ inputs.releasenotes }}" ${{ inputs.buildnumber && format('buildnumber:"{0}"', inputs.buildnumber) || '' }}
     secrets:

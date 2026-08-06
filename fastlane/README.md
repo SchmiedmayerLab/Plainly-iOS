@@ -15,14 +15,6 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 
 ## iOS
 
-### ios test
-
-```sh
-[bundle exec] fastlane ios test
-```
-
-Build and test
-
 ### ios screenshots
 
 ```sh
@@ -31,22 +23,6 @@ Build and test
 
 Screenshots
 
-### ios codeql
-
-```sh
-[bundle exec] fastlane ios codeql
-```
-
-CodeQL
-
-### ios build
-
-```sh
-[bundle exec] fastlane ios build
-```
-
-Build app
-
 ### ios archive
 
 ```sh
@@ -54,14 +30,6 @@ Build app
 ```
 
 Archive app
-
-### ios signin
-
-```sh
-[bundle exec] fastlane ios signin
-```
-
-Sign in to the App Store Connect API
 
 ### ios deploy
 

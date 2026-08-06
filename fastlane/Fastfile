@@ -1,5 +1,5 @@
 #
-# This source file is part of the Stanford AI Health Literacy iOS project
+# This source file is part of the Plainly iOS project
 #
 # SPDX-FileCopyrightText: 2023 Stanford University
 #
@@ -11,12 +11,30 @@ default_platform(:ios)
 APP_CONFIG = {
   default_environment: "staging",
   default_app_identifier: "edu.stanford.llmonfhir",
-  default_provisioningProfile: "AIHealthLiteracy",
   default_version_name: "0.1.0",
   default_release_notes: "Bug fixes and performance improvements.",
-  scheme: "AIHealthLiteracy",
-  plist_path: "AIHealthLiteracy/Supporting Files/Info.plist"
+  scheme: "Plainly",
+  plist_path: "Plainly/Supporting Files/Info.plist"
 }.freeze
+
+SCREENSHOTS_DIRECTORY = File.expand_path("screenshots", __dir__).freeze
+
+def installed_provisioning_profile(app_identifier)
+  profile_directories = [
+    File.expand_path("~/Library/Developer/Xcode/UserData/Provisioning Profiles"),
+    File.expand_path("~/Library/MobileDevice/Provisioning Profiles")
+  ]
+  profile_paths = profile_directories.flat_map do |directory|
+    Dir.glob(File.join(directory, "*.{mobileprovision,provisionprofile}"))
+  end
+  matching_profiles = profile_paths.select do |path|
+    FastlaneCore::ProvisioningProfile.bundle_id(path) == app_identifier
+  end
+  UI.user_error!("No installed provisioning profile found for #{app_identifier}") if matching_profiles.empty?
+
+  profile_path = matching_profiles.max_by { |path| File.mtime(path) }
+  FastlaneCore::ProvisioningProfile.uuid(profile_path)
+end
 
 platform :ios do
   before_all do
@@ -40,30 +58,58 @@ platform :ios do
     snapshot(
       test_without_building: true,
       derived_data_path: ".derivedData",
+      xcargs: "-collect-test-diagnostics never",
       devices: [
-        "iPhone 17 Pro Max"
+        "iPhone 17 Pro Max",
+        "iPad Pro 13-inch (M5)"
       ],
       languages: [
          "en-US",
       ],
       scheme: APP_CONFIG[:scheme],
-      output_directory: "./fastlane/screenshots",
+      output_directory: SCREENSHOTS_DIRECTORY,
       clear_previous_screenshots: true,
       concurrent_simulators: false,
+      override_status_bar: true,
+      override_status_bar_arguments: "--time 9:41 --dataNetwork wifi --wifiMode active --wifiBars 3 --cellularMode active --operatorName '' --cellularBars 4 --batteryState discharging --batteryLevel 100",
+      only_testing: [
+        "PlainlyUITests/AppStoreScreenshotTests/testScreenshots"
+      ],
       stop_after_first_error: true,
       skip_open_summary: true
     )
-    
-    # Workaround for https://github.com/fastlane/fastlane/issues/21759 
-    Dir.glob("./screenshots/**/iPhone 17 Pro Max-*.png").each do |file|
-      sh("sips --resampleHeightWidth 2796 1290 '#{file}'")
+
+    Dir.glob(File.join(SCREENSHOTS_DIRECTORY, "**/*.png")).each do |file|
+      jpeg_file = file.sub(/\.png\z/, ".jpg")
+      sh("sips", "-s", "format", "jpeg", "-s", "formatOptions", "100", file, "--out", jpeg_file, log: false)
+      File.delete(file)
+    end
+
+    expected_sizes = {
+      "iPhone 17 Pro Max" => [1320, 2868],
+      "iPad Pro 13-inch (M5)" => [2752, 2064]
+    }
+    expected_sizes.each do |device, expected_size|
+      files = Dir.glob(File.join(SCREENSHOTS_DIRECTORY, "**/#{device}-*.jpg"))
+      UI.user_error!("Expected three screenshots for #{device}, found #{files.count}") unless files.count == 3
+
+      files.each do |file|
+        properties = sh("sips", "-g", "pixelWidth", "-g", "pixelHeight", "-g", "hasAlpha", file, log: false)
+        actual_size = [
+          properties[/pixelWidth: (\d+)/, 1].to_i,
+          properties[/pixelHeight: (\d+)/, 1].to_i
+        ]
+        UI.user_error!("Unexpected screenshot size for #{file}: #{actual_size.join('x')}") unless actual_size == expected_size
+        UI.user_error!("Screenshot contains an alpha channel: #{file}") unless properties.include?("hasAlpha: no")
+      end
     end
   end
 
   desc "Archive app"
   lane :archive do |options|
     appidentifier = options[:appidentifier].to_s.strip.empty? ? APP_CONFIG[:default_app_identifier] : options[:appidentifier]
-    provisioningProfile = options[:provisioningProfile].to_s.strip.empty? ? APP_CONFIG[:default_provisioningProfile] : options[:provisioningProfile]
+    provisioningProfile = options[:provisioningProfile].to_s.strip
+    provisioningProfile = installed_provisioning_profile(appidentifier) if provisioningProfile.empty?
     
     update_app_identifier(
       plist_path: APP_CONFIG[:plist_path],
@@ -76,7 +122,8 @@ platform :ios do
       skip_profile_detection: true,
       xcargs: [
         "-skipPackagePluginValidation",
-        "-skipMacroValidation"
+        "-skipMacroValidation",
+        "PROVISIONING_PROFILE_SPECIFIER='#{provisioningProfile}'"
       ],
       export_options: {
         provisioningProfiles: {
@@ -90,13 +137,13 @@ platform :ios do
   lane :deploy do |options|
     environment = options[:environment].to_s.strip.empty? ? APP_CONFIG[:default_environment] : options[:environment]
     appidentifier = options[:appidentifier].to_s.strip.empty? ? APP_CONFIG[:default_app_identifier] : options[:appidentifier]
-    provisioningProfile = options[:provisioningProfile].to_s.strip.empty? ? APP_CONFIG[:default_provisioningProfile] : options[:provisioningProfile]
+    provisioningProfile = options[:provisioningProfile].to_s.strip
     versionname = options[:versionname].to_s.strip.empty? ? APP_CONFIG[:default_version_name] : options[:versionname]
     releasenotes = options[:releasenotes].to_s.strip.empty? ? APP_CONFIG[:default_release_notes] : options[:releasenotes]
 
     UI.message("Using environment: #{environment}")
     UI.message("Using app identifier: #{appidentifier}")
-    UI.message("Using provisioning profile: #{provisioningProfile}")
+    UI.message("Using provisioning profile: #{provisioningProfile.empty? ? 'automatically detected' : provisioningProfile}")
     UI.message("Using version name: #{versionname}")
     UI.message("Using release notes: #{releasenotes}")
 

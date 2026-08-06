@@ -1,2 +1,1 @@
-Stanford University research study app. Use only if invited.
-
+Plainly is a Schmiedmayer Lab research study app. Use only if invited.

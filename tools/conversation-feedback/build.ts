@@ -1,6 +1,6 @@
 #!/usr/bin/env -S npx tsx
 //
-// This source file is part of the Stanford AI Health Literacy iOS project
+// This source file is part of the Plainly iOS project
 //
 // SPDX-FileCopyrightText: 2026 Stanford University
 //
@@ -8,7 +8,7 @@
 //
 
 /**
- * build.ts — bake a folder of LLMonFHIR StudyReport JSON exports into a single,
+ * build.ts — bake a folder of Plainly StudyReport JSON exports into a single,
  * self-contained HTML feedback file that reviewers can open and fill out offline.
  *
  * Usage:

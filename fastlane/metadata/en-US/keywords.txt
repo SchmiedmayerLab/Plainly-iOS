@@ -1,1 +1,1 @@
-stanford,research study,study,health literacy
+plainly,stanford,research study,health literacy,health records
