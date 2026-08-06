@@ -39,16 +39,30 @@ struct SimulatedSessionConfig: Sendable {
     /// Optional human-readable name for this config, used as the output filename prefix.
     let name: String?
 
+    /// Optional free-form comment describing this config, propagated to the output report.
+    let comment: String?
+
     /// Optional custom system prompt text.
     let customSystemPrompt: String?
+
+    /// Optional custom resource prompt text, used to control how individual FHIR resources are summarized.
+    let customResourcePrompt: String?
 
     /// The questions that should be asked by the simulated patient.
     let userQuestions: [String]
 
-    /// The effective system prompt: the study's default prompt with any suffix appended.
+    /// The effective system prompt: `customSystemPrompt` if provided, replacing the study's default entirely; otherwise the study's default.
     var systemPrompt: FHIRPrompt {
         guard let prompt = customSystemPrompt, !prompt.isEmpty else {
             return study.interpretMultipleResourcesPrompt
+        }
+        return FHIRPrompt(promptText: prompt)
+    }
+
+    /// The effective resource summarization prompt: custom if provided, otherwise the study's default.
+    var summarizeSingleResourcePrompt: FHIRPrompt {
+        guard let prompt = customResourcePrompt, !prompt.isEmpty else {
+            return study.summarizeSingleResourcePrompt
         }
         return FHIRPrompt(promptText: prompt)
     }
@@ -69,10 +83,12 @@ extension SimulatedSessionConfig: DecodableWithConfiguration {
     private enum CodingKeys: String, CodingKey {
         case numberOfRuns
         case name
+        case comment
         case studyId
         case bundleName
         case service
         case customSystemPrompt
+        case customResourcePrompt
         case userQuestions
         case model
         case temperature
@@ -82,6 +98,7 @@ extension SimulatedSessionConfig: DecodableWithConfiguration {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.numberOfRuns = try container.decode(Int.self, forKey: .numberOfRuns)
         self.name = try container.decodeIfPresent(String.self, forKey: .name)
+        self.comment = try container.decodeIfPresent(String.self, forKey: .comment)
         self.model = try container.decode(LLMOpenAIParameters.ModelType.self, forKey: .model)
         self.temperature = try container.decode(Double.self, forKey: .temperature)
         self.service = try Self.inferService(from: container)
@@ -91,7 +108,7 @@ extension SimulatedSessionConfig: DecodableWithConfiguration {
             throw DecodingError.dataCorrupted(.init(codingPath: [], debugDescription: "Unable to find study with id '\(studyId)'"))
         }
         self.study = study
-        bundleInputName = try container.decode(String.self, forKey: .bundleName)
+        self.bundleInputName = try container.decode(String.self, forKey: .bundleName)
         let url = URL(filePath: bundleInputName, relativeTo: configuration.configFileUrl?.deletingLastPathComponent())
         if FileManager.default.itemExists(at: url) && !FileManager.default.isDirectory(at: url) {
             bundle = try JSONDecoder().decode(ModelsR4.Bundle.self, from: Data(contentsOf: url))
@@ -104,6 +121,10 @@ extension SimulatedSessionConfig: DecodableWithConfiguration {
         self.customSystemPrompt = try container.decodeIfPresent(
             String.self,
             forKey: .customSystemPrompt
+        )
+        self.customResourcePrompt = try container.decodeIfPresent(
+            String.self,
+            forKey: .customResourcePrompt
         )
         self.userQuestions = try container.decode([String].self, forKey: .userQuestions)
     }

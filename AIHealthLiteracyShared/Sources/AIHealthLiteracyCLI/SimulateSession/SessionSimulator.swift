@@ -66,14 +66,16 @@ struct SessionSimulator: ~Copyable {
             _ = try await interpreter.generateAssistantResponse()
         }
         let endTime = Date()
+        var userInfo = ["bundle": self.config.bundleInputName]
+        if let comment = config.comment {
+            userInfo["comment"] = comment
+        }
         return StudyReport(
             metadata: .init(
                 studyID: config.study.id,
                 startTime: startTime,
                 endTime: endTime,
-                userInfo: [
-                    "bundle": self.config.bundleInputName
-                ],
+                userInfo: userInfo,
                 llmConfig: .init(
                     model: config.model,
                     temperature: config.temperature
@@ -162,7 +164,7 @@ extension SessionSimulator {
                 model: config.model,
                 temperature: config.temperature,
                 resourceLimit: 1000,
-                summarizeSingleResourcePrompt: config.study.summarizeSingleResourcePrompt,
+                summarizeSingleResourcePrompt: config.summarizeSingleResourcePrompt,
                 systemPrompt: config.systemPrompt
             ))
             LLMRunner {

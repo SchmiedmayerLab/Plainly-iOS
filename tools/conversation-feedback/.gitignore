@@ -1,0 +1,17 @@
+#
+# This source file is part of the Stanford AI Health Literacy iOS project
+#
+# SPDX-FileCopyrightText: 2026 Stanford University
+#
+# SPDX-License-Identifier: MIT
+#
+
+# Node dependencies
+node_modules/
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Default build output — generated reviewer bundles may embed patient data and
+# should never be committed; custom -o paths should also stay untracked.
+conversation-feedback.html

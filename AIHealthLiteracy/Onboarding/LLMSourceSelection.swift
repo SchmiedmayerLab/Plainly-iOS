@@ -41,7 +41,9 @@ struct LLMSourceSelection: View {
                     case .fog:
                         path.append(customView: FogInformationView())
                     case .local:
+                        #if MLX
                         path.append(customView: LLMLocalDownload())
+                        #endif
                     }
                 }
             }
