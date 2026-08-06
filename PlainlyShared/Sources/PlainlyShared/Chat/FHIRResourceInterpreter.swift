@@ -18,20 +18,22 @@ public final class SingleFHIRResourceInterpreter: Sendable {
     private let resourceProcessor: FHIRResourceProcessor<String>
     
     /// - Parameters:
-    ///   - localStorage: Local storage module that needs to be passed to the ``FHIRResourceInterpreter`` to allow it to cache interpretations.
-    ///   - openAIModel: OpenAI module that needs to be passed to the ``FHIRResourceInterpreter`` to allow it to retrieve interpretations.
+    ///   - localStorage: Storage used to cache interpretations.
+    ///   - llmRunner: Runner used to create the interpretation session.
+    ///   - llmSchema: Schema used to generate interpretations.
+    ///   - interpretationPrompt: Prompt used to interpret the resource.
     public init(
         localStorage: LocalStorage?,
         llmRunner: LLMRunner,
         llmSchema: any LLMSchema,
-        summarizationPrompt: FHIRPrompt = .summarizeSingleFHIRResourceDefaultPrompt
+        interpretationPrompt: FHIRPrompt = .interpretSingleFHIRResource
     ) {
         self.resourceProcessor = FHIRResourceProcessor(
             localStorage: localStorage,
             llmRunner: llmRunner,
             llmSchema: llmSchema,
             storageKey: "FHIRResourceInterpreter.Interpretations",
-            summarizationPrompt: summarizationPrompt
+            summarizationPrompt: interpretationPrompt
         )
     }
     
@@ -61,11 +63,12 @@ public final class SingleFHIRResourceInterpreter: Sendable {
         await resourceProcessor.results[resource.id]
     }
     
-    /// Adjust the LLM schema used by the ``FHIRResourceInterpreter``.
+    /// Adjust the LLM schema and prompt used by the interpreter.
     ///
     /// - Parameters:
-    ///    - schema: The to-be-used `LLMSchema`.
-    public func update(llmSchema schema: any LLMSchema, summarizationPrompt: FHIRPrompt) async {
-        await resourceProcessor.update(llmSchema: schema, summarizationPrompt: summarizationPrompt)
+    ///    - schema: The `LLMSchema` to use.
+    ///    - interpretationPrompt: The prompt used to interpret the resource.
+    public func update(llmSchema schema: any LLMSchema, interpretationPrompt: FHIRPrompt) async {
+        await resourceProcessor.update(llmSchema: schema, summarizationPrompt: interpretationPrompt)
     }
 }

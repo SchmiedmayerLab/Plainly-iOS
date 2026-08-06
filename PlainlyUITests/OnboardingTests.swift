@@ -29,6 +29,19 @@ class OnboardingTests: XCTestCase, Sendable {
         try app.navigateOnboardingFlowOpenAI()
         try app.navigateOnboardingFlowHealthKitAccess()
     }
+
+    func testStudyOnboardingSkipsRemoteConfiguration() throws {
+        let app = XCUIApplication()
+        app.resetAuthorizationStatus(for: .health)
+        app.launchArguments = ["--showOnboarding", "--mode", "study"]
+        app.launch()
+        try app.navigateOnboardingFlowWelcome()
+        try app.navigateOnboardingFlowDisclaimers()
+
+        XCTAssertFalse(app.textFields["API Key…"].exists)
+        XCTAssertFalse(app.buttons["Save Model Selection"].exists)
+        try app.navigateOnboardingFlowHealthKitAccess()
+    }
 }
 
 
@@ -61,9 +74,6 @@ extension XCUIApplication {
         
         XCTAssertTrue(buttons["Save Model Selection"].waitForExistence(timeout: 2))
         buttons["Save Model Selection"].tap()
-        
-        XCTAssertTrue(buttons["Save Choice"].waitForExistence(timeout: 2))
-        buttons["Save Choice"].tap()
     }
     
     

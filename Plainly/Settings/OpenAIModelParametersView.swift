@@ -7,13 +7,12 @@
 //
 
 import SpeziFoundation
-import SpeziViews
 import SwiftUI
 
 
 struct OpenAIModelParametersView: View {
     @LocalPreference(.openAIModelTemperature) private var temperature
-    @Environment(FHIRInterpretationModule.self) var fhirInterpretationModule
+    @Environment(FHIRInterpretationModule.self) private var fhirInterpretationModule
 
     var body: some View {
         Form {
@@ -21,9 +20,6 @@ struct OpenAIModelParametersView: View {
         }
         .navigationTitle("SETTINGS_OPENAI_MODEL_PARAMETERS")
         .navigationBarTitleDisplayMode(.inline)
-        .safeAreaInset(edge: .bottom) {
-            footerText
-        }
     }
 
 
@@ -34,9 +30,7 @@ struct OpenAIModelParametersView: View {
                 Slider(value: $temperature, in: 0...2, step: 0.05)
                     .tint(temperatureColor)
                     .onChange(of: temperature) {
-                        Task {
-                            await fhirInterpretationModule.updateSchemas()
-                        }
+                        fhirInterpretationModule.scheduleSchemaUpdate()
                     }
                 
                 temperatureLabels
@@ -53,9 +47,8 @@ struct OpenAIModelParametersView: View {
 
     private var temperatureHeader: some View {
         HStack {
-            Text("\(temperature, specifier: "%.2f")")
-                .font(.system(.title3))
-                .fontWeight(.medium)
+            Text(temperature, format: .number.precision(.fractionLength(2)))
+                .font(.title3)
 
             Spacer()
 
@@ -65,7 +58,7 @@ struct OpenAIModelParametersView: View {
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
                 .background(temperatureColor.opacity(0.1))
-                .cornerRadius(6)
+                .clipShape(.rect(cornerRadius: 6))
         }
     }
 
@@ -79,16 +72,8 @@ struct OpenAIModelParametersView: View {
             Spacer()
             Text("Random")
         }
-        .font(.caption2)
+        .font(.caption)
         .foregroundStyle(.secondary)
-    }
-
-    private var footerText: some View {
-        Text("Please quit and reopen the app for the changes to take effect.")
-            .font(.footnote)
-            .foregroundColor(.secondary)
-            .frame(maxWidth: .infinity)
-            .padding()
     }
 
 

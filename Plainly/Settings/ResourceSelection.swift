@@ -17,7 +17,6 @@ import SwiftUI
 
 struct ResourceSelection: View {
     @Environment(PlainlyStandard.self) private var standard
-    @Environment(FHIRInterpretationModule.self) var fhirInterpretationModule
     @Environment(FHIRStore.self) private var store
     
     @State private var bundles: [ModelsR4.Bundle] = []
@@ -67,11 +66,6 @@ struct ResourceSelection: View {
         .task {
             showBundleSelection = !standard.useHealthKitResources || !HKHealthStore.isHealthDataAvailable()
             self.bundles = await loadBundles()
-        }
-        .onDisappear {
-            _Concurrency.Task {
-                await fhirInterpretationModule.updateSchemas()
-            }
         }
     }
     

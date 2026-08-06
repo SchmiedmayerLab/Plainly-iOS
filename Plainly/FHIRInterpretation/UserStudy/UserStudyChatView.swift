@@ -66,15 +66,17 @@ struct UserStudyChatView: View {
                 } message: {
                     Text("Do you want to end the chat and complete your participation in the study?")
                 }
-                .onChange(of: model.llmSession.state, initial: true) { _, newState in
-                    switch newState {
+                .task(id: model.llmSession.state) {
+                    switch model.llmSession.state {
                     case .error(let error):
-                        Task {
+                        do {
                             try await Task.sleep(for: .seconds(0.5))
                             model.presentedSheet = nil
                             try await Task.sleep(for: .seconds(0.5))
-                            viewState = .error(AnyLocalizedError(error: error))
+                        } catch {
+                            return
                         }
+                        viewState = .error(AnyLocalizedError(error: error))
                     default:
                         viewState = .idle
                     }

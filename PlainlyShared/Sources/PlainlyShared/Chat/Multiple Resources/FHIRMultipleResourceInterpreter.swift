@@ -136,9 +136,7 @@ public final class FHIRMultipleResourceInterpreter: Sendable {
     /// but the conversation will start fresh with only system messages.
     public func changeLLMSchema(to newSchema: some LLMSchema, using prompt: FHIRPrompt) {
         self.llmSchema = newSchema
-        let newSession = llmRunner(with: llmSchema)
-        newSession.context = createInterpretationContext(using: prompt)
-        llmSession = newSession
+        startNewConversation(using: prompt)
     }
     
     /// Cancels any ongoing response generation.

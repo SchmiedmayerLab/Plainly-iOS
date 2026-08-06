@@ -6,6 +6,8 @@
 # SPDX-License-Identifier: MIT
 #
 
+require "fileutils"
+
 default_platform(:ios)
 
 APP_CONFIG = {
@@ -44,6 +46,9 @@ platform :ios do
 
   desc "Screenshots"
   lane :screenshots do
+    FileUtils.rm_rf(File.expand_path("~/Library/Caches/tools.fastlane/screenshots"))
+    FileUtils.rm_f(Dir.glob(File.join(SCREENSHOTS_DIRECTORY, "**/*.{png,jpg,jpeg}")))
+
     run_tests(
       destination: "generic/platform=iOS Simulator",
       configuration: "Debug",
@@ -76,7 +81,9 @@ platform :ios do
         "PlainlyUITests/AppStoreScreenshotTests/testScreenshots"
       ],
       stop_after_first_error: true,
-      skip_open_summary: true
+      skip_open_summary: true,
+      # AppStoreScreenshotTests provides the project's custom screenshot implementation.
+      skip_helper_version_check: true
     )
 
     Dir.glob(File.join(SCREENSHOTS_DIRECTORY, "**/*.png")).each do |file|
@@ -103,6 +110,8 @@ platform :ios do
         UI.user_error!("Screenshot contains an alpha channel: #{file}") unless properties.include?("hasAlpha: no")
       end
     end
+    generated_files = Dir.glob(File.join(SCREENSHOTS_DIRECTORY, "**/*.{jpg,jpeg,png}"))
+    UI.user_error!("Expected six screenshots, found #{generated_files.count}") unless generated_files.count == 6
   end
 
   desc "Archive app"

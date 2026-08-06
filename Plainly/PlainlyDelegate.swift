@@ -14,15 +14,12 @@ import PlainlyShared
 @_spi(APISupport) import Spezi
 import SpeziAccount
 import SpeziFirebaseAccount
-import SpeziFirebaseAccountStorage
 import SpeziFirebaseConfiguration
 import SpeziFirebaseStorage
 import SpeziFoundation
 import SpeziHealthKit
 import SpeziKeychainStorage
 import SpeziLLM
-import SpeziLLMFog
-import SpeziLLMLocal
 import SpeziLLMOpenAI
 
 
@@ -34,8 +31,7 @@ final class PlainlyDelegate: SpeziAppDelegate {
             }
             let openAIInterceptor = OpenAIRequestInterceptor()
             openAIInterceptor
-            let fhirInterpretationModule = FHIRInterpretationModule()
-            fhirInterpretationModule
+            FHIRInterpretationModule()
             HealthKit {
                 if HKHealthStore().supportsHealthRecords() {
                     RequestReadAccess(other: PlainlyStandard.recordTypes)
@@ -51,15 +47,6 @@ final class PlainlyDelegate: SpeziAppDelegate {
                     retryPolicy: .attempts(3),  // Automatically perform up to 3 retries on retryable OpenAI API status codes
                     middlewares: [openAIInterceptor]
                 ))
-                switch Plainly.mode {
-                case .study:
-                    let _ = () // swiftlint:disable:this redundant_discardable_let
-                case .standalone, .test:
-                    LLMFogPlatform(configuration: .init(host: "spezillmfog.local", connectionType: .http, authToken: .none))
-                    #if MLX
-                    LLMLocalPlatform()
-                    #endif
-                }
             }
         }
     }
@@ -93,11 +80,10 @@ final class PlainlyDelegate: SpeziAppDelegate {
     }
     
     nonisolated private var openAITokenConfig: RemoteLLMInferenceAuthToken {
-        switch Plainly.mode {
-        case .standalone, .test:
-            .keychain(tag: .openAIKey, username: "Plainly_OpenAI_Token")
-        case .study:
-            .closure { @MainActor in
+        if Plainly.mode.requiresUserProvidedAPIKey {
+            return .keychain(tag: .openAIKey, username: "Plainly_OpenAI_Token")
+        } else {
+            return .closure { @MainActor in
                 Self.spezi?.module(FHIRInterpretationModule.self)?.currentStudy?.config.openAIAPIKey
             }
         }

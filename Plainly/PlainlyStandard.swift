@@ -27,9 +27,10 @@ actor PlainlyStandard: Standard, EnvironmentAccessible {
     
     @Dependency(FHIRStore.self) private var fhirStore
     @Dependency(HealthKit.self) private var healthKit
-    @MainActor @Dependency(FHIRInterpretationModule.self) private var fhirInterpretationModule
     
-    @LocalPreference(.resourceLimit) private var resourceLimit
+    private var resourceLimit: Int {
+        LocalPreferencesStore.standard[.resourceLimit]
+    }
     @MainActor var useHealthKitResources = true
     
     @MainActor @Dependency private var waitingState = FHIRResourceWaitingState()
@@ -83,7 +84,6 @@ actor PlainlyStandard: Standard, EnvironmentAccessible {
                 }
             }
         }
-        await updateSchemas()
         await healthKit.triggerDataSourceCollection()
     }
     
@@ -99,11 +99,6 @@ actor PlainlyStandard: Standard, EnvironmentAccessible {
                 }
             }
         }
-    }
-    
-    @MainActor
-    private func updateSchemas() async {
-        await fhirInterpretationModule.updateSchemas()
     }
 }
 

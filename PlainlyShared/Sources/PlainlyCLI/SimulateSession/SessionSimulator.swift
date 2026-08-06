@@ -58,7 +58,6 @@ struct SessionSimulator: ~Copyable {
         await fhirStore.removeAllResources()
         await fhirStore.load(bundle: config.bundle)
         await coordinator.prepareForUse()
-        await interpreter.startNewConversation(using: config.systemPrompt)
         for question in config.userQuestions {
             await MainActor.run {
                 interpreter.llmSession.context.append(userInput: question)
