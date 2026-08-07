@@ -21,6 +21,7 @@ struct OnboardingSheet: View {
                 .frame(height: 0)
                 .sheet(isPresented: !$didComplete) {
                     OnboardingFlow(completedOnboardingFlow: $didComplete)
+                        .presentationSizing(.page)
                 }
         }
     }

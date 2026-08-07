@@ -45,8 +45,15 @@ final class AppStoreScreenshotTests: XCTestCase, Sendable {
 
         onboardingApp.buttons["Learn More"].tap()
         XCTAssertTrue(onboardingApp.staticTexts["Disclaimer"].waitForExistence(timeout: 5))
-        XCTAssertTrue(onboardingApp.buttons["I Agree"].waitForExistence(timeout: 5))
-        XCTAssertTrue(onboardingApp.staticTexts["Research Use Only"].waitForExistence(timeout: 2))
+        let agreementButton = onboardingApp.buttons["I Agree"]
+        let visibleElements = ["Informational Use", "Model Limitations", "Clinical Questions", "Research Use Only"]
+            .map { onboardingApp.staticTexts[$0] } + [agreementButton]
+        let visibleFrame = onboardingApp.windows.firstMatch.frame
+        for element in visibleElements {
+            XCTAssertTrue(element.waitForExistence(timeout: 5))
+            XCTAssertTrue(visibleFrame.contains(element.frame))
+        }
+        XCTAssertTrue(agreementButton.isHittable)
         snapshot("01_Disclaimer")
 
         onboardingApp.terminate()
