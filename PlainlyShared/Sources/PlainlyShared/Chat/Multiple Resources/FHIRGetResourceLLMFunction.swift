@@ -38,7 +38,10 @@ public struct FHIRGetResourceLLMFunction: LLMFunction {
                 Ensure that you request the most recent information to get a good overview of the user's current health status.
                 Today’s date is \(FHIRResource.functionCallIdentifierDateFormatter.string(from: .now)).
                 """,
-            enum: fhirStore.allResourcesFunctionCallIdentifier.suffix(resourceCountLimit)
+            enum: fhirStore.allResourcesFunctionCallIdentifier.suffix(resourceCountLimit),
+            minItems: 1,
+            maxItems: resourceCountLimit,
+            uniqueItems: true
         )
     }
     

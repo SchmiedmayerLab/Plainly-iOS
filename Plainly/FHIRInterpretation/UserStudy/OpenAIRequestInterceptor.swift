@@ -16,8 +16,17 @@ import Spezi
 
 @Observable
 final class OpenAIRequestInterceptor: Module, EnvironmentAccessible, ClientMiddleware, @unchecked Sendable {
-    private struct Error: Swift.Error, CustomStringConvertible {
+    private struct Error: LocalizedError, CustomDebugStringConvertible {
         let description: String
+
+        var errorDescription: String? {
+            "Plainly could not load chat content. Please try again."
+        }
+
+        var debugDescription: String {
+            description
+        }
+
         init(_ description: String) {
             self.description = description
         }
@@ -92,14 +101,17 @@ final class OpenAIRequestInterceptor: Module, EnvironmentAccessible, ClientMiddl
             .httpsCallable(
                 callableName,
                 requestAs: String.self,
-                responseAs: String.self
+                responseAs: StreamResponse<String?, String?>.self
             )
         return AsyncThrowingStream(HTTPBody.ByteChunk.self) { continuation in
             let task = Task {
                 do {
                     let stream = try callable.stream(body)
-                    for try await chunk in stream {
+                    for try await event in stream {
                         try Task.checkCancellation()
+                        guard let chunk = try responseChunk(from: event) else {
+                            continue
+                        }
                         let isDone = chunk.trimmingCharacters(in: .whitespacesAndNewlines) == "data: [DONE]"
                         continuation.yield(HTTPBody.ByteChunk(chunk.utf8))
                         if isDone {
@@ -116,6 +128,17 @@ final class OpenAIRequestInterceptor: Module, EnvironmentAccessible, ClientMiddl
             continuation.onTermination = { @Sendable _ in
                 task.cancel()
             }
+        }
+    }
+
+    private func responseChunk(from event: StreamResponse<String?, String?>) throws -> String? {
+        switch event {
+        case .message(let chunk):
+            return chunk
+        case .result(nil):
+            return nil
+        case .result(let result?):
+            throw Error("Firebase chat function returned an unexpected result: \(result)")
         }
     }
 }

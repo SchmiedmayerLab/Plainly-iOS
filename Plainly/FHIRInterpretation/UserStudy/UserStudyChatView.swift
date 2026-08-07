@@ -66,21 +66,6 @@ struct UserStudyChatView: View {
                 } message: {
                     Text("Do you want to end the chat and complete your participation in the study?")
                 }
-                .task(id: model.llmSession.state) {
-                    switch model.llmSession.state {
-                    case .error(let error):
-                        do {
-                            try await Task.sleep(for: .seconds(0.5))
-                            model.presentedSheet = nil
-                            try await Task.sleep(for: .seconds(0.5))
-                        } catch {
-                            return
-                        }
-                        viewState = .error(AnyLocalizedError(error: error))
-                    default:
-                        viewState = .idle
-                    }
-                }
                 .viewStateAlert(state: $viewState)
                 .onAppear {
                     model.didUploadHandler = {
@@ -89,7 +74,7 @@ struct UserStudyChatView: View {
                     _ = model.startStudy()
                 }
                 .task(id: model.llmSession.context.count(where: { $0.role == .user })) {
-                    _ = await model.generateAssistantResponse()
+                    await generateAssistantResponse()
                 }
         }
     }
@@ -110,6 +95,22 @@ struct UserStudyChatView: View {
     
     init(model: UserStudyChatViewModel) {
         self.model = model
+    }
+
+    private func generateAssistantResponse() async {
+        do {
+            _ = try await model.generateAssistantResponse()
+        } catch is CancellationError {
+            return
+        } catch {
+            model.presentedSheet = nil
+            do {
+                try await Task.sleep(for: .seconds(0.5))
+            } catch {
+                return
+            }
+            viewState = .error(AnyLocalizedError(error: error))
+        }
     }
     
     @ViewBuilder
