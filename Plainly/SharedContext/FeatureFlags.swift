@@ -24,6 +24,9 @@ enum FeatureFlags {
     /// Whether the app should use a local firebase emulator
     static let useFirebaseEmulator = CommandLine.arguments.contains("--useFirebaseEmulator")
 
+    /// Makes the Firebase emulator return a production-shaped chat error for end-to-end UI testing.
+    static let useFirebaseMockChatError = useFirebaseEmulator && CommandLine.arguments.contains("--useFirebaseMockChatError")
+
     /// Disables clinical health record access for tests that do not exercise Health Records.
     static let disableHealthRecords = CommandLine.arguments.contains("--disableHealthRecords")
 

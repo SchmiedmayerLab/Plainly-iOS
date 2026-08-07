@@ -59,7 +59,8 @@ final class OpenAIRequestInterceptor: Module, EnvironmentAccessible, ClientMiddl
                 name: name,
                 queryItems: [
                     "ragEnabled": "true",
-                    "studyId": studyId
+                    "studyId": studyId,
+                    "mockChatError": FeatureFlags.useFirebaseMockChatError ? "true" : nil
                 ].compactMapValues { $0 },
                 body: input
             )
