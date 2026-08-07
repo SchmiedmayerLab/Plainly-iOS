@@ -20,7 +20,7 @@ final class OpenAIRequestInterceptor: Module, EnvironmentAccessible, ClientMiddl
         let description: String
 
         var errorDescription: String? {
-            "Plainly could not load chat content. Please try again."
+            String(localized: "Plainly could not load chat content. Please try again.")
         }
 
         var debugDescription: String {

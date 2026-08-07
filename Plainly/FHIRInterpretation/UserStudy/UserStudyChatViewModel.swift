@@ -28,7 +28,7 @@ final class UserStudyChatViewModel: Sendable {
         case emptyResponse
 
         var errorDescription: String? {
-            "Plainly did not receive a chat response. Please try again."
+            String(localized: "Plainly did not receive a chat response. Please try again.")
         }
     }
 
