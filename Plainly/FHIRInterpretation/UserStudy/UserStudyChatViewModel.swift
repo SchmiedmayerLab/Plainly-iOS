@@ -24,6 +24,14 @@ import SwiftUI
 @MainActor
 @Observable
 final class UserStudyChatViewModel: Sendable {
+    private enum ResponseGenerationError: LocalizedError {
+        case emptyResponse
+
+        var errorDescription: String? {
+            String(localized: "Plainly did not receive a chat response. Please try again.")
+        }
+    }
+
     /// The current state of the survey navigation
     enum NavigationState: Equatable {
         case introduction
@@ -475,28 +483,31 @@ extension UserStudyChatViewModel {
     ///
     /// This method checks if a response is needed and if so, delegates
     /// to the interpreter to generate the actual response.
-    func generateAssistantResponse() async -> LLMContextEntity? {
-        let imp = { [unowned self] () async -> LLMContextEntity? in // swiftlint:disable:this unowned_variable_capture
-            await updateProcessingState()
-            processingState = await processingState.calculateNewProcessingState(basedOn: llmSession)
-            guard shouldGenerateResponse else {
-                return nil
-            }
-            processingState = .processingSystemPrompts
-            guard let response = try? await interpreter.generateAssistantResponse() else {
-                return nil
-            }
-            await updateProcessingState()
-            processingState = await processingState.calculateNewProcessingState(basedOn: llmSession)
-            return response
-        }
-        guard let response = await imp() else {
+    func generateAssistantResponse() async throws -> LLMContextEntity? {
+        await updateProcessingState()
+        processingState = await processingState.calculateNewProcessingState(basedOn: llmSession)
+        guard shouldGenerateResponse else {
             return nil
         }
-        if let currentTaskId {
-            try? assistantMessagesByTask.append(response.id.uuidString, forKey: currentTaskId)
+        processingState = .processingSystemPrompts
+        do {
+            let response = try await interpreter.generateAssistantResponse()
+            try Task.checkCancellation()
+            guard let response, response.role == .assistant() else {
+                throw ResponseGenerationError.emptyResponse
+            }
+            await updateProcessingState()
+            processingState = await processingState.calculateNewProcessingState(basedOn: llmSession)
+            if let currentTaskId {
+                try? assistantMessagesByTask.append(response.id.uuidString, forKey: currentTaskId)
+            }
+            return response
+        } catch let error as CancellationError {
+            throw error
+        } catch {
+            processingState = .error
+            throw error
         }
-        return response
     }
 }
 

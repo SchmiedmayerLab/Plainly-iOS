@@ -26,7 +26,7 @@ import SpeziLLMOpenAI
 final class PlainlyDelegate: SpeziAppDelegate {
     override var configuration: Configuration {
         Configuration(standard: PlainlyStandard()) {
-            if !FeatureFlags.disableFirebase, let config = AppConfigFile.current().firebaseConfig {
+            if !FeatureFlags.disableFirebase, let config = firebaseConfig {
                 firebaseModules(using: config)
             }
             let openAIInterceptor = OpenAIRequestInterceptor()
@@ -50,11 +50,14 @@ final class PlainlyDelegate: SpeziAppDelegate {
             }
         }
     }
+
+    private var firebaseConfig: AppConfigFile.FirebaseConfigDictionary? {
+        FeatureFlags.useFirebaseEmulator ? .emulator : AppConfigFile.current().firebaseConfig
+    }
     
     @ModuleBuilder
     private func firebaseModules(using config: AppConfigFile.FirebaseConfigDictionary) -> ModuleCollection {
-        let firebaseConfig = FeatureFlags.useFirebaseEmulator ? .emulator : config
-        ConfigureFirebaseApp(options: FirebaseOptions(firebaseConfig)!) // swiftlint:disable:this force_unwrapping
+        ConfigureFirebaseApp(options: FirebaseOptions(config)!) // swiftlint:disable:this force_unwrapping
         AccountConfiguration(
             service: FirebaseAccountService(
                 providers: [],

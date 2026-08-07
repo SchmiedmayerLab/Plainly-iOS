@@ -24,13 +24,26 @@ struct RootView: View {
                 case .standalone, .test:
                     HomeView()
                 case .study(let studyId):
-                    if let studyId, let study = Study.withId(studyId), let studyConfig = AppConfigFile.current().studyConfigs[studyId] {
+                    if let studyId, let study = Study.withId(studyId), let studyConfig = studyConfig(for: studyId) {
                         StudyHomeView(study: study, config: studyConfig, userInfo: [:])
                     } else {
                         StudyHomeView()
                     }
                 }
             }
+        }
+    }
+
+    private func studyConfig(for studyId: Study.ID) -> StudyConfig? {
+        if FeatureFlags.useFirebaseEmulator {
+            StudyConfig(
+                openAIAPIKey: nil,
+                openAIEndpoint: .firebaseFunction(name: "chat"),
+                reportEmail: "",
+                encryptionKey: nil
+            )
+        } else {
+            AppConfigFile.current().studyConfigs[studyId]
         }
     }
 }

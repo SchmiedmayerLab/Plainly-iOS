@@ -26,20 +26,8 @@ final class FirebaseEndToEndTests: XCTestCase, Sendable {
     }
 
     func testChatAndReportUploadThroughFirebaseEmulators() throws {
-        let app = XCUIApplication()
-        app.launchArguments = [
-            "--skipOnboarding",
-            "--mode",
-            "study:edu.stanford.plainly.languageStudy",
-            "--useFirebaseEmulator",
-            "--disableHealthRecords"
-        ]
-        app.launch()
-
-        XCTAssertTrue(app.staticTexts["Language Study"].waitForExistence(timeout: 10))
-        let startSession = app.buttons["Start Session"]
-        XCTAssertTrue(startSession.waitForExistence(timeout: 10))
-        startSession.tap()
+        let app = launchApp()
+        let startSession = startSession(in: app)
 
         let response = app.descendants(matching: .any)
             .matching(NSPredicate(format: "label == %@", expectedResponse))
@@ -63,5 +51,64 @@ final class FirebaseEndToEndTests: XCTestCase, Sendable {
             startSession.waitForExistence(timeout: 30),
             "The study did not dismiss after uploading its report to Firebase Storage."
         )
+    }
+
+    func testChatErrorThroughFirebaseEmulators() throws {
+        let app = launchApp(mockChatError: true)
+        _ = startSession(in: app)
+
+        assertChatError(in: app)
+    }
+
+    func testChatErrorAfterStreamStartsThroughFirebaseEmulators() throws {
+        let app = launchApp(mockChatErrorAfterChunk: true)
+        _ = startSession(in: app)
+
+        assertChatError(in: app)
+    }
+
+    private func assertChatError(in app: XCUIApplication) {
+        let alert = app.alerts.firstMatch
+        XCTAssertTrue(
+            alert.waitForExistence(timeout: 30),
+            "The Firebase callable error was not presented to the participant."
+        )
+        XCTAssertFalse(
+            app.descendants(matching: .any)
+                .matching(NSPredicate(format: "label == %@", expectedResponse))
+                .firstMatch
+                .exists,
+            "The mock response should not be displayed after a callable error."
+        )
+    }
+
+    private func launchApp(
+        mockChatError: Bool = false,
+        mockChatErrorAfterChunk: Bool = false
+    ) -> XCUIApplication {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "--skipOnboarding",
+            "--mode",
+            "study:edu.stanford.plainly.languageStudy",
+            "--useFirebaseEmulator",
+            "--disableHealthRecords"
+        ]
+        if mockChatError {
+            app.launchArguments.append("--useFirebaseMockChatError")
+        }
+        if mockChatErrorAfterChunk {
+            app.launchArguments.append("--useFirebaseMockChatErrorAfterChunk")
+        }
+        app.launch()
+        return app
+    }
+
+    private func startSession(in app: XCUIApplication) -> XCUIElement {
+        XCTAssertTrue(app.staticTexts["Language Study"].waitForExistence(timeout: 10))
+        let startSession = app.buttons["Start Session"]
+        XCTAssertTrue(startSession.waitForExistence(timeout: 10))
+        startSession.tap()
+        return startSession
     }
 }
