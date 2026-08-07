@@ -20,6 +20,7 @@ APP_CONFIG = {
 }.freeze
 
 SCREENSHOTS_DIRECTORY = File.expand_path("screenshots", __dir__).freeze
+SCREENSHOT_STATUS_BAR_TIME = "2026-01-09T09:41:00.000-08:00".freeze
 
 def installed_provisioning_profile(app_identifier)
   profile_directories = [
@@ -76,7 +77,7 @@ platform :ios do
       clear_previous_screenshots: true,
       concurrent_simulators: false,
       override_status_bar: true,
-      override_status_bar_arguments: "--time 9:41 --dataNetwork wifi --wifiMode active --wifiBars 3 --cellularMode active --operatorName '' --cellularBars 4 --batteryState discharging --batteryLevel 100",
+      override_status_bar_arguments: "--time #{SCREENSHOT_STATUS_BAR_TIME} --dataNetwork wifi --wifiMode active --wifiBars 3 --cellularMode active --operatorName '' --cellularBars 4 --batteryState discharging --batteryLevel 100",
       only_testing: [
         "PlainlyUITests/AppStoreScreenshotTests/testScreenshots"
       ],
