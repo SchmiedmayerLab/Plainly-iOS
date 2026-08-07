@@ -23,6 +23,14 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 
 Screenshots
 
+### ios firebase_uitest
+
+```sh
+[bundle exec] fastlane ios firebase_uitest
+```
+
+Run the Firebase emulator end-to-end UI test
+
 ### ios archive
 
 ```sh

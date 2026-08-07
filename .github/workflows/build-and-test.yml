@@ -34,6 +34,17 @@ jobs:
     with:
       path: PlainlyShared
       runsonlabels: '["macOS", "self-hosted"]'
+  firebase_e2e_tests:
+    name: Firebase End-to-End UI Test
+    uses: SchmiedmayerLab/.github/.github/workflows/xcodebuild-or-fastlane.yml@v0.2
+    permissions:
+      contents: read
+    with:
+      runsonlabels: '["macOS", "self-hosted"]'
+      setupfirebaseemulator: true
+      checkout_submodules: true
+      artifactname: Plainly-Firebase-E2E.xcresult
+      customcommand: scripts/run-firebase-e2e.sh
   uploadcoveragereport:
     name: Upload Coverage Report
     needs: [app_tests, shared_spm_pkg_tests]

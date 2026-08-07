@@ -24,11 +24,6 @@
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>NSBonjourServices</key>
-	<array>
-		<string>_https._tcp</string>
-		<string>_http._tcp</string>
-	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>Plainly uses the camera to scan study enrollment QR codes.</string>
 	<key>NSHealthClinicalHealthRecordsShareUsageDescription</key>
@@ -37,8 +32,6 @@
 	<string>Plainly uses your health data to help explain medical concepts in the app.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>Plainly uses step-count data when it is required by a research study.</string>
-	<key>NSLocalNetworkUsageDescription</key>
-	<string>Plainly uses local network access to discover nearby language-model services when you select that option.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>This message should never appear. Please adjust this when you start using location information. We have to put this in here as ResearchKit has the possibility to use it and not putting it here returns an error on AppStore Connect.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

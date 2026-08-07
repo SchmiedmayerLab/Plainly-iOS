@@ -9,9 +9,9 @@
 import OSLog
 import Spezi
 import SpeziFHIR
-import SpeziFHIRHealthKit
 import SpeziFoundation
 import SpeziHealthKit
+import SpeziHealthKitFHIR
 import SpeziViews
 import SwiftUI
 
@@ -27,10 +27,11 @@ actor PlainlyStandard: Standard, EnvironmentAccessible {
     
     @Dependency(FHIRStore.self) private var fhirStore
     @Dependency(HealthKit.self) private var healthKit
-    @MainActor @Dependency(FHIRInterpretationModule.self) private var fhirInterpretationModule
     
-    @LocalPreference(.resourceLimit) private var resourceLimit
-    @MainActor var useHealthKitResources = true
+    private var resourceLimit: Int {
+        LocalPreferencesStore.standard[.resourceLimit]
+    }
+    @MainActor var useHealthKitResources = !FeatureFlags.disableHealthRecords
     
     @MainActor @Dependency private var waitingState = FHIRResourceWaitingState()
     
@@ -83,7 +84,6 @@ actor PlainlyStandard: Standard, EnvironmentAccessible {
                 }
             }
         }
-        await updateSchemas()
         await healthKit.triggerDataSourceCollection()
     }
     
@@ -92,18 +92,13 @@ actor PlainlyStandard: Standard, EnvironmentAccessible {
             for record in records {
                 taskGroup.addTask { [self] in
                     do {
-                        try await fhirStore.add(record, loadHealthKitAttachments: true)
+                        try await fhirStore.add(record, using: healthKit, loadHealthKitAttachments: true)
                     } catch {
                         logger.error("Could not transform sample \(record.id) to FHIR resource: \(error)")
                     }
                 }
             }
         }
-    }
-    
-    @MainActor
-    private func updateSchemas() async {
-        await fhirInterpretationModule.updateSchemas()
     }
 }
 
@@ -114,7 +109,7 @@ extension PlainlyStandard: HealthKitConstraint {
             guard let sample = sample as? HKClinicalRecord else {
                 continue
             }
-            try? await fhirStore.add(sample)
+            try? await fhirStore.add(sample, using: healthKit)
         }
     }
     

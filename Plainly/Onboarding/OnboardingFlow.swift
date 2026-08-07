@@ -8,7 +8,6 @@
 
 import SpeziFoundation
 import SpeziHealthKit
-import SpeziLLMOpenAI
 import SpeziViews
 import SwiftUI
 
@@ -47,15 +46,9 @@ struct OnboardingFlow: View {
         ManagedNavigationStack(didComplete: $completedOnboardingFlow) {
             Welcome()
             Disclaimer()
-            switch Plainly.mode {
-            case .study:
-                let _ = () // swiftlint:disable:this redundant_discardable_let
-            case .standalone, .test:
-                // Always show OpenAI model onboarding for chat-based interaction.
+            if Plainly.mode.requiresUserProvidedAPIKey {
                 OpenAIAPIKey()
                 OpenAIModelSelection()
-                // Presents the onboarding flow for the respective local, fog, or cloud LLM.
-                LLMSourceSelection()
             }
             if HKHealthStore.isHealthDataAvailable() && !healthKitAuthorization {
                 HealthKitPermissions()

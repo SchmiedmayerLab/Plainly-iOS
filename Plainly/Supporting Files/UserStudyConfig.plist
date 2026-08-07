@@ -9,7 +9,7 @@
 		<key>API_KEY</key>
 		<string>A00000000000000000000000000000000000000</string>
 		<key>BUNDLE_ID</key>
-		<string>edu.stanford.plainly</string>
+		<string>edu.stanford.llmonfhir</string>
 		<key>GCM_SENDER_ID</key>
 		<string>GCM_SENDER_ID</string>
 		<key>GOOGLE_APP_ID</key>
@@ -43,6 +43,13 @@
 			<string></string>
 		</dict>
 		<key>edu.stanford.plainly.spineAI</key>
+		<dict>
+			<key>openAIEndpoint</key>
+			<string>firebase-function:chat</string>
+			<key>reportEmail</key>
+			<string></string>
+		</dict>
+		<key>edu.stanford.plainly.languageStudy</key>
 		<dict>
 			<key>openAIEndpoint</key>
 			<string>firebase-function:chat</string>

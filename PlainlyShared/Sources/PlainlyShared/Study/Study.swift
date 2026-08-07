@@ -9,7 +9,7 @@
 // swiftlint:disable redundant_string_enum_value
 
 public import Foundation
-public import class ModelsR4.Questionnaire
+public import struct ModelsR4.Questionnaire
 
 
 /// Manages a collection of survey tasks and their responses.

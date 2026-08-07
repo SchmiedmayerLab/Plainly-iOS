@@ -7,7 +7,7 @@
 //
 
 import Foundation
-import class ModelsR4.Bundle
+import struct ModelsR4.Bundle
 import PlainlyShared
 import PlainlyStudyDefinitions
 import SpeziLLMOpenAI
@@ -31,7 +31,7 @@ struct SimulatedSessionConfig: Sendable {
     /// The FHIR bundle providing the resources that will be made available to the LLM
     ///
     /// - Note: Isn't allowed to be mutated
-    nonisolated(unsafe) let bundle: ModelsR4.Bundle
+    let bundle: ModelsR4.Bundle
     
     /// The service that should be used for the simulation.
     let service: Service

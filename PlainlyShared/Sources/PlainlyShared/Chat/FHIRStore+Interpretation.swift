@@ -123,13 +123,9 @@ extension FHIRStore {
             }
     }
     
-    func llmRelevantResources(filteredBy filter: String) async -> Set<SendableFHIRResource> {
+    func llmRelevantResources(filteredBy filter: String) async -> Set<FHIRResource> {
         await MainActor.run {
-            llmRelevantResources.reduce(into: []) { result, resource in
-                if resource.functionCallIdentifier.contains(filter) {
-                    result.insert(SendableFHIRResource(resource: resource))
-                }
-            }
+            llmRelevantResources.filter { $0.functionCallIdentifier.contains(filter) }
         }
     }
 }

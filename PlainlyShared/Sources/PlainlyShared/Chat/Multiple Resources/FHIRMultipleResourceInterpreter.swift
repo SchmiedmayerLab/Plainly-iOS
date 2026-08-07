@@ -34,6 +34,7 @@ public final class FHIRMultipleResourceInterpreter: Sendable {
     public let fhirStore: FHIRStore
     
     private var currentGenerationTask: Task<LLMContextEntity?, any Error>?
+    private var currentGenerationIdentifier = 0
     
     /// The current LLM session managing the conversation context with the language model.
     ///
@@ -93,12 +94,11 @@ public final class FHIRMultipleResourceInterpreter: Sendable {
     ///   or `nil` if generation was cancelled or encountered an error.
     public func generateAssistantResponse() async throws -> LLMContextEntity? {
         currentGenerationTask?.cancel()
-        currentGenerationTask = Task { [weak self] in
+        currentGenerationIdentifier &+= 1
+        let generationIdentifier = currentGenerationIdentifier
+        let task = Task<LLMContextEntity?, any Error> { [weak self] in
             guard let self else {
                 return nil
-            }
-            defer {
-                currentGenerationTask = nil
             }
             do {
                 let stream = try await llmSession.generate()
@@ -120,7 +120,17 @@ public final class FHIRMultipleResourceInterpreter: Sendable {
                 throw error
             }
         }
-        return try await currentGenerationTask?.value
+        currentGenerationTask = task
+        return try await withTaskCancellationHandler {
+            defer {
+                if currentGenerationIdentifier == generationIdentifier {
+                    currentGenerationTask = nil
+                }
+            }
+            return try await task.value
+        } onCancel: {
+            task.cancel()
+        }
     }
     
     /// Updates the LLM schema used by the interpreter.
@@ -136,9 +146,7 @@ public final class FHIRMultipleResourceInterpreter: Sendable {
     /// but the conversation will start fresh with only system messages.
     public func changeLLMSchema(to newSchema: some LLMSchema, using prompt: FHIRPrompt) {
         self.llmSchema = newSchema
-        let newSession = llmRunner(with: llmSchema)
-        newSession.context = createInterpretationContext(using: prompt)
-        llmSession = newSession
+        startNewConversation(using: prompt)
     }
     
     /// Cancels any ongoing response generation.

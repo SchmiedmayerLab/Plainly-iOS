@@ -6,7 +6,7 @@
 // SPDX-License-Identifier: MIT
 //
 
-import class ModelsR4.QuestionnaireResponse
+import struct ModelsR4.QuestionnaireResponse
 import PlainlyShared
 import SpeziFoundation
 import SpeziHealthKit
@@ -194,7 +194,7 @@ struct StudyHomeView: View {
     
     private var primaryActionButton: some View {
         PrimaryActionButton {
-            if let currentStudy = fhirInterpretationModule.currentStudy {
+            if fhirInterpretationModule.currentStudy != nil {
                 if isMissingPreChatQuestionnaire {
                     isPresentingQuestionnaire = true
                     return
@@ -202,10 +202,7 @@ struct StudyHomeView: View {
                 // the HealthKit permissions should already have been granted via the onboarding, but we re-request them here, just in case,
                 // to make sure everything is in a proper state when the study gets launched.
                 try await healthKit.askForAuthorization()
-                await fhirInterpretationModule.updateSchemas(forceImmediateUpdate: true)
-                fhirInterpretationModule.multipleResourceInterpreter.startNewConversation(
-                    using: currentStudy.study.interpretMultipleResourcesPrompt
-                )
+                await fhirInterpretationModule.updateSchemas()
                 isPresentingUserStudyChatView = true
             } else {
                 isPresentingQRCodeScanner = true

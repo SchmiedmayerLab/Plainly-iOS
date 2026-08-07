@@ -50,7 +50,7 @@ struct InspectResourceView: View {
             }
             AsyncButton(summary == nil ? "Load Resource Summary" : "Reload Resource Summary", state: $viewState) {
                 summary = try await summarizer.summarize(
-                    resource: SendableFHIRResource(resource: resource),
+                    resource: resource,
                     forceReload: summary != nil
                 )
             }
@@ -65,7 +65,7 @@ struct InspectResourceView: View {
             }
             AsyncButton(interpretation == nil ? "Load Resource Interpretation" : "Update Resource Interpretation", state: $viewState) {
                 interpretation = try await interpreter.interpret(
-                    resource: SendableFHIRResource(resource: resource),
+                    resource: resource,
                     forceReload: interpretation != nil
                 )
             }

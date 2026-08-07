@@ -19,6 +19,19 @@ public enum AppLaunchMode: Equatable, Sendable {
 }
 
 
+extension AppLaunchMode {
+    /// Whether this mode lets the user configure the API key used for remote inference.
+    public var requiresUserProvidedAPIKey: Bool {
+        switch self {
+        case .standalone, .test:
+            true
+        case .study:
+            false
+        }
+    }
+}
+
+
 extension AppLaunchMode: RawRepresentable, Codable {
     public var rawValue: String {
         switch self {

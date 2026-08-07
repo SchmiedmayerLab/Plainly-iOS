@@ -9,7 +9,7 @@
 // periphery:ignore - These objects are used to create a JSON resprestation of the User Study Survey Report
 
 public import Foundation
-public import class ModelsR4.QuestionnaireResponse
+public import struct ModelsR4.QuestionnaireResponse
 public import SpeziFHIR
 public import SpeziLLMOpenAI // for LLMOpenAIParameters.ModelType
 
@@ -21,7 +21,7 @@ public struct StudyReport: Encodable, Sendable {
     /// Not used anywhere in the code, but included when the type is encoded, so that any downstream processing code can decode it in a resilient way, if we make changes down the road.
     private let version = 1
     private let metadata: Metadata
-    nonisolated(unsafe) private let initialQuestionnaireResponse: ModelsR4.QuestionnaireResponse?
+    private let initialQuestionnaireResponse: ModelsR4.QuestionnaireResponse?
     private let fhirResources: FHIRResources
     private let timeline: [TimelineEvent]
     
@@ -79,7 +79,7 @@ extension StudyReport {
 
     /// A wrapper for a full FHIR resource, delegating encoding to the underlying resource.
     public struct FullFHIRResource: Encodable, Sendable {
-        nonisolated(unsafe) private let versionedResource: SpeziFHIR.FHIRResource.VersionedFHIRResource
+        private let versionedResource: SpeziFHIR.FHIRResource.VersionedFHIRResource
         
         public init(_ versionedResource: SpeziFHIR.FHIRResource.VersionedFHIRResource) {
             self.versionedResource = versionedResource

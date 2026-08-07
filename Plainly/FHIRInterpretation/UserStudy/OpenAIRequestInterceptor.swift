@@ -92,21 +92,18 @@ final class OpenAIRequestInterceptor: Module, EnvironmentAccessible, ClientMiddl
             .httpsCallable(
                 callableName,
                 requestAs: String.self,
-                responseAs: StreamResponse<String?, String?>.self
+                responseAs: String.self
             )
         return AsyncThrowingStream(HTTPBody.ByteChunk.self) { continuation in
             let task = Task {
                 do {
                     let stream = try callable.stream(body)
-                    for try await event in stream {
+                    for try await chunk in stream {
                         try Task.checkCancellation()
-                        let string =
-                            switch event {
-                            case .message(let chunk), .result(let chunk):
-                                chunk
-                            }
-                        if let string {
-                            continuation.yield(HTTPBody.ByteChunk(string.utf8))
+                        let isDone = chunk.trimmingCharacters(in: .whitespacesAndNewlines) == "data: [DONE]"
+                        continuation.yield(HTTPBody.ByteChunk(chunk.utf8))
+                        if isDone {
+                            break
                         }
                     }
                     continuation.finish()

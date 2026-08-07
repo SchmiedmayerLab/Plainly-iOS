@@ -1,23 +1,19 @@
 {
   "configurations" : [
     {
-      "id" : "6C9DABEF-5835-4523-A115-B83B0C6E3BBC",
-      "name" : "Default",
+      "id" : "43A21F91-BD37-4E79-8BA0-35BA12D9D81A",
+      "name" : "Firebase Emulators",
       "options" : {
-
+        "environmentVariableEntries" : [
+          {
+            "key" : "PLAINLY_RUN_FIREBASE_E2E",
+            "value" : "1"
+          }
+        ]
       }
     }
   ],
   "defaultOptions" : {
-    "codeCoverage" : {
-      "targets" : [
-        {
-          "containerPath" : "container:Plainly.xcodeproj",
-          "identifier" : "653A254C283387FE005D4D48",
-          "name" : "Plainly"
-        }
-      ]
-    },
     "targetForVariableExpansion" : {
       "containerPath" : "container:Plainly.xcodeproj",
       "identifier" : "653A254C283387FE005D4D48",

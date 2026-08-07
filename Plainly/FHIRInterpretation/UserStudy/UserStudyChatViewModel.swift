@@ -8,10 +8,11 @@
 
 // swiftlint:disable file_length
 
-import class ModelsR4.QuestionnaireResponse
+import struct ModelsR4.QuestionnaireResponse
 import PlainlyShared
 import SpeziChat
 import SpeziLLM
+import SpeziLLMOpenAI
 import SwiftUI
 
 
@@ -390,19 +391,19 @@ extension UserStudyChatViewModel {
 
 extension UserStudyChatViewModel {
     /// Direct access to the current LLM session for observing state changes
-    var llmSession: any LLMSession {
-        interpreter.llmSession
+    var llmSession: LLMOpenAISession {
+        guard let llmSession = interpreter.llmSession as? LLMOpenAISession else {
+            preconditionFailure("Plainly requires a SpeziLLM OpenAI session.")
+        }
+        return llmSession
     }
     
-    /// Provides a binding to the chat messages for use in SwiftUI views
-    ///
-    /// This binding allows the ChatView component to both display messages
-    /// and add new user messages to the conversation.
+    /// A chat projection that keeps SpeziLLM's context as the single source of truth.
     var chatBinding: Binding<Chat> {
         Binding { [weak self] in
-            self?.interpreter.llmSession.context.chat ?? []
-        } set: { [weak self] newChat in
-            self?.interpreter.llmSession.context.chat = newChat
+            self?.llmSession.context.chat ?? []
+        } set: { [weak self] chat in
+            self?.llmSession.context.chat = chat
         }
     }
 }

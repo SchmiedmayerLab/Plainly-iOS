@@ -27,7 +27,6 @@ final class SessionCoordinator: Module, @unchecked Sendable {
     
     // swiftlint:disable implicitly_unwrapped_optional
     @MainActor private(set) var resourceSummarizer: FHIRResourceSummarizer!
-    @MainActor private var singleResourceInterpreter: SingleFHIRResourceInterpreter!
     @MainActor private(set) var multipleResourceInterpreter: FHIRMultipleResourceInterpreter!
     // swiftlint:enable implicitly_unwrapped_optional
     
@@ -41,11 +40,6 @@ final class SessionCoordinator: Module, @unchecked Sendable {
     @MainActor
     func configure() {
         resourceSummarizer = FHIRResourceSummarizer(
-            localStorage: nil,
-            llmRunner: llmRunner,
-            llmSchema: singleResourceLLMSchema
-        )
-        singleResourceInterpreter = SingleFHIRResourceInterpreter(
             localStorage: nil,
             llmRunner: llmRunner,
             llmSchema: singleResourceLLMSchema
@@ -68,7 +62,6 @@ final class SessionCoordinator: Module, @unchecked Sendable {
     func prepareForUse() async {
         let summarizePrompt = config.summarizeSingleResourcePrompt
         await resourceSummarizer.update(llmSchema: singleResourceLLMSchema, summarizationPrompt: summarizePrompt)
-        await singleResourceInterpreter.update(llmSchema: singleResourceLLMSchema, summarizationPrompt: summarizePrompt)
         multipleResourceInterpreter.changeLLMSchema(
             to: multipleResourceInterpreterOpenAISchema,
             using: config.systemPrompt
@@ -80,14 +73,14 @@ final class SessionCoordinator: Module, @unchecked Sendable {
 extension SessionCoordinator {
     private var singleResourceLLMSchema: any LLMSchema {
         LLMOpenAISchema(
-            parameters: .init(modelType: config.model, systemPrompts: []),
+            parameters: .init(modelType: config.model),
             modelParameters: .init(temperature: config.temperature)
         )
     }
     
     @MainActor private var multipleResourceInterpreterOpenAISchema: LLMOpenAISchema {
         LLMOpenAISchema(
-            parameters: .init(modelType: config.model, systemPrompts: []),
+            parameters: .init(modelType: config.model),
             modelParameters: .init(temperature: config.temperature)
         ) {
             FHIRGetResourceLLMFunction(

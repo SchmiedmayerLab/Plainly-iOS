@@ -11,15 +11,13 @@ import Spezi
 import SpeziFHIR
 import SpeziFoundation
 import SpeziLLM
-import SpeziLLMFog
-import SpeziLLMLocal
 import SpeziLLMOpenAI
 import SpeziLocalStorage
 import SwiftUI
 
 
 @Observable
-final class FHIRInterpretationModule: Module, EnvironmentAccessible, @unchecked Sendable { // maybe rename to smth Coordinator?
+final class FHIRInterpretationModule: Module, EnvironmentAccessible, @unchecked Sendable {
     @ObservationIgnored @MainActor @Dependency(LocalStorage.self) private var localStorage
     @ObservationIgnored @MainActor @Dependency(LLMRunner.self) private var llmRunner
     @ObservationIgnored @MainActor @Dependency(FHIRStore.self) private var fhirStore
@@ -28,41 +26,30 @@ final class FHIRInterpretationModule: Module, EnvironmentAccessible, @unchecked 
     @ObservationIgnored @MainActor @Model private(set) var singleResourceInterpreter: SingleFHIRResourceInterpreter
     @ObservationIgnored @MainActor @Model private(set) var multipleResourceInterpreter: FHIRMultipleResourceInterpreter
     
-    @ObservationIgnored @LocalPreference(.llmSource) private var llmSource
-    @ObservationIgnored @LocalPreference(.openAIModel) private(set) var openAIModel
-    @ObservationIgnored @LocalPreference(.openAIModelTemperature) private(set) var openAIModelTemperature
-    @ObservationIgnored @LocalPreference(.fogModel) private var fogModel
-    @ObservationIgnored @LocalPreference(.resourceLimit) private var resourceLimit
+    @MainActor var openAIModel: LLMOpenAIParameters.ModelType {
+        LocalPreferencesStore.standard[.openAIModel]
+    }
+    @MainActor var openAIModelTemperature: Double {
+        LocalPreferencesStore.standard[.openAIModelTemperature]
+    }
+    @MainActor private var resourceLimit: Int {
+        LocalPreferencesStore.standard[.resourceLimit]
+    }
     
     @MainActor var currentStudy: InProgressStudy?
     
-    @ObservationIgnored private var updateModelsTask: Task<Void, any Error>?
+    @ObservationIgnored private var schemaUpdateTask: Task<Void, Never>?
     
-    @MainActor var singleResourceLLMSchema: any LLMSchema {
-        switch llmSource {
-        case .openai:
-            LLMOpenAISchema(
-                parameters: .init(modelType: openAIModel, systemPrompts: []),
-                modelParameters: .init(temperature: openAIModelTemperature)
-            )
-        case .fog:
-            LLMFogSchema(
-                parameters: .init(modelType: fogModel)
-            )
-        case .local:
-            #if MLX
-            LLMLocalSchema(
-                model: .llama3_2_3B_4bit // always use the Llama 3.2 3B model as we can guarantee that it runs well on modern devices
-            )
-            #else
-            fatalError("Usage of the local llm source requires MLX to be enabled")
-            #endif
-        }
+    @MainActor private var singleResourceSchema: LLMOpenAISchema {
+        LLMOpenAISchema(
+            parameters: .init(modelType: openAIModel),
+            modelParameters: .init(temperature: openAIModelTemperature)
+        )
     }
     
-    @MainActor var multipleResourceInterpreterOpenAISchema: LLMOpenAISchema {
+    @MainActor private var multipleResourceSchema: LLMOpenAISchema {
         LLMOpenAISchema(
-            parameters: .init(modelType: openAIModel, systemPrompts: []),
+            parameters: .init(modelType: openAIModel),
             modelParameters: .init(temperature: openAIModelTemperature)
         ) {
             FHIRGetResourceLLMFunction(
@@ -82,53 +69,51 @@ final class FHIRInterpretationModule: Module, EnvironmentAccessible, @unchecked 
         resourceSummarizer = FHIRResourceSummarizer(
             localStorage: localStorage,
             llmRunner: llmRunner,
-            llmSchema: singleResourceLLMSchema
+            llmSchema: singleResourceSchema
         )
         singleResourceInterpreter = SingleFHIRResourceInterpreter(
             localStorage: localStorage,
             llmRunner: llmRunner,
-            llmSchema: singleResourceLLMSchema
+            llmSchema: singleResourceSchema,
+            interpretationPrompt: .interpretSingleFHIRResource
         )
         multipleResourceInterpreter = FHIRMultipleResourceInterpreter(
             localStorage: localStorage,
             llmRunner: llmRunner,
-            llmSchema: multipleResourceInterpreterOpenAISchema,
+            llmSchema: multipleResourceSchema,
             fhirStore: fhirStore
         )
-        
-        // Double-check that we load the right configurations.
-        Task {
-            await updateSchemas()
-        }
     }
     
     
-    /// Updates the schema used by the interpretation module.
-    ///
-    /// By default, this function will delay the actual schema updating, in order to be able to coalesce multiple calls into just one update.
-    ///
-    /// - parameter forceImmediateUpdate: Set this to `true` to disable the delay and instead update the schema immediately.
+    /// Schedules a schema update, coalescing rapid preference changes into a single update.
     @MainActor
-    func updateSchemas(forceImmediateUpdate: Bool = false) async {
-        updateModelsTask?.cancel()
-        let imp = { [self] in
-            let summarizePrompt = currentStudy?.study.summarizeSingleResourcePrompt ?? .summarizeSingleFHIRResourceDefaultPrompt
-            await resourceSummarizer.update(llmSchema: singleResourceLLMSchema, summarizationPrompt: summarizePrompt)
-            await singleResourceInterpreter.update(llmSchema: singleResourceLLMSchema, summarizationPrompt: summarizePrompt)
-            multipleResourceInterpreter.changeLLMSchema(
-                to: multipleResourceInterpreterOpenAISchema,
-                using: currentStudy?.study.interpretMultipleResourcesPrompt ?? .interpretMultipleResourcesDefaultPrompt
-            )
-        }
-        if forceImmediateUpdate {
-            await imp()
-        } else {
-            updateModelsTask = Task {
-                try? await Task.sleep(for: .seconds(0.1))
-                if !Task.isCancelled {
-                    await imp()
-                }
+    func scheduleSchemaUpdate() {
+        schemaUpdateTask?.cancel()
+        schemaUpdateTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(0.1))
+            guard !Task.isCancelled, let self else {
+                return
             }
+            await self.applySchemas()
         }
+    }
+
+    /// Immediately updates the schemas used by the interpretation module.
+    @MainActor
+    func updateSchemas() async {
+        schemaUpdateTask?.cancel()
+        await applySchemas()
+    }
+
+    @MainActor
+    private func applySchemas() async {
+        let summarizePrompt = currentStudy?.study.summarizeSingleResourcePrompt ?? .summarizeSingleFHIRResourceDefaultPrompt
+        await resourceSummarizer.update(llmSchema: singleResourceSchema, summarizationPrompt: summarizePrompt)
+        await singleResourceInterpreter.update(llmSchema: singleResourceSchema, interpretationPrompt: .interpretSingleFHIRResource)
+        multipleResourceInterpreter.changeLLMSchema(
+            to: multipleResourceSchema,
+            using: currentStudy?.study.interpretMultipleResourcesPrompt ?? .interpretMultipleResourcesDefaultPrompt
+        )
     }
 }
