@@ -29,28 +29,19 @@ struct OnboardingSheet: View {
 
 /// Displays a multi-step onboarding flow for Plainly.
 struct OnboardingFlow: View {
-    @Environment(HealthKit.self) private var healthKit: HealthKit?
     @Binding var completedOnboardingFlow: Bool
-    
-    private var healthKitAuthorization: Bool {
-        // As HealthKit not available in preview simulator
-        if ProcessInfo.processInfo.isPreviewSimulator {
-            false
-        } else {
-            healthKit?.isFullyAuthorized ?? false
-        }
-    }
+    @State private var navigationPath = ManagedNavigationStack.Path()
     
     
     var body: some View {
-        ManagedNavigationStack(didComplete: $completedOnboardingFlow) {
+        ManagedNavigationStack(didComplete: $completedOnboardingFlow, path: navigationPath) {
             Welcome()
             Disclaimer()
             if Plainly.mode.requiresUserProvidedAPIKey {
                 OpenAIAPIKey()
                 OpenAIModelSelection()
             }
-            if HKHealthStore.isHealthDataAvailable() && !healthKitAuthorization {
+            if HKHealthStore.isHealthDataAvailable() {
                 HealthKitPermissions()
             }
         }
