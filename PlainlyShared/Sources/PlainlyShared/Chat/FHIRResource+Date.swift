@@ -31,7 +31,7 @@ extension FHIRResource {
         case let careTeam as ModelsR4.CareTeam:
             careTeam.period?.date
         case let claim as ModelsR4.Claim:
-            try? claim.billablePeriod?.end?.value?.asNSDate()
+            claim.billablePeriod?.date
         case let condition as ModelsR4.Condition:
             condition.onset?.date
         case let device as ModelsR4.Device:
@@ -41,9 +41,9 @@ extension FHIRResource {
         case let documentReference as ModelsR4.DocumentReference:
             try? documentReference.date?.value?.asNSDate()
         case let encounter as ModelsR4.Encounter:
-            try? encounter.period?.end?.value?.asNSDate()
+            encounter.period?.date
         case let explanationOfBenefit as ModelsR4.ExplanationOfBenefit:
-            try? explanationOfBenefit.billablePeriod?.end?.value?.asNSDate()
+            explanationOfBenefit.billablePeriod?.date
         case let immunization as ModelsR4.Immunization:
             immunization.occurrence.date
         case let medicationRequest as ModelsR4.MedicationRequest:
@@ -71,19 +71,13 @@ extension FHIRResource {
         case let observation as ModelsDSTU2.Observation:
             if let issuedDate = observation.issued {
                 try? issuedDate.value?.asNSDate()
-            } else if case let .dateTime(effectiveDate) = observation.effective {
-                try? effectiveDate.value?.asNSDate()
             } else {
-                nil
+                observation.effective?.date
             }
         case let medicationOrder as ModelsDSTU2.MedicationOrder:
             try? medicationOrder.dateWritten?.value?.asNSDate()
         case let medicationStatement as ModelsDSTU2.MedicationStatement:
-            if case let .dateTime(date) = medicationStatement.effective {
-                try? date.value?.asNSDate()
-            } else {
-                nil
-            }
+            medicationStatement.effective?.date
         case let condition as ModelsDSTU2.Condition:
             if case let .dateTime(date) = condition.onset {
                 try? date.value?.asNSDate()
@@ -95,7 +89,7 @@ extension FHIRResource {
             case let .dateTime(date):
                 try? date.value?.asNSDate()
             case let .period(period):
-                try? period.end?.value?.asNSDate()
+                period.date
             default:
                 nil
             }
@@ -110,9 +104,23 @@ extension ModelsR4.Observation {
     fileprivate var date: Date? {
         if let issued {
             try? issued.value?.asNSDate()
-        } else if case let .dateTime(effectiveDate) = effective {
-            try? effectiveDate.value?.asNSDate()
         } else {
+            effective?.date
+        }
+    }
+}
+
+
+extension ModelsR4.Observation.EffectiveX {
+    fileprivate var date: Date? {
+        switch self {
+        case let .dateTime(date):
+            try? date.value?.asNSDate()
+        case let .instant(date):
+            try? date.value?.asNSDate()
+        case let .period(period):
+            period.date
+        case .timing:
             nil
         }
     }
@@ -120,6 +128,43 @@ extension ModelsR4.Observation {
 
 
 extension ModelsR4.Period {
+    fileprivate var date: Date? {
+        if let endDate = try? end?.value?.asNSDate() {
+            endDate
+        } else if let startDate = try? start?.value?.asNSDate() {
+            startDate
+        } else {
+            nil
+        }
+    }
+}
+
+
+extension ModelsDSTU2.Observation.EffectiveX {
+    fileprivate var date: Date? {
+        switch self {
+        case let .dateTime(date):
+            try? date.value?.asNSDate()
+        case let .period(period):
+            period.date
+        }
+    }
+}
+
+
+extension ModelsDSTU2.MedicationStatement.EffectiveX {
+    fileprivate var date: Date? {
+        switch self {
+        case let .dateTime(date):
+            try? date.value?.asNSDate()
+        case let .period(period):
+            period.date
+        }
+    }
+}
+
+
+extension ModelsDSTU2.Period {
     fileprivate var date: Date? {
         if let endDate = try? end?.value?.asNSDate() {
             endDate
