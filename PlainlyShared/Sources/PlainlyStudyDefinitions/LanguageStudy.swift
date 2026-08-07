@@ -10,7 +10,7 @@
 
 import Foundation
 public import PlainlyShared
-@preconcurrency import class ModelsR4.Questionnaire
+@preconcurrency import struct ModelsR4.Questionnaire
 import SpeziFoundation
 
 

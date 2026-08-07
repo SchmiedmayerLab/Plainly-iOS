@@ -1,5 +1,5 @@
 {
-  "originHash" : "a181b2eace622653ac140fc156b22fb118b9657483d85db33bf6669eb0947acf",
+  "originHash" : "837e0cbf1f78855d9ff24aaa1221e30d5c537e57c27e32663e1cdabf81de338f",
   "pins" : [
     {
       "identity" : "abseil-cpp-binary",
@@ -33,8 +33,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/FHIRModels.git",
       "state" : {
-        "revision" : "a05392269b630a8d661bda720d149fee2f0257e2",
-        "version" : "0.8.0"
+        "revision" : "9e2e1f2a79db3d6ec8bbebac93b13bf847982754",
+        "version" : "0.9.1"
       }
     },
     {
@@ -148,10 +148,10 @@
     {
       "identity" : "phonenumberkit",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/marmelroy/PhoneNumberKit.git",
+      "location" : "https://github.com/PhoneNumberKit/PhoneNumberKit.git",
       "state" : {
-        "revision" : "169ab10234347fb19b37441f2867ace896a284b0",
-        "version" : "4.3.0"
+        "revision" : "e18a029dbada1d8eb32e3f81a4eb72eba539ff75",
+        "version" : "5.0.6"
       }
     },
     {
@@ -168,8 +168,7 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/SchmiedmayerLab/Spezi",
       "state" : {
-        "revision" : "d55dd3a84fc21fc4f6153cb90f08fbb381b6ec0d",
-        "version" : "0.1.7"
+        "revision" : "e7a66a44bea90bfc93ddaed5ac84cd1727fb0e56"
       }
     },
     {
@@ -233,6 +232,15 @@
       "state" : {
         "revision" : "a0cb0954ecb21e4e31b0070e6ed5674e8556685a",
         "version" : "1.6.0"
+      }
+    },
+    {
+      "identity" : "swift-concurrency-extras",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-concurrency-extras",
+      "state" : {
+        "revision" : "5fa253428866f2360c3754e88537f700ed2656b5",
+        "version" : "1.4.1"
       }
     },
     {
@@ -341,6 +349,24 @@
       "state" : {
         "revision" : "3292bab28e6e92000161348003fdef8edc4e582d",
         "version" : "0.65.0"
+      }
+    },
+    {
+      "identity" : "swiftui-math",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/gonzalezreal/swiftui-math",
+      "state" : {
+        "revision" : "0b5c2cfaaec8d6193db206f675048eeb5ce95f71",
+        "version" : "0.1.0"
+      }
+    },
+    {
+      "identity" : "textual",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/gonzalezreal/textual.git",
+      "state" : {
+        "revision" : "5b06b811c0f5313b6b84bbef98c635a630638c38",
+        "version" : "0.3.1"
       }
     },
     {

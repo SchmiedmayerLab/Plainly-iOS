@@ -1,0 +1,3 @@
+[submodule "Plainly-Firebase"]
+	path = Plainly-Firebase
+	url = https://github.com/SchmiedmayerLab/Plainly-Firebase.git

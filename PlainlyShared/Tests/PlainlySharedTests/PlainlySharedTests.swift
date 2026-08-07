@@ -8,7 +8,7 @@
 
 import CryptoKit
 import Foundation
-import class ModelsR4.Questionnaire
+import struct ModelsR4.Questionnaire
 import PlainlyShared
 import PlainlyStudyDefinitions
 import Testing

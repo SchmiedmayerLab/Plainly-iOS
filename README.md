@@ -45,6 +45,16 @@ When running Plainly via Xcode, you can use the `--mode` CLI flag to control the
 - `--mode study:<study-id>` launches Plainly into its study mode, loads the study with the specified ID from the UserStudyConfig.plist file, and automatically opens it;
 - `--mode study` launches Plainly into its study mode, showing a "Scan QR Code" button to select and open a study.
 
+### Firebase End-to-End Test
+
+The Firebase emulator UI test exercises anonymous authentication, streaming chat through the callable function, and study-report upload to Storage without a real OpenAI token:
+
+```bash
+scripts/run-firebase-e2e.sh
+```
+
+The script initializes the `Plainly-Firebase` submodule, starts the local emulators with a deterministic OpenAI-compatible response, and runs only the dedicated end-to-end UI test.
+
 
 ### UserStudyConfig.plist File
 

@@ -33,7 +33,7 @@ final class PlainlyDelegate: SpeziAppDelegate {
             openAIInterceptor
             FHIRInterpretationModule()
             HealthKit {
-                if HKHealthStore().supportsHealthRecords() {
+                if !FeatureFlags.disableHealthRecords, HKHealthStore().supportsHealthRecords() {
                     RequestReadAccess(other: PlainlyStandard.recordTypes)
                     for type in PlainlyStandard.recordTypes {
                         CollectSamples(type, start: .manual, continueInBackground: false, timeRange: .newSamples)
@@ -53,7 +53,8 @@ final class PlainlyDelegate: SpeziAppDelegate {
     
     @ModuleBuilder
     private func firebaseModules(using config: AppConfigFile.FirebaseConfigDictionary) -> ModuleCollection {
-        ConfigureFirebaseApp(options: FirebaseOptions(config)!) // swiftlint:disable:this force_unwrapping
+        let firebaseConfig = FeatureFlags.useFirebaseEmulator ? .emulator : config
+        ConfigureFirebaseApp(options: FirebaseOptions(firebaseConfig)!) // swiftlint:disable:this force_unwrapping
         AccountConfiguration(
             service: FirebaseAccountService(
                 providers: [],

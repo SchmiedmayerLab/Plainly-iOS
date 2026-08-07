@@ -16,8 +16,8 @@ extension FHIRResource {
         dateFormatter.dateFormat = "MM-dd-yyyy"
         return dateFormatter
     }()
-    
-    
+
+
     // swiftlint:disable:next missing_docs
     public var functionCallIdentifier: String {
         resourceType.filter { $0.isLetter || $0.isWholeNumber }

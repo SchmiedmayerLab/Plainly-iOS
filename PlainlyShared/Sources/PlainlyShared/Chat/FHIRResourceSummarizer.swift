@@ -80,6 +80,7 @@ public final class FHIRResourceSummarizer: Sendable {
     /// - Returns: An asynchronous `String` representing the summarization of the resource.
     @discardableResult
     public func summarize(resource: SendableFHIRResource, forceReload: Bool = false) async throws -> Summary {
+        var resource = resource
         try? resource.stringifyAttachments()
         
         var retryCount = 0

@@ -49,6 +49,13 @@
 			<key>reportEmail</key>
 			<string></string>
 		</dict>
+		<key>edu.stanford.plainly.languageStudy</key>
+		<dict>
+			<key>openAIEndpoint</key>
+			<string>firebase-function:chat</string>
+			<key>reportEmail</key>
+			<string></string>
+		</dict>
 		<key>edu.stanford.plainly.usabilityStudy</key>
 		<dict>
 			<key>openAIAPIKey</key>

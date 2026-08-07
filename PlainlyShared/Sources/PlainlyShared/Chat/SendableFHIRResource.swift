@@ -10,59 +10,34 @@
 
 public import Foundation
 public import SpeziFHIR
-private import SpeziFoundation
-
-
 /// Sendable mechanism for `FHIRResource`s with limited access needed for Plainly.
-public struct SendableFHIRResource: @unchecked Sendable {
-    private let _resource: FHIRResource
-    private let readWriteLock = RWLock()
+public struct SendableFHIRResource: Hashable, Sendable {
+    private var resource: FHIRResource
     
     
     public var id: FHIRResource.ID {
-        readWriteLock.withReadLock {
-            _resource.id
-        }
+        resource.id
     }
     
     public var functionCallIdentifier: String {
-        readWriteLock.withReadLock {
-            _resource.functionCallIdentifier
-        }
+        resource.functionCallIdentifier
     }
     
     public var date: Date? {
-        readWriteLock.withReadLock {
-            _resource.date
-        }
+        resource.date
     }
     
     public var jsonDescription: String {
-        readWriteLock.withReadLock {
-            _resource.jsonDescription
-        }
+        resource.jsonDescription
     }
     
     
     public init(resource: FHIRResource) {
-        _resource = resource
+        self.resource = resource
     }
     
     
-    public func stringifyAttachments() throws {
-        try readWriteLock.withWriteLock {
-            try _resource.stringifyAttachments()
-        }
-    }
-}
-
-
-extension SendableFHIRResource: Hashable {
-    public static func == (lhs: Self, rhs: Self) -> Bool {
-        lhs._resource == rhs._resource
-    }
-    
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(_resource)
+    public mutating func stringifyAttachments() throws {
+        try resource.stringifyAttachments()
     }
 }

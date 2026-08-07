@@ -104,10 +104,14 @@ public final class FHIRMultipleResourceInterpreter: Sendable {
                 let stream = try await llmSession.generate()
                 for try await token in stream {
                     try Task.checkCancellation()
-                    llmSession.context.append(assistantOutput: token)
+                    var context = llmSession.context
+                    context.append(assistantOutput: token)
+                    llmSession.context = context
                 }
                 try Task.checkCancellation()
-                llmSession.context.completeAssistantStreaming()
+                var context = llmSession.context
+                context.completeAssistantStreaming()
+                llmSession.context = context
                 if let localStorage {
                     try localStorage.store(llmSession.context, for: .init(FHIRMultipleResourceInterpreterConstants.context))
                     Self.logger.debug("Successfully stored updated conversation context")

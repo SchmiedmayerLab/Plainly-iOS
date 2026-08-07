@@ -9,9 +9,9 @@
 import OSLog
 import Spezi
 import SpeziFHIR
-import SpeziFHIRHealthKit
 import SpeziFoundation
 import SpeziHealthKit
+import SpeziHealthKitFHIR
 import SpeziViews
 import SwiftUI
 
@@ -31,7 +31,7 @@ actor PlainlyStandard: Standard, EnvironmentAccessible {
     private var resourceLimit: Int {
         LocalPreferencesStore.standard[.resourceLimit]
     }
-    @MainActor var useHealthKitResources = true
+    @MainActor var useHealthKitResources = !FeatureFlags.disableHealthRecords
     
     @MainActor @Dependency private var waitingState = FHIRResourceWaitingState()
     
@@ -92,7 +92,7 @@ actor PlainlyStandard: Standard, EnvironmentAccessible {
             for record in records {
                 taskGroup.addTask { [self] in
                     do {
-                        try await fhirStore.add(record, loadHealthKitAttachments: true)
+                        try await fhirStore.add(record, using: healthKit, loadHealthKitAttachments: true)
                     } catch {
                         logger.error("Could not transform sample \(record.id) to FHIR resource: \(error)")
                     }
@@ -109,7 +109,7 @@ extension PlainlyStandard: HealthKitConstraint {
             guard let sample = sample as? HKClinicalRecord else {
                 continue
             }
-            try? await fhirStore.add(sample)
+            try? await fhirStore.add(sample, using: healthKit)
         }
     }
     

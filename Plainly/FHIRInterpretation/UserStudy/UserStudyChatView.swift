@@ -88,7 +88,13 @@ struct UserStudyChatView: View {
                     }
                     _ = model.startStudy()
                 }
-                .onChange(of: model.llmSession.context, initial: true) {
+                .onChange(of: model.llmSession.context, initial: true) { previousContext, context in
+                    let isInitialUpdate = previousContext == context
+                    let didAddUserMessage = context.count(where: { $0.role == .user })
+                        > previousContext.count(where: { $0.role == .user })
+                    guard isInitialUpdate || didAddUserMessage else {
+                        return
+                    }
                     Task {
                         _ = await model.generateAssistantResponse()
                     }

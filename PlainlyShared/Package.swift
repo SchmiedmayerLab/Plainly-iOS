@@ -23,8 +23,11 @@ let package = Package(
         .executable(name: "PlainlyCLI", targets: ["PlainlyCLI"])
     ],
     dependencies: [
-        .package(url: "https://github.com/SchmiedmayerLab/Spezi.git", from: "0.1.7"),
-        .package(url: "https://github.com/apple/FHIRModels.git", .upToNextMinor(from: "0.8.0")),
+        .package(
+            url: "https://github.com/SchmiedmayerLab/Spezi.git",
+            revision: "e7a66a44bea90bfc93ddaed5ac84cd1727fb0e56"
+        ),
+        .package(url: "https://github.com/apple/FHIRModels.git", .upToNextMinor(from: "0.9.0")),
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.7.0")
     ],
     targets: [
@@ -62,7 +65,8 @@ let package = Package(
             dependencies: [
                 "PlainlyShared",
                 "PlainlyStudyDefinitions",
-                .product(name: "ArgumentParser", package: "swift-argument-parser")
+                .product(name: "ArgumentParser", package: "swift-argument-parser"),
+                .product(name: "SpeziHealthKit", package: "Spezi")
             ],
             swiftSettings: [
                 .enableUpcomingFeature("ExistentialAny")

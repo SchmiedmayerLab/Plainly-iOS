@@ -23,7 +23,10 @@ enum FeatureFlags {
     
     /// Whether the app should use a local firebase emulator
     static let useFirebaseEmulator = CommandLine.arguments.contains("--useFirebaseEmulator")
-    
+
+    /// Disables clinical health record access for tests that do not exercise Health Records.
+    static let disableHealthRecords = CommandLine.arguments.contains("--disableHealthRecords")
+
     /// Whether the app disable its firebase integration.
     ///
     /// - Note: if present, this option will take precedence over ``useFirebaseEmulator``.

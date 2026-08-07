@@ -114,6 +114,31 @@ platform :ios do
     UI.user_error!("Expected six screenshots, found #{generated_files.count}") unless generated_files.count == 6
   end
 
+  desc "Run the Firebase emulator end-to-end UI test"
+  lane :firebase_uitest do
+    result_bundle_path = File.expand_path("../Plainly-Firebase-E2E.xcresult", __dir__)
+    FileUtils.rm_rf(result_bundle_path)
+
+    run_tests(
+      scheme: APP_CONFIG[:scheme],
+      testplan: "Plainly Firebase End-to-End",
+      derived_data_path: ".derivedData/firebase-e2e",
+      devices: ["iPhone 17"],
+      only_testing: [
+        "PlainlyUITests/FirebaseEndToEndTests/testChatAndReportUploadThroughFirebaseEmulators"
+      ],
+      concurrent_workers: 1,
+      max_concurrent_simulators: 1,
+      result_bundle: true,
+      result_bundle_path: result_bundle_path,
+      output_directory: ".",
+      xcargs: [
+        "-skipPackagePluginValidation",
+        "-skipMacroValidation"
+      ]
+    )
+  end
+
   desc "Archive app"
   lane :archive do |options|
     appidentifier = options[:appidentifier].to_s.strip.empty? ? APP_CONFIG[:default_app_identifier] : options[:appidentifier]
