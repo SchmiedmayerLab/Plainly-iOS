@@ -43,7 +43,7 @@ public struct FHIRGetResourceLLMFunction: LLMFunction {
     }
     
     
-    private static func filterFittingResources(_ fittingResources: some Collection<SendableFHIRResource>) -> [SendableFHIRResource] {
+    private static func filterFittingResources(_ fittingResources: some Collection<FHIRResource>) -> [FHIRResource] {
         if fittingResources.count > 64 {
             fittingResources.lazy.sorted(by: { $0.date ?? .distantPast < $1.date ?? .distantPast }).suffix(64)
         } else {
@@ -84,7 +84,7 @@ public struct FHIRGetResourceLLMFunction: LLMFunction {
     }
     
     
-    private func summarizeFHIRResources(_ resources: [SendableFHIRResource], resourceCategory: String) async throws -> [String] {
+    private func summarizeFHIRResources(_ resources: [FHIRResource], resourceCategory: String) async throws -> [String] {
         var summaries: [String] = []
         try await withThrowingTaskGroup(of: String.self) { group in
             for resource in resources {
@@ -100,7 +100,7 @@ public struct FHIRGetResourceLLMFunction: LLMFunction {
     }
     
     
-    private func summarizeFHIRResource(_ resource: SendableFHIRResource, resourceCategory: String) async throws -> String {
+    private func summarizeFHIRResource(_ resource: FHIRResource, resourceCategory: String) async throws -> String {
         let summary = try await resourceSummarizer.summarize(resource: resource)
         return String(localized: "This is the summary of the requested \(resourceCategory):\n\n\(summary.description)")
     }

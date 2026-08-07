@@ -34,6 +34,7 @@ public final class FHIRMultipleResourceInterpreter: Sendable {
     public let fhirStore: FHIRStore
     
     private var currentGenerationTask: Task<LLMContextEntity?, any Error>?
+    private var currentGenerationIdentifier = 0
     
     /// The current LLM session managing the conversation context with the language model.
     ///
@@ -93,25 +94,20 @@ public final class FHIRMultipleResourceInterpreter: Sendable {
     ///   or `nil` if generation was cancelled or encountered an error.
     public func generateAssistantResponse() async throws -> LLMContextEntity? {
         currentGenerationTask?.cancel()
-        currentGenerationTask = Task { [weak self] in
+        currentGenerationIdentifier &+= 1
+        let generationIdentifier = currentGenerationIdentifier
+        let task = Task<LLMContextEntity?, any Error> { [weak self] in
             guard let self else {
                 return nil
-            }
-            defer {
-                currentGenerationTask = nil
             }
             do {
                 let stream = try await llmSession.generate()
                 for try await token in stream {
                     try Task.checkCancellation()
-                    var context = llmSession.context
-                    context.append(assistantOutput: token)
-                    llmSession.context = context
+                    llmSession.context.append(assistantOutput: token)
                 }
                 try Task.checkCancellation()
-                var context = llmSession.context
-                context.completeAssistantStreaming()
-                llmSession.context = context
+                llmSession.context.completeAssistantStreaming()
                 if let localStorage {
                     try localStorage.store(llmSession.context, for: .init(FHIRMultipleResourceInterpreterConstants.context))
                     Self.logger.debug("Successfully stored updated conversation context")
@@ -124,7 +120,17 @@ public final class FHIRMultipleResourceInterpreter: Sendable {
                 throw error
             }
         }
-        return try await currentGenerationTask?.value
+        currentGenerationTask = task
+        return try await withTaskCancellationHandler {
+            defer {
+                if currentGenerationIdentifier == generationIdentifier {
+                    currentGenerationTask = nil
+                }
+            }
+            return try await task.value
+        } onCancel: {
+            task.cancel()
+        }
     }
     
     /// Updates the LLM schema used by the interpreter.

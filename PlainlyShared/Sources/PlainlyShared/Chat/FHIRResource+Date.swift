@@ -14,6 +14,8 @@ public import SpeziFHIR
 
 extension FHIRResource {
     /// The clinically relevant date associated with the resource, when available.
+    ///
+    /// Spezi's FHIRModels 0.9 migration removed this mapping from `FHIRResource`; Plainly retains it while using that revision.
     public var date: Date? {
         switch versionedResource {
         case .r4(let resource):

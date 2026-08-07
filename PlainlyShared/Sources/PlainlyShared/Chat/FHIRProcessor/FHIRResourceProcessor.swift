@@ -52,7 +52,7 @@ public actor FHIRResourceProcessor<Content: Codable & LosslessStringConvertible>
     }
     
     @discardableResult
-    public func process(resource: SendableFHIRResource, forceReload: Bool = false) async throws -> Content {
+    public func process(resource: FHIRResource, forceReload: Bool = false) async throws -> Content {
         if let result = results[resource.id], !result.description.isEmpty, !forceReload {
             return result
         }
