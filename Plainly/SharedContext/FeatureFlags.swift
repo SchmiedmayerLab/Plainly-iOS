@@ -27,6 +27,10 @@ enum FeatureFlags {
     /// Makes the Firebase emulator return a production-shaped chat error for end-to-end UI testing.
     static let useFirebaseMockChatError = useFirebaseEmulator && CommandLine.arguments.contains("--useFirebaseMockChatError")
 
+    /// Makes the Firebase emulator fail after its first chat chunk to test terminal result validation.
+    static let useFirebaseMockChatErrorAfterChunk =
+        useFirebaseEmulator && CommandLine.arguments.contains("--useFirebaseMockChatErrorAfterChunk")
+
     /// Disables clinical health record access for tests that do not exercise Health Records.
     static let disableHealthRecords = CommandLine.arguments.contains("--disableHealthRecords")
 

@@ -57,6 +57,17 @@ final class FirebaseEndToEndTests: XCTestCase, Sendable {
         let app = launchApp(mockChatError: true)
         _ = startSession(in: app)
 
+        assertChatError(in: app)
+    }
+
+    func testChatErrorAfterStreamStartsThroughFirebaseEmulators() throws {
+        let app = launchApp(mockChatErrorAfterChunk: true)
+        _ = startSession(in: app)
+
+        assertChatError(in: app)
+    }
+
+    private func assertChatError(in app: XCUIApplication) {
         let alert = app.alerts.firstMatch
         XCTAssertTrue(
             alert.waitForExistence(timeout: 30),
@@ -71,7 +82,10 @@ final class FirebaseEndToEndTests: XCTestCase, Sendable {
         )
     }
 
-    private func launchApp(mockChatError: Bool = false) -> XCUIApplication {
+    private func launchApp(
+        mockChatError: Bool = false,
+        mockChatErrorAfterChunk: Bool = false
+    ) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = [
             "--skipOnboarding",
@@ -82,6 +96,9 @@ final class FirebaseEndToEndTests: XCTestCase, Sendable {
         ]
         if mockChatError {
             app.launchArguments.append("--useFirebaseMockChatError")
+        }
+        if mockChatErrorAfterChunk {
+            app.launchArguments.append("--useFirebaseMockChatErrorAfterChunk")
         }
         app.launch()
         return app

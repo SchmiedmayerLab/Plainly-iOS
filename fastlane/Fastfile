@@ -126,7 +126,8 @@ platform :ios do
       devices: ["iPhone 17"],
       only_testing: [
         "PlainlyUITests/FirebaseEndToEndTests/testChatAndReportUploadThroughFirebaseEmulators",
-        "PlainlyUITests/FirebaseEndToEndTests/testChatErrorThroughFirebaseEmulators"
+        "PlainlyUITests/FirebaseEndToEndTests/testChatErrorThroughFirebaseEmulators",
+        "PlainlyUITests/FirebaseEndToEndTests/testChatErrorAfterStreamStartsThroughFirebaseEmulators"
       ],
       concurrent_workers: 1,
       max_concurrent_simulators: 1,

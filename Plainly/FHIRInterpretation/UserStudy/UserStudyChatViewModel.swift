@@ -491,7 +491,9 @@ extension UserStudyChatViewModel {
         }
         processingState = .processingSystemPrompts
         do {
-            guard let response = try await interpreter.generateAssistantResponse(), response.role == .assistant() else {
+            let response = try await interpreter.generateAssistantResponse()
+            try Task.checkCancellation()
+            guard let response, response.role == .assistant() else {
                 throw ResponseGenerationError.emptyResponse
             }
             await updateProcessingState()
@@ -500,6 +502,8 @@ extension UserStudyChatViewModel {
                 try? assistantMessagesByTask.append(response.id.uuidString, forKey: currentTaskId)
             }
             return response
+        } catch let error as CancellationError {
+            throw error
         } catch {
             processingState = .error
             throw error
