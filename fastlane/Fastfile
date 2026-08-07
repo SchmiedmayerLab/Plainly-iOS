@@ -157,7 +157,7 @@ platform :ios do
       xcargs: [
         "-skipPackagePluginValidation",
         "-skipMacroValidation",
-        "PROVISIONING_PROFILE_SPECIFIER='#{provisioningProfile}'"
+        "PROVISIONING_PROFILE_SPECIFIER=#{provisioningProfile}"
       ],
       export_options: {
         provisioningProfiles: {
