@@ -68,7 +68,9 @@ struct HealthKitPermissions: View {
                 .disabled(authorizationState != .idle)
 
                 if authorizationState == .recoveryAvailable {
-                    Button("HEALTHKIT_PERMISSIONS_SKIP_BUTTON", action: completeAuthorization)
+                    Button("HEALTHKIT_PERMISSIONS_SKIP_BUTTON") {
+                        completeAuthorization(fetchRecords: false)
+                    }
                         .padding(.vertical, 10)
                 }
             }
@@ -101,7 +103,7 @@ struct HealthKitPermissions: View {
         }
         authorizationState = .requesting
         guard let healthKit else {
-            completeAuthorization()
+            completeAuthorization(fetchRecords: false)
             return
         }
 
@@ -122,6 +124,8 @@ struct HealthKitPermissions: View {
                 }
             } catch {
                 logger.error("Could not request HealthKit permissions: \(error)")
+                completeAuthorization(fetchRecords: false)
+                return
             }
             completeAuthorization()
         }
@@ -137,12 +141,14 @@ struct HealthKitPermissions: View {
         }
     }
 
-    private func completeAuthorization() {
+    private func completeAuthorization(fetchRecords: Bool = true) {
         guard authorizationState != .completed else {
             return
         }
         authorizationState = .completed
-        Task { await standard.fetchRecordsFromHealthKit() }
+        if fetchRecords {
+            Task { await standard.fetchRecordsFromHealthKit() }
+        }
         Task { @MainActor in
             await Task.yield()
             managedNavigationStackPath.nextStep()
