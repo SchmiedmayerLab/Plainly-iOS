@@ -42,7 +42,7 @@ public final class Study: Identifiable {
     public let chatFunctionName: String
 
     public let summarizeSingleResourcePrompt: FHIRPrompt
-    public var interpretMultipleResourcesPrompt: FHIRPrompt
+    public let interpretMultipleResourcesPrompt: FHIRPrompt
     
     public let chatTitleConfig: ChatTitleConfig
     

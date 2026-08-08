@@ -51,6 +51,7 @@ struct StudyChatView: View {
                     case .studyCompleted:
                         StudyCompletedSheet(studyTitle: model.study.title, didUpload: model.didUploadReport) {
                             model.finishCompletedStudy()
+                            dismiss()
                         }
                     }
                 }
@@ -64,9 +65,6 @@ struct StudyChatView: View {
                 }
                 .viewStateAlert(state: $viewState)
                 .onAppear {
-                    model.onStudyCompleted = {
-                        dismiss()
-                    }
                     _ = model.startStudy()
                     scheduleAssistantResponseGeneration()
                 }

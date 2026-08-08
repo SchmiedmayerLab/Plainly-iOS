@@ -28,13 +28,32 @@ final class PendingReportStore: Module, EnvironmentAccessible, Sendable {
 
     @ObservationIgnored private let directory = URL.applicationSupportDirectory
         .appending(path: "PendingStudyReports", directoryHint: .isDirectory)
+    @ObservationIgnored private var uploadTask: Task<Void, Never>?
 
 
     func configure() {
         pendingCount = pendingReports().count
-        Task {
-            await uploadPendingReports()
+        retryPendingUploads()
+    }
+
+    /// Starts an upload attempt unless one is already running.
+    ///
+    /// The store owns the task so that callers do not have to manage its lifetime, and so an attempt
+    /// that is still in flight is never restarted from underneath itself.
+    func retryPendingUploads() {
+        guard uploadTask == nil else {
+            return
         }
+        uploadTask = Task {
+            await uploadPendingReports()
+            uploadTask = nil
+        }
+    }
+
+    /// Cancels an upload attempt that is still running; the reports it did not reach stay retained.
+    func cancelPendingUploads() {
+        uploadTask?.cancel()
+        uploadTask = nil
     }
 
     /// Keeps a report that could not be uploaded, so that a later launch can retry it.
@@ -55,7 +74,7 @@ final class PendingReportStore: Module, EnvironmentAccessible, Sendable {
     }
 
     /// Uploads every retained report, keeping the ones that still fail.
-    func uploadPendingReports() async {
+    private func uploadPendingReports() async {
         let reports = pendingReports()
         guard !reports.isEmpty, !isUploading else {
             pendingCount = reports.count
@@ -67,6 +86,9 @@ final class PendingReportStore: Module, EnvironmentAccessible, Sendable {
             pendingCount = pendingReports().count
         }
         for report in reports {
+            guard !Task.isCancelled else {
+                return
+            }
             do {
                 try await uploader.uploadReport(at: report.url, for: report.study)
                 try FileManager.default.removeItem(at: report.url)

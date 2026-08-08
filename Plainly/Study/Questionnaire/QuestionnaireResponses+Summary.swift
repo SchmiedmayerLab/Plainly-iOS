@@ -15,7 +15,7 @@ import class UIKit.UIImage
 
 
 extension QuestionnaireResponses {
-    func summarize(using runner: LLMRunner) async throws -> String {
+    func summarize(using runner: LLMRunner, model: LLMOpenAIParameters.ModelType) async throws -> String {
         let taskSummaries: [(Questionnaire.Task, String)] = try await withThrowingTaskGroup(
             of: (Int, Questionnaire.Task, String?).self
         ) { taskGroup in
@@ -27,7 +27,7 @@ extension QuestionnaireResponses {
                     }
                     let response = self.responses[task.id]
                     taskGroup.addTask { [idx, questionnaire] in
-                        (idx, task, try await response.summarize(for: task, in: questionnaire, using: runner))
+                        (idx, task, try await response.summarize(for: task, in: questionnaire, using: runner, model: model))
                     }
                 }
             }
@@ -50,7 +50,8 @@ extension QuestionnaireResponses.Response {
     fileprivate func summarize( // swiftlint:disable:this cyclomatic_complexity function_body_length
         for task: Questionnaire.Task,
         in questionnaire: Questionnaire,
-        using runner: LLMRunner
+        using runner: LLMRunner,
+        model: LLMOpenAIParameters.ModelType
     ) async throws -> String? {
         guard !value.isEmpty else {
             return nil
@@ -100,7 +101,7 @@ extension QuestionnaireResponses.Response {
         case .custom(let value):
             return switch value {
             case let value as QuestionnaireResponses.ImageAnnotation:
-                try await value.summarize(for: task, in: questionnaire, using: runner)
+                try await value.summarize(for: task, in: questionnaire, using: runner, model: model)
             default:
                 nil
             }
@@ -113,12 +114,13 @@ extension QuestionnaireResponses.ImageAnnotation {
     fileprivate func summarize( // swiftlint:disable:this function_body_length
         for task: Questionnaire.Task,
         in questionnaire: Questionnaire,
-        using runner: LLMRunner
+        using runner: LLMRunner,
+        model: LLMOpenAIParameters.ModelType
     ) async throws -> String? {
         /// 0 = max compression; 1 = no compression
         let jpegCompression: Double = 1
         /// The LLMSchema used for the image summary queries
-        let schema = LLMOpenAISchema(parameters: .init(modelType: .gpt4o))
+        let schema = LLMOpenAISchema(parameters: .init(modelType: model))
         guard let config = task.kind.config(for: AnnotateImageQuestionKind.self) else {
             return nil
         }

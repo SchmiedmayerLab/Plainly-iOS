@@ -76,9 +76,7 @@ struct StudyHomeView: View {
                 guard !isPresenting else {
                     return
                 }
-                Task {
-                    await pendingReports?.uploadPendingReports()
-                }
+                pendingReports?.retryPendingUploads()
             }
     }
 
@@ -95,7 +93,7 @@ struct StudyHomeView: View {
     @ViewBuilder private var questionnaireSheetContent: some View {
         if let currentStudy = fhirInterpretationModule.currentStudy {
             IntakeQuestionnaireSheet(
-                study: currentStudy.study,
+                inProgressStudy: currentStudy,
                 response: $questionnaireResponse
             )
         } else {

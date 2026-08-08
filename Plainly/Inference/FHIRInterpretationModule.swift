@@ -97,8 +97,13 @@ final class FHIRInterpretationModule: Module, EnvironmentAccessible, @unchecked 
         let singleResourceSchema = self.singleResourceSchema
         let multipleResourceSchema = self.multipleResourceSchema
         let summarizePrompt = currentStudy?.study.summarizeSingleResourcePrompt ?? .summarizeSingleFHIRResourceDefaultPrompt
-        let multipleResourcePrompt = currentStudy?.study.interpretMultipleResourcesPrompt
-            ?? .interpretMultipleResourcesDefaultPrompt
+        let multipleResourcePrompt = currentStudy.map { inProgressStudy -> FHIRPrompt in
+            let prompt = inProgressStudy.study.interpretMultipleResourcesPrompt
+            guard let summary = inProgressStudy.questionnaireSummary else {
+                return prompt
+            }
+            return FHIRPrompt(promptText: prompt.promptText + "\n\nInitial User Questionnaire Summary:\n" + summary)
+        } ?? .interpretMultipleResourcesDefaultPrompt
         await resourceSummarizer.update(llmSchema: singleResourceSchema, summarizationPrompt: summarizePrompt)
         guard isCurrentSchemaUpdate(generation) else {
             return

@@ -27,7 +27,11 @@ struct IntakeQuestionnaireSheet: View {
     @Environment(\.dismiss) var dismiss
     @Environment(LLMRunner.self) private var llmRunner
     
-    private let study: Study
+    private let inProgressStudy: InProgressStudy
+
+    private var study: Study {
+        inProgressStudy.study
+    }
     @Binding private var fhirResponse: ModelsR4.QuestionnaireResponse?
     
     @State private var questionnaireState: QuestionnaireLoadState = .loading
@@ -68,8 +72,8 @@ struct IntakeQuestionnaireSheet: View {
         }
     }
     
-    init(study: Study, response: Binding<ModelsR4.QuestionnaireResponse?>) {
-        self.study = study
+    init(inProgressStudy: InProgressStudy, response: Binding<ModelsR4.QuestionnaireResponse?>) {
+        self.inProgressStudy = inProgressStudy
         self._fhirResponse = response
     }
 
@@ -100,13 +104,10 @@ struct IntakeQuestionnaireSheet: View {
         viewState = .processing
         do {
             let fhirResponse = try ModelsR4.QuestionnaireResponse(speziResponses)
-            let summary = try await speziResponses.summarize(using: llmRunner)
-            study.interpretMultipleResourcesPrompt = """
-                \(study.interpretMultipleResourcesPrompt.promptText)
-                
-                Initial User Questionnaire Summary:
-                \(summary)
-                """
+            inProgressStudy.questionnaireSummary = try await speziResponses.summarize(
+                using: llmRunner,
+                model: study.llmModel
+            )
             self.fhirResponse = fhirResponse
             dismiss()
         } catch {

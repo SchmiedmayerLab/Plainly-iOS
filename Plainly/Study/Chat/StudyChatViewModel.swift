@@ -112,9 +112,6 @@ final class StudyChatViewModel: Sendable {
     /// This alert is presented when the user taps the continue button while in a study that contains no tasks.
     var isShowingConfirmEndChatAlert = false
     
-    /// Called once the participant acknowledges that the session is complete.
-    var onStudyCompleted: (@MainActor () -> Void)?
-
     /// Whether the session's report reached Firebase Storage, as opposed to being kept for a later retry.
     private(set) var didUploadReport = false
 
@@ -230,10 +227,9 @@ final class StudyChatViewModel: Sendable {
         }
     }
 
-    /// Dismisses the session once the participant acknowledges the confirmation.
+    /// Closes the confirmation once the participant acknowledges it.
     func finishCompletedStudy() {
         presentedSheet = nil
-        onStudyCompleted?()
     }
     
     private func advanceToNextTask() {
