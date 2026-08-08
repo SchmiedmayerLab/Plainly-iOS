@@ -10,6 +10,7 @@ import Foundation
 import PlainlyShared
 import PlainlyStudyDefinitions
 import Spezi
+import SpeziFoundation
 
 
 /// Keeps study reports that could not be uploaded and retries them on later launches.
@@ -19,6 +20,11 @@ import Spezi
 @MainActor
 @Observable
 final class PendingReportStore: Module, EnvironmentAccessible, Sendable {
+    /// How long one attempt may run before it is abandoned.
+    ///
+    /// Without it a stalled upload would hold ``isUploading`` forever and block every later retry.
+    private static let uploadTimeout: Duration = .seconds(120)
+
     @ObservationIgnored @Dependency(FirebaseUpload.self) private var uploader
 
     /// The number of reports still waiting to be uploaded.
@@ -30,7 +36,6 @@ final class PendingReportStore: Module, EnvironmentAccessible, Sendable {
         .appending(path: "PendingStudyReports", directoryHint: .isDirectory)
     @ObservationIgnored private var uploadTask: Task<Void, Never>?
 
-
     func configure() {
         pendingCount = pendingReports().count
         retryPendingUploads()
@@ -38,22 +43,35 @@ final class PendingReportStore: Module, EnvironmentAccessible, Sendable {
 
     /// Starts an upload attempt unless one is already running.
     ///
-    /// The store owns the task so that callers do not have to manage its lifetime, and so an attempt
-    /// that is still in flight is never restarted from underneath itself.
+    /// An attempt that is in flight is left alone rather than cancelled and restarted: restarting
+    /// would discard the progress of an upload that is simply slow, and two attempts reading the same
+    /// directory could upload a report twice. A stalled attempt is bounded by ``uploadTimeout``
+    /// instead, after which the next trigger starts a fresh one.
     func retryPendingUploads() {
-        guard uploadTask == nil else {
+        guard !isUploading else {
             return
         }
-        uploadTask = Task {
+        isUploading = true
+        let task = Task {
+            defer {
+                isUploading = false
+                pendingCount = pendingReports().count
+                uploadTask = nil
+            }
             await uploadPendingReports()
-            uploadTask = nil
+        }
+        uploadTask = task
+        Task {
+            // Cancelling a task that already finished is a no-op, so the watchdog needs no result check.
+            await withTimeout(of: Self.uploadTimeout) {
+                task.cancel()
+            }
         }
     }
 
     /// Cancels an upload attempt that is still running; the reports it did not reach stay retained.
     func cancelPendingUploads() {
         uploadTask?.cancel()
-        uploadTask = nil
     }
 
     /// Keeps a report that could not be uploaded, so that a later launch can retry it.
@@ -75,17 +93,7 @@ final class PendingReportStore: Module, EnvironmentAccessible, Sendable {
 
     /// Uploads every retained report, keeping the ones that still fail.
     private func uploadPendingReports() async {
-        let reports = pendingReports()
-        guard !reports.isEmpty, !isUploading else {
-            pendingCount = reports.count
-            return
-        }
-        isUploading = true
-        defer {
-            isUploading = false
-            pendingCount = pendingReports().count
-        }
-        for report in reports {
+        for report in pendingReports() {
             guard !Task.isCancelled else {
                 return
             }
