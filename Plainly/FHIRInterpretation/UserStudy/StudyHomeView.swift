@@ -31,81 +31,87 @@ struct StudyHomeView: View {
     
     @State private var isPresentingUserStudyChatView = false
     
-    private var earliestDates: [String: Date] {
-        fhirInterpretationModule.multipleResourceInterpreter.fhirStore.earliestDates(limit: resourceLimit)
-    }
-    private var oldestHealthRecordTimestamp: Date? {
-        earliestDates.values.min()
-    }
-    /// Whether the currently enabled study has an initial questionnaire, and the user still needs to fill that out.
-    private var isMissingPreChatQuestionnaire: Bool {
-        (try? fhirInterpretationModule.currentStudy?.study.initialQuestionnaire(from: .main)) != nil && questionnaireResponse == nil
-    }
-    
     var body: some View {
-        @Bindable var fhirInterpretationModule = fhirInterpretationModule
-        NavigationStack { // swiftlint:disable:this closure_body_length
-            mainContent
-                .background(Color(.systemBackground))
-                .navigationTitle("USER_STUDY_WECOME")
-                .navigationBarTitleDisplayMode(.inline)
-                #if targetEnvironment(simulator)
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        // Maybe instead show a button that directly brings up the ResourceSelection sheet?
-                        // (most of the other settings won't be taken into account in study mode...)
-                        SettingsButton()
-                    }
+        NavigationStack {
+            studyContent
+        }
+    }
+
+    private var studyContent: some View {
+        observedContent
+    }
+
+    private var navigationContent: some View {
+        mainContent
+            .background(Color(.systemBackground))
+            .navigationTitle("USER_STUDY_WECOME")
+            .navigationBarTitleDisplayMode(.inline)
+            #if targetEnvironment(simulator)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    SettingsButton()
                 }
-                #endif
-                .sheet(isPresented: $isPresentingEarliestHealthRecords) {
-                    EarliestHealthRecordsView(dataSource: earliestDates)
-                        .presentationDetents([.medium, .large])
+            }
+            #endif
+    }
+
+    private var presentationContent: some View {
+        navigationContent
+            .sheet(isPresented: $isPresentingEarliestHealthRecords) {
+                EarliestHealthRecordsView(dataSource: earliestDates)
+                    .presentationDetents([.medium, .large])
+            }
+            .qrCodeScanningSheet(isPresented: $isPresentingQRCodeScanner) { payload in
+                processStudyQRCode(payload)
+            }
+            .fullScreenCover(isPresented: $isPresentingQuestionnaire) {
+                questionnaireSheetContent
+            }
+            .fullScreenCover(isPresented: $isPresentingUserStudyChatView) {
+                chatSheetContent
+            }
+    }
+
+    private var observedContent: some View {
+        presentationContent
+            .task {
+                await prepareInitialStudyState()
+            }
+            .task(id: fhirInterpretationModule.currentStudy?.study.id) {
+                await preloadInitialQuestionnaire()
+            }
+    }
+
+    @ViewBuilder private var questionnaireSheetContent: some View {
+        if let currentStudy = fhirInterpretationModule.currentStudy {
+            IntakeQuestionnaireSheet(
+                study: currentStudy.study,
+                response: $questionnaireResponse
+            )
+        } else {
+            ContentUnavailableView("Study not selected", systemImage: "document.badge.gearshape")
+                .onAppear {
+                    AppDiagnostics.questionnaire.fault(
+                        "Questionnaire presentation requested without a selected study"
+                    )
                 }
-                .qrCodeScanningSheet(isPresented: $isPresentingQRCodeScanner) { payload in
-                    guard fhirInterpretationModule.currentStudy == nil else {
-                        return .stopScanning
-                    }
-                    do {
-                        let scanResult = try StudyQRCodeHandler.processQRCode(payload: payload)
-                        isPresentingQRCodeScanner = false
-                        fhirInterpretationModule.currentStudy = .init(
-                            study: scanResult.study,
-                            config: scanResult.studyConfig,
-                            userInfo: scanResult.userInfo
-                        )
-                        return .stopScanning
-                    } catch {
-                        print("Failed to start study: \(error)")
-                        return .continueScanning
-                    }
-                }
-                .fullScreenCover(isPresented: $isPresentingQuestionnaire) {
-                    if let currentStudy = fhirInterpretationModule.currentStudy {
-                        IntakeQuestionnaireSheet(
-                            study: currentStudy.study,
-                            response: $questionnaireResponse
-                        )
-                    } else {
-                        ContentUnavailableView("Study not selected", systemImage: "document.badge.gearshape")
-                    }
-                }
-                .fullScreenCover(isPresented: $isPresentingUserStudyChatView) {
-                    if let currentStudy = fhirInterpretationModule.currentStudy {
-                        UserStudyChatView(model: .init(
-                            inProgressStudy: currentStudy,
-                            initialQuestionnaireResponse: questionnaireResponse,
-                            interpretationModule: fhirInterpretationModule,
-                            uploader: uploader
-                        ))
-                    }
-                }
-                .task {
-                    if let preloadedStudy {
-                        fhirInterpretationModule.currentStudy = preloadedStudy
-                    }
-                    await standard.fetchRecordsFromHealthKit()
-                    await fhirInterpretationModule.updateSchemas()
+        }
+    }
+
+    @ViewBuilder private var chatSheetContent: some View {
+        if let currentStudy = fhirInterpretationModule.currentStudy {
+            UserStudyChatView(model: .init(
+                inProgressStudy: currentStudy,
+                initialQuestionnaireResponse: questionnaireResponse,
+                interpretationModule: fhirInterpretationModule,
+                uploader: uploader
+            ))
+        } else {
+            ContentUnavailableView("Study not selected", systemImage: "document.badge.gearshape")
+                .onAppear {
+                    AppDiagnostics.chat.fault(
+                        "Chat presentation requested without a selected study"
+                    )
                 }
         }
     }
@@ -201,7 +207,15 @@ struct StudyHomeView: View {
                 }
                 // the HealthKit permissions should already have been granted via the onboarding, but we re-request them here, just in case,
                 // to make sure everything is in a proper state when the study gets launched.
-                try await healthKit.askForAuthorization()
+                do {
+                    try await healthKit.askForAuthorization()
+                } catch {
+                    AppDiagnostics.healthRecords.logError(
+                        error,
+                        context: "Refreshing Health Records authorization before chat"
+                    )
+                    throw error
+                }
                 await fhirInterpretationModule.updateSchemas()
                 isPresentingUserStudyChatView = true
             } else {
@@ -221,12 +235,73 @@ struct StudyHomeView: View {
             }
         }
     }
-    
+}
+
+
+extension StudyHomeView {
+    private var earliestDates: [String: Date] {
+        fhirInterpretationModule.multipleResourceInterpreter.fhirStore.earliestDates(limit: resourceLimit)
+    }
+
+    private var oldestHealthRecordTimestamp: Date? {
+        earliestDates.values.min()
+    }
+
+    /// Whether the currently enabled study has an initial questionnaire, and the user still needs to fill that out.
+    private var isMissingPreChatQuestionnaire: Bool {
+        fhirInterpretationModule.currentStudy?.study.hasInitialQuestionnaire == true && questionnaireResponse == nil
+    }
+
     init(study: Study, config: StudyConfig, userInfo: [String: String]) {
         preloadedStudy = InProgressStudy(study: study, config: config, userInfo: userInfo)
     }
     
     init() {
         preloadedStudy = nil
+    }
+
+    @MainActor
+    private func processStudyQRCode(_ payload: String) -> QRCodeScanningResponse {
+        guard fhirInterpretationModule.currentStudy == nil else {
+            return .stopScanning
+        }
+        do {
+            let scanResult = try StudyQRCodeHandler.processQRCode(payload: payload)
+            isPresentingQRCodeScanner = false
+            fhirInterpretationModule.currentStudy = .init(
+                study: scanResult.study,
+                config: scanResult.studyConfig,
+                userInfo: scanResult.userInfo
+            )
+            return .stopScanning
+        } catch {
+            AppDiagnostics.study.logError(error, context: "Selecting study from QR code")
+            return .continueScanning
+        }
+    }
+
+    @MainActor
+    private func prepareInitialStudyState() async {
+        if let preloadedStudy {
+            fhirInterpretationModule.currentStudy = preloadedStudy
+        }
+        await standard.fetchRecordsFromHealthKit()
+        await fhirInterpretationModule.updateSchemas()
+    }
+
+    private func preloadInitialQuestionnaire() async {
+        guard let study = fhirInterpretationModule.currentStudy?.study else {
+            return
+        }
+        do {
+            guard let url = try study.initialQuestionnaireURL(in: .main) else {
+                return
+            }
+            _ = try await QuestionnaireLoader.shared.questionnaire(from: url)
+        } catch is CancellationError {
+            return
+        } catch {
+            AppDiagnostics.questionnaire.logError(error, context: "Questionnaire preload")
+        }
     }
 }

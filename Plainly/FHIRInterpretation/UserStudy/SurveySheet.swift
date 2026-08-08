@@ -55,7 +55,7 @@ struct SurveySheet: View {
             do {
                 try model.submitSurveyAnswers(answers, for: task)
             } catch {
-                print("Error submitting answers: \(error)")
+                AppDiagnostics.study.logError(error, context: "Submitting study task survey")
             }
         } onDismiss: {
             model.presentedSheet = nil

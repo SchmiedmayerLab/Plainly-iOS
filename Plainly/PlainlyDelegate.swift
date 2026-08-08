@@ -25,8 +25,8 @@ import SpeziLLMOpenAI
 
 final class PlainlyDelegate: SpeziAppDelegate {
     override var configuration: Configuration {
-        Configuration(standard: PlainlyStandard()) {
-            if !FeatureFlags.disableFirebase, let config = AppConfigFile.current().firebaseConfig {
+        return Configuration(standard: PlainlyStandard()) {
+            if !FeatureFlags.disableFirebase, let config = firebaseConfig {
                 firebaseModules(using: config)
             }
             let openAIInterceptor = OpenAIRequestInterceptor()
@@ -50,11 +50,27 @@ final class PlainlyDelegate: SpeziAppDelegate {
             }
         }
     }
+
+    private var firebaseConfig: AppConfigFile.FirebaseConfigDictionary? {
+        let config = FeatureFlags.useFirebaseEmulator ? .emulator : AppConfigFile.current().firebaseConfig
+        guard let config else {
+            AppDiagnostics.configuration.fault("Firebase configuration is unavailable")
+            return nil
+        }
+        let missingKeys = config.missingRequiredKeys
+        guard missingKeys.isEmpty else {
+            AppDiagnostics.configuration.fault(
+                "Firebase configuration contains missing or invalid required keys: \(missingKeys.joined(separator: ","), privacy: .public)"
+            )
+            return nil
+        }
+        return config
+    }
     
     @ModuleBuilder
     private func firebaseModules(using config: AppConfigFile.FirebaseConfigDictionary) -> ModuleCollection {
-        let firebaseConfig = FeatureFlags.useFirebaseEmulator ? .emulator : config
-        ConfigureFirebaseApp(options: FirebaseOptions(firebaseConfig)!) // swiftlint:disable:this force_unwrapping
+        let options = firebaseOptions(using: config)
+        ConfigureFirebaseApp(options: options)
         AccountConfiguration(
             service: FirebaseAccountService(
                 providers: [],
@@ -71,6 +87,14 @@ final class PlainlyDelegate: SpeziAppDelegate {
         }
         FirebaseUpload()
     }
+
+    private func firebaseOptions(using config: AppConfigFile.FirebaseConfigDictionary) -> FirebaseOptions {
+        guard let options = FirebaseOptions(config) else {
+            AppDiagnostics.configuration.fault("FirebaseOptions could not be created from the configured keys")
+            preconditionFailure("Invalid Firebase configuration")
+        }
+        return options
+    }
     
     private var accountEmulatorSettings: (host: String, port: Int)? {
         if FeatureFlags.useFirebaseEmulator {
@@ -85,7 +109,15 @@ final class PlainlyDelegate: SpeziAppDelegate {
             return .keychain(tag: .openAIKey, username: "Plainly_OpenAI_Token")
         } else {
             return .closure { @MainActor in
-                Self.spezi?.module(FHIRInterpretationModule.self)?.currentStudy?.config.openAIAPIKey
+                guard let study = Self.spezi?.module(FHIRInterpretationModule.self)?.currentStudy else {
+                    AppDiagnostics.configuration.error("Inference credential requested before a study was selected")
+                    return nil
+                }
+                let key = study.config.openAIAPIKey
+                if case .regular = study.config.openAIEndpoint, key?.isEmpty != false {
+                    AppDiagnostics.configuration.fault("Direct inference is missing its configured credential")
+                }
+                return key
             }
         }
     }
@@ -100,6 +132,7 @@ extension FirebaseOptions {
         do {
             try config.asNSDictionary().write(to: tmpUrl)
         } catch {
+            AppDiagnostics.configuration.logError(error, context: "Writing temporary Firebase configuration")
             return nil
         }
         defer {

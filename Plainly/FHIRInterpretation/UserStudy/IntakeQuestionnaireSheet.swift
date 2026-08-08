@@ -16,6 +16,13 @@ import SpeziViews
 import SwiftUI
 
 
+private enum QuestionnaireLoadState {
+    case loading
+    case loaded(SpeziQuestionnaire.Questionnaire)
+    case failed
+}
+
+
 struct IntakeQuestionnaireSheet: View {
     @Environment(\.dismiss) var dismiss
     @Environment(LLMRunner.self) private var llmRunner
@@ -23,13 +30,13 @@ struct IntakeQuestionnaireSheet: View {
     private let study: Study
     @Binding private var fhirResponse: ModelsR4.QuestionnaireResponse?
     
-    @State private var isLoadingQuestionnaire = true
-    @State private var questionnaire: SpeziQuestionnaire.Questionnaire?
+    @State private var questionnaireState: QuestionnaireLoadState = .loading
     @State private var viewState: ViewState = .idle
     
     var body: some View {
         Group {
-            if let questionnaire {
+            switch questionnaireState {
+            case .loaded(let questionnaire):
                 QuestionnaireSheet(questionnaire, completionStepConfig: .disable) { result in
                     switch result {
                     case .completed(let responses):
@@ -38,13 +45,14 @@ struct IntakeQuestionnaireSheet: View {
                         dismiss()
                     }
                 }
-            } else if isLoadingQuestionnaire {
-                ProgressView("Loading Questionnaire…")
-            } else {
+            case .failed:
                 ContentUnavailableView("Unable to load questionnaire", systemImage: "document.badge.gearshape")
                 Button("Dismiss") {
                     dismiss()
                 }
+            case .loading:
+                ProgressView("Loading Questionnaire…")
+                    .accessibilityIdentifier("QuestionnaireLoadingIndicator")
             }
         }
         .viewStateAlert(state: $viewState)
@@ -56,21 +64,7 @@ struct IntakeQuestionnaireSheet: View {
             }
         }
         .task {
-            isLoadingQuestionnaire = true
-            defer {
-                isLoadingQuestionnaire = false
-            }
-            do {
-                guard let fhir = try study.initialQuestionnaire(from: .main) else {
-                    return
-                }
-                questionnaire = try SpeziQuestionnaire.Questionnaire(fhir)
-            } catch {
-                questionnaire = nil
-                #if DEBUG
-                viewState = .error(AnyLocalizedError(error: error))
-                #endif
-            }
+            await loadQuestionnaire()
         }
     }
     
@@ -78,8 +72,31 @@ struct IntakeQuestionnaireSheet: View {
         self.study = study
         self._fhirResponse = response
     }
+
+    private func loadQuestionnaire() async {
+        questionnaireState = .loading
+        do {
+            guard let url = try study.initialQuestionnaireURL(in: .main) else {
+                AppDiagnostics.questionnaire.fault(
+                    "Study requires an initial questionnaire but has no questionnaire URL; study=\(study.id, privacy: .public)"
+                )
+                questionnaireState = .failed
+                return
+            }
+            questionnaireState = .loaded(try await QuestionnaireLoader.shared.questionnaire(from: url))
+        } catch is CancellationError {
+            return
+        } catch {
+            AppDiagnostics.questionnaire.logError(error, context: "Initial questionnaire preparation")
+            questionnaireState = .failed
+            #if DEBUG
+            viewState = .error(AnyLocalizedError(error: error))
+            #endif
+        }
+    }
     
     private func processQuestionnaireResponses(_ speziResponses: SpeziQuestionnaire.QuestionnaireResponses) async {
+        let correlationID = AppDiagnostics.correlationID()
         viewState = .processing
         do {
             let fhirResponse = try ModelsR4.QuestionnaireResponse(speziResponses)
@@ -93,6 +110,11 @@ struct IntakeQuestionnaireSheet: View {
             self.fhirResponse = fhirResponse
             dismiss()
         } catch {
+            AppDiagnostics.questionnaire.logError(
+                error,
+                context: "Questionnaire response processing",
+                correlationID: correlationID
+            )
             // the view will get dismissed when the user dismisses the alert, via the `onChange(of: viewState)` above.
             viewState = .error(AnyLocalizedError(error: error))
             return

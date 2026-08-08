@@ -16,6 +16,15 @@ import SpeziLLMOpenAI
 import SwiftUI
 
 
+private enum UserStudyResponseGenerationError: LocalizedError {
+    case emptyResponse
+
+    var errorDescription: String? {
+        String(localized: "Plainly did not receive a chat response. Please try again.")
+    }
+}
+
+
 /// View model for the UserStudyChatView.
 ///
 /// This view model coordinates between the UI and the FHIRMultipleResourceInterpreter.
@@ -119,7 +128,7 @@ final class UserStudyChatViewModel: Sendable {
     }
     /// The response to the Study's initial questionnaire, if any.
     private let initialQuestionnaireResponse: ModelsR4.QuestionnaireResponse?
-    private let studyStartTime = Date()
+    private let studyStartTime = Date.now
     private var taskStartTimes: [Study.Task.ID: Date] = [:]
     private var taskEndTimes: [Study.Task.ID: Date] = [:]
     private var assistantMessagesByTask = LimitedCollectionDictionary<Study.Task.ID, String>()
@@ -189,7 +198,7 @@ final class UserStudyChatViewModel: Sendable {
     func submitSurveyAnswers(_ answers: [Study.Task.Question.Answer], for task: Study.Task) throws {
         let isCurrentTask = task == currentTask
         if isCurrentTask {
-            taskEndTimes[task.id] = Date()
+            taskEndTimes[task.id] = .now
         }
         for (index, answer) in answers.enumerated() {
             try study.submitAnswer(answer, forTaskId: task.id, questionIndex: index)
@@ -233,7 +242,7 @@ final class UserStudyChatViewModel: Sendable {
             numTotalTasks: study.tasks.count,
             taskState: .chatting
         )
-        taskStartTimes[task.id] = Date()
+        taskStartTimes[task.id] = .now
         presentedSheet = .instructions
         return true
     }
@@ -247,6 +256,8 @@ final class UserStudyChatViewModel: Sendable {
             presentedSheet = nil
             if didUpload {
                 didUploadHandler?()
+            } else {
+                AppDiagnostics.report.error("Study report workflow finished without a successful upload")
             }
         }
     }
@@ -274,7 +285,7 @@ final class UserStudyChatViewModel: Sendable {
                 numTotalTasks: study.tasks.count,
                 taskState: newTaskState
             )
-            taskStartTimes[nextTask.id] = Date()
+            taskStartTimes[nextTask.id] = .now
             switch newTaskState {
             case .chatting:
                 presentedSheet = .instructions
@@ -397,15 +408,6 @@ extension UserStudyChatViewModel {
         }
         return llmSession
     }
-    
-    /// A chat projection that keeps SpeziLLM's context as the single source of truth.
-    var chatBinding: Binding<Chat> {
-        Binding { [weak self] in
-            self?.llmSession.context.chat ?? []
-        } set: { [weak self] chat in
-            self?.llmSession.context.chat = chat
-        }
-    }
 }
 
 
@@ -431,7 +433,7 @@ extension UserStudyChatViewModel {
             do {
                 try assistantMessagesByTask.setCapacityRange(minimum: limits.lowerBound, maximum: limits.upperBound, forKey: task.id)
             } catch {
-                print("Error configuring message limit for task \(task.id): \(error)")
+                AppDiagnostics.configuration.logError(error, context: "Configuring task message limit")
             }
         }
     }
@@ -454,6 +456,7 @@ extension UserStudyChatViewModel {
     private func updateProcessingState() async {
         switch llmSession.state {
         case .error(let error):
+            AppDiagnostics.chat.logError(error, context: "Updating chat processing state")
             // Alerts and sheets can not be displayed at the same time.
             if presentedSheet != nil {
                 // We have to first dismiss all sheets.
@@ -475,28 +478,41 @@ extension UserStudyChatViewModel {
     ///
     /// This method checks if a response is needed and if so, delegates
     /// to the interpreter to generate the actual response.
-    func generateAssistantResponse() async -> LLMContextEntity? {
-        let imp = { [unowned self] () async -> LLMContextEntity? in // swiftlint:disable:this unowned_variable_capture
-            await updateProcessingState()
-            processingState = await processingState.calculateNewProcessingState(basedOn: llmSession)
-            guard shouldGenerateResponse else {
-                return nil
-            }
-            processingState = .processingSystemPrompts
-            guard let response = try? await interpreter.generateAssistantResponse() else {
-                return nil
-            }
-            await updateProcessingState()
-            processingState = await processingState.calculateNewProcessingState(basedOn: llmSession)
-            return response
-        }
-        guard let response = await imp() else {
+    func generateAssistantResponse() async throws -> LLMContextEntity? {
+        let correlationID = AppDiagnostics.correlationID()
+        await updateProcessingState()
+        processingState = await processingState.calculateNewProcessingState(basedOn: llmSession)
+        guard shouldGenerateResponse else {
             return nil
         }
-        if let currentTaskId {
-            try? assistantMessagesByTask.append(response.id.uuidString, forKey: currentTaskId)
+        processingState = .processingSystemPrompts
+        return try await requestAssistantResponse(correlationID: correlationID)
+    }
+
+    private func requestAssistantResponse(correlationID: String) async throws -> LLMContextEntity {
+        do {
+            let response = try await interpreter.generateAssistantResponse()
+            try Task.checkCancellation()
+            guard let response, response.role == .assistant() else {
+                throw UserStudyResponseGenerationError.emptyResponse
+            }
+            await updateProcessingState()
+            processingState = await processingState.calculateNewProcessingState(basedOn: llmSession)
+            if let currentTaskId {
+                try? assistantMessagesByTask.append(response.id.uuidString, forKey: currentTaskId)
+            }
+            return response
+        } catch let error as CancellationError {
+            throw error
+        } catch {
+            AppDiagnostics.chat.logError(
+                error,
+                context: "Assistant response generation",
+                correlationID: correlationID
+            )
+            processingState = .error
+            throw error
         }
-        return response
     }
 }
 
@@ -517,12 +533,13 @@ extension UserStudyChatViewModel {
             // Otherwise, there would be no indication in the UI that the upload actually took place & succeeded.
             try await Task.sleep(for: .seconds(0.5))
             guard let reportFile = try await generateStudyReportFile(encryptIfPossible: false) else {
+                AppDiagnostics.report.error("Study report generation returned no file")
                 return false
             }
             try await uploader.uploadReport(at: reportFile, for: study)
             return true
         } catch {
-            print("study report upload failed: \(error)")
+            AppDiagnostics.report.logError(error, context: "Study report workflow")
             return false
         }
     }
@@ -549,7 +566,7 @@ extension UserStudyChatViewModel {
             metadata: .init(
                 studyID: study.id,
                 startTime: studyStartTime,
-                endTime: Date(),
+                endTime: .now,
                 userInfo: inProgressStudy.userInfo,
                 llmConfig: .init(
                     model: interpretationModule.openAIModel,
@@ -564,9 +581,10 @@ extension UserStudyChatViewModel {
             let encoder = JSONEncoder()
             encoder.dateEncodingStrategy = .iso8601
             encoder.outputFormatting = [.prettyPrinted, .withoutEscapingSlashes]
-            return try encoder.encode(report)
+            let data = try encoder.encode(report)
+            return data
         } catch {
-            print("Error generating study report: \(error)")
+            AppDiagnostics.report.logError(error, context: "Study report encoding")
             return nil
         }
     }

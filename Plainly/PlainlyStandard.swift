@@ -6,7 +6,6 @@
 // SPDX-License-Identifier: MIT
 //
 
-import OSLog
 import Spezi
 import SpeziFHIR
 import SpeziFoundation
@@ -22,8 +21,6 @@ actor PlainlyStandard: Standard, EnvironmentAccessible {
         .coverageRecord, .immunizationRecord, .labResultRecord,
         .medicationRecord, .procedureRecord, .vitalSignRecord
     ]
-    
-    private let logger = Logger(subsystem: "edu.stanford.plainly", category: "PlainlyStandard")
     
     @Dependency(FHIRStore.self) private var fhirStore
     @Dependency(HealthKit.self) private var healthKit
@@ -47,7 +44,6 @@ actor PlainlyStandard: Standard, EnvironmentAccessible {
     private func initialSetup() async {
         await healthKit.waitForConfigurationDone()
         guard healthKit.isFullyAuthorized else {
-            logger.error("HealthKit permissions not yet provided.")
             return
         }
         await fetchRecordsFromHealthKit()
@@ -66,21 +62,23 @@ actor PlainlyStandard: Standard, EnvironmentAccessible {
         guard useHealthKitResources else {
             return
         }
+        let resourceLimit = await self.resourceLimit
         await fhirStore.removeAllResources()
         let healthKit = await healthKit
         await withTaskGroup { taskGroup in
             for recordType in Self.recordTypes {
                 taskGroup.addTask { @concurrent [self] in
-                    let records = try? await healthKit.query(
-                        recordType,
-                        timeRange: .ever,
-                        limit: self.resourceLimit,
-                        sortedBy: [SortDescriptor(\.startDate, order: .reverse)]
-                    )
-                    guard let records else {
-                        return
+                    do {
+                        let records = try await healthKit.query(
+                            recordType,
+                            timeRange: .ever,
+                            limit: resourceLimit,
+                            sortedBy: [SortDescriptor(\.startDate, order: .reverse)]
+                        )
+                        await addRecords(records)
+                    } catch {
+                        AppDiagnostics.healthRecords.logError(error, context: "Health Records query")
                     }
-                    await addRecords(records)
                 }
             }
         }
@@ -94,7 +92,7 @@ actor PlainlyStandard: Standard, EnvironmentAccessible {
                     do {
                         try await fhirStore.add(record, using: healthKit, loadHealthKitAttachments: true)
                     } catch {
-                        logger.error("Could not transform sample \(record.id) to FHIR resource: \(error)")
+                        AppDiagnostics.healthRecords.logError(error, context: "Transforming Health Records sample to FHIR")
                     }
                 }
             }

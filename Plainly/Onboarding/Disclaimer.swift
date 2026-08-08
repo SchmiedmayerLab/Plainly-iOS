@@ -13,35 +13,41 @@ import SwiftUI
 
 struct Disclaimer: View {
     @Environment(ManagedNavigationStack.Path.self) private var path
-    
+
     var body: some View {
-        SequentialOnboardingView(
-            header: {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("DISCLAIMER_TITLE")
-                        .font(.title)
-                        .fontWeight(.bold)
-                        .accessibilityAddTraits(.isHeader)
-                    Text("DISCLAIMER_SUBTITLE")
-                        .font(.body)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .fixedSize(horizontal: false, vertical: true)
-            },
-            steps: [
-                .init(
+        OnboardingView(
+            title: "DISCLAIMER_TITLE",
+            subtitle: "DISCLAIMER_SUBTITLE",
+            areas: [
+                OnboardingInformationView.Area(
+                    icon: {
+                        Image(systemName: "info.circle.fill")
+                            .accessibilityHidden(true)
+                    },
                     title: "DISCLAIMER_AREA1_TITLE",
                     description: "DISCLAIMER_AREA1_DESCRIPTION"
                 ),
-                .init(
+                OnboardingInformationView.Area(
+                    icon: {
+                        Image(systemName: "bubble.left.and.exclamationmark.bubble.right.fill")
+                            .accessibilityHidden(true)
+                    },
                     title: "DISCLAIMER_AREA2_TITLE",
                     description: "DISCLAIMER_AREA2_DESCRIPTION"
                 ),
-                .init(
+                OnboardingInformationView.Area(
+                    icon: {
+                        Image(systemName: "cross.case.fill")
+                            .accessibilityHidden(true)
+                    },
                     title: "DISCLAIMER_AREA3_TITLE",
                     description: "DISCLAIMER_AREA3_DESCRIPTION"
                 ),
-                .init(
+                OnboardingInformationView.Area(
+                    icon: {
+                        Image(systemName: "flask.fill")
+                            .accessibilityHidden(true)
+                    },
                     title: "DISCLAIMER_AREA4_TITLE",
                     description: "DISCLAIMER_AREA4_DESCRIPTION"
                 )
@@ -51,7 +57,6 @@ struct Disclaimer: View {
                 path.nextStep()
             }
         )
-        .font(.subheadline)
     }
 }
 

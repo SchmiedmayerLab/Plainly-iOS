@@ -21,6 +21,8 @@ struct UserStudyChatView: View {
     
     @State private var model: UserStudyChatViewModel
     @State private var viewState: ViewState = .idle
+    @State private var responseGenerationTask: Task<Void, Never>?
+    @State private var responseGenerationAttempt = 0
     
     private var enableTextToSpeech: Binding<Bool> {
         Binding<Bool> { [weak model] in
@@ -32,7 +34,11 @@ struct UserStudyChatView: View {
             enableTextToSpeechPrefValue = newValue
         }
     }
-    
+
+    private var userMessageCount: Int {
+        model.llmSession.context.count(where: { $0.role == .user })
+    }
+
     var body: some View {
         @Bindable var model = model
         NavigationStack { // swiftlint:disable:this closure_body_length
@@ -66,44 +72,40 @@ struct UserStudyChatView: View {
                 } message: {
                     Text("Do you want to end the chat and complete your participation in the study?")
                 }
-                .task(id: model.llmSession.state) {
-                    switch model.llmSession.state {
-                    case .error(let error):
-                        do {
-                            try await Task.sleep(for: .seconds(0.5))
-                            model.presentedSheet = nil
-                            try await Task.sleep(for: .seconds(0.5))
-                        } catch {
-                            return
-                        }
-                        viewState = .error(AnyLocalizedError(error: error))
-                    default:
-                        viewState = .idle
-                    }
-                }
                 .viewStateAlert(state: $viewState)
                 .onAppear {
                     model.didUploadHandler = {
                         dismiss()
                     }
                     _ = model.startStudy()
+                    scheduleAssistantResponseGeneration()
                 }
-                .task(id: model.llmSession.context.count(where: { $0.role == .user })) {
-                    _ = await model.generateAssistantResponse()
+                .onChange(of: userMessageCount) { _, _ in
+                    scheduleAssistantResponseGeneration()
+                }
+                .onChange(of: model.llmSession.state) { _, newValue in
+                    if case .error(let error) = newValue {
+                        AppDiagnostics.chat.logError(error, context: "LLM session state")
+                    }
+                }
+                .onDisappear {
+                    responseGenerationTask?.cancel()
                 }
         }
     }
     
     @ViewBuilder private var chatView: some View {
+        @Bindable var llmSession = model.llmSession
+
         VStack {
             UserStudyChatProcessingView(model: model)
             ChatView(
-                model.chatBinding,
+                $llmSession.context.chat,
                 disableInput: !model.shouldEnableChatInput,
                 speechToText: model.study.isUnguided,
                 messagePendingAnimation: .manual(shouldDisplay: model.showTypingIndicator)
             )
-            .speak(model.llmSession.context.chat, muted: !enableTextToSpeech.wrappedValue)
+            .speak(llmSession.context.chat, muted: !enableTextToSpeech.wrappedValue)
         }
         .animation(.easeInOut(duration: 0.4), value: model.isProcessing)
     }
@@ -111,7 +113,38 @@ struct UserStudyChatView: View {
     init(model: UserStudyChatViewModel) {
         self.model = model
     }
-    
+
+    private func scheduleAssistantResponseGeneration() {
+        responseGenerationAttempt += 1
+        let attempt = responseGenerationAttempt
+        responseGenerationTask?.cancel()
+        responseGenerationTask = Task {
+            await generateAssistantResponse(attempt: attempt)
+        }
+    }
+
+    private func generateAssistantResponse(attempt: Int) async {
+        defer {
+            if responseGenerationAttempt == attempt {
+                responseGenerationTask = nil
+            }
+        }
+        do {
+            _ = try await model.generateAssistantResponse()
+        } catch is CancellationError {
+            return
+        } catch {
+            AppDiagnostics.chat.logError(error, context: "Assistant response task")
+            model.presentedSheet = nil
+            do {
+                try await Task.sleep(for: .seconds(0.5))
+            } catch {
+                return
+            }
+            viewState = .error(AnyLocalizedError(error: error))
+        }
+    }
+
     @ViewBuilder
     private func taskInstructionSheet() -> some View {
         if let task = model.currentTask, let taskIdx = model.userDisplayableCurrentTaskIdx {

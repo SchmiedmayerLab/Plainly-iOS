@@ -10,7 +10,6 @@
 
 import AVFoundation
 import Foundation
-import OSLog
 import SpeziViews
 import SwiftUI
 import VisionKit
@@ -96,7 +95,6 @@ private struct ScanQRCodeSheet: View {
 private struct DataScannerView: UIViewControllerRepresentable {
     typealias UIViewControllerType = DataScannerViewController
     
-    private let logger = Logger(subsystem: "edu.stanford.plainly", category: "QRCodeScanning")
     let isScanning: Binding<Bool>
     let onSuccess: @Sendable @MainActor (_ payload: String) -> QRCodeScanningResponse
     
@@ -127,7 +125,7 @@ private struct DataScannerView: UIViewControllerRepresentable {
             do {
                 try viewController.startScanning()
             } catch {
-                logger.error("Unable to start scanning: \(error)")
+                AppDiagnostics.study.logError(error, context: "Starting study QR code scanner")
             }
         case (false, true):
             viewController.stopScanning()

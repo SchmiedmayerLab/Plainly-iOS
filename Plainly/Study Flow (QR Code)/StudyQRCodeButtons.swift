@@ -26,11 +26,12 @@ struct ScanQRCodeButton: View {
         }
         .qrCodeScanningSheet(isPresented: $showQRCodeScanner) { payload in
             do {
-                didScan(try StudyQRCodeHandler.processQRCode(payload: payload))
+                let result = try StudyQRCodeHandler.processQRCode(payload: payload)
+                didScan(result)
                 showQRCodeScanner = false
                 return .stopScanning
             } catch {
-                print("Failed to start study: \(error)")
+                AppDiagnostics.study.logError(error, context: "Processing study QR code")
                 return .continueScanning
             }
         }

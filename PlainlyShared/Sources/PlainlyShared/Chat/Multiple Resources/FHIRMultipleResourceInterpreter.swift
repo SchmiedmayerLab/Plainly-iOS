@@ -6,6 +6,7 @@
 // SPDX-License-Identifier: MIT
 //
 
+private import Foundation
 public import Observation
 private import os
 public import SpeziFHIR
@@ -71,18 +72,34 @@ public final class FHIRMultipleResourceInterpreter: Sendable {
             llmSession.context = createInterpretationContext(using: .interpretMultipleResourcesDefaultPrompt)
         }
     }
+
+    private static func logError(_ error: any Error, context: String, generation: Int? = nil) {
+        let nsError = error as NSError
+        let typeName = String(reflecting: type(of: error))
+        let description = nsError.localizedDescription
+        logger.error("""
+            \(context, privacy: .public) failed; generation=\(generation ?? 0); type=\(typeName, privacy: .public); \
+            domain=\(nsError.domain, privacy: .public); code=\(nsError.code); \
+            descriptionHash=\(description, privacy: .private(mask: .hash))
+            """)
+    }
     
     /// Starts a new conversation by creating a fresh LLM session.
     ///
     /// This  creates an entirely new session and replaces the current one.
     public func startNewConversation(using prompt: FHIRPrompt) {
+        if currentGenerationTask != nil {
+            currentGenerationIdentifier &+= 1
+            currentGenerationTask?.cancel()
+            currentGenerationTask = nil
+        }
         let newLLMSession = llmRunner(with: llmSchema)
         newLLMSession.context = createInterpretationContext(using: prompt)
         if let localStorage {
             do {
                 try localStorage.delete(.init(FHIRMultipleResourceInterpreterConstants.context))
             } catch {
-                Self.logger.error("Failed to delete conversation context: \(error)")
+                Self.logError(error, context: "Deleting stored conversation context")
             }
         }
         llmSession = newLLMSession
@@ -100,25 +117,7 @@ public final class FHIRMultipleResourceInterpreter: Sendable {
             guard let self else {
                 return nil
             }
-            do {
-                let stream = try await llmSession.generate()
-                for try await token in stream {
-                    try Task.checkCancellation()
-                    llmSession.context.append(assistantOutput: token)
-                }
-                try Task.checkCancellation()
-                llmSession.context.completeAssistantStreaming()
-                if let localStorage {
-                    try localStorage.store(llmSession.context, for: .init(FHIRMultipleResourceInterpreterConstants.context))
-                    Self.logger.debug("Successfully stored updated conversation context")
-                }
-                return llmSession.context.last
-            } catch is CancellationError {
-                Self.logger.error("Response generation was cancelled")
-                return nil
-            } catch {
-                throw error
-            }
+            return try await self.performGeneration(generationIdentifier: generationIdentifier)
         }
         currentGenerationTask = task
         return try await withTaskCancellationHandler {
@@ -130,6 +129,27 @@ public final class FHIRMultipleResourceInterpreter: Sendable {
             return try await task.value
         } onCancel: {
             task.cancel()
+        }
+    }
+
+    private func performGeneration(generationIdentifier: Int) async throws -> LLMContextEntity? {
+        do {
+            let stream = try await llmSession.generate()
+            for try await token in stream {
+                try Task.checkCancellation()
+                llmSession.context.append(assistantOutput: token)
+            }
+            try Task.checkCancellation()
+            llmSession.context.completeAssistantStreaming()
+            if let localStorage {
+                try localStorage.store(llmSession.context, for: .init(FHIRMultipleResourceInterpreterConstants.context))
+            }
+            return llmSession.context.last
+        } catch is CancellationError {
+            return nil
+        } catch {
+            Self.logError(error, context: "Generating assistant response", generation: generationIdentifier)
+            throw error
         }
     }
     

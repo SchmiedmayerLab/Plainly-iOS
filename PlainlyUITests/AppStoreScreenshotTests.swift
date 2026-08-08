@@ -34,7 +34,8 @@ final class AppStoreScreenshotTests: XCTestCase, Sendable {
             "--showOnboarding",
             "--mode",
             "test",
-            "--disableFirebase"
+            "--disableFirebase",
+            "--disableHealthRecords"
         ]
         onboardingApp.launch()
         setScreenshotOrientation()
@@ -44,18 +45,15 @@ final class AppStoreScreenshotTests: XCTestCase, Sendable {
 
         onboardingApp.buttons["Learn More"].tap()
         XCTAssertTrue(onboardingApp.staticTexts["Disclaimer"].waitForExistence(timeout: 5))
-        for _ in 0..<10 {
-            let nextButton = onboardingApp.buttons["Next"]
-            guard nextButton.waitForExistence(timeout: 1) else {
-                break
-            }
-            nextButton.tap()
+        let agreementButton = onboardingApp.buttons["I Agree"]
+        let visibleElements = ["Informational Use", "Model Limitations", "Clinical Questions", "Research Use Only"]
+            .map { onboardingApp.staticTexts[$0] } + [agreementButton]
+        let visibleFrame = onboardingApp.windows.firstMatch.frame
+        for element in visibleElements {
+            XCTAssertTrue(element.waitForExistence(timeout: 5))
+            XCTAssertTrue(visibleFrame.contains(element.frame))
         }
-        XCTAssertTrue(onboardingApp.buttons["I Agree"].waitForExistence(timeout: 5))
-        let disclaimerScrollView = onboardingApp.scrollViews.firstMatch
-        for _ in 0..<4 {
-            disclaimerScrollView.swipeDown()
-        }
+        XCTAssertTrue(agreementButton.isHittable)
         snapshot("01_Disclaimer")
 
         onboardingApp.terminate()
@@ -68,7 +66,8 @@ final class AppStoreScreenshotTests: XCTestCase, Sendable {
             "--skipOnboarding",
             "--mode",
             "study:edu.stanford.plainly.usabilityStudy",
-            "--disableFirebase"
+            "--disableFirebase",
+            "--disableHealthRecords"
         ]
         studyApp.launch()
         setScreenshotOrientation()

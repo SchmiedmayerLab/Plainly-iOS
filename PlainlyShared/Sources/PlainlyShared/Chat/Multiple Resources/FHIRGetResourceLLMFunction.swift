@@ -6,6 +6,7 @@
 // SPDX-License-Identifier: MIT
 //
 
+private import Foundation
 private import ModelsR4
 private import os
 public import SpeziFHIR
@@ -30,6 +31,10 @@ public struct FHIRGetResourceLLMFunction: LLMFunction {
     ) {
         self.fhirStore = fhirStore
         self.resourceSummarizer = resourceSummarizer
+        let resourceIdentifiers = Self.resourceIdentifierEnum(
+            Array(fhirStore.allResourcesFunctionCallIdentifier),
+            limit: resourceCountLimit
+        )
         _resourceCategories = Parameter(
             description: """
                 Pass in one or more identifiers that you want to access.
@@ -38,8 +43,18 @@ public struct FHIRGetResourceLLMFunction: LLMFunction {
                 Ensure that you request the most recent information to get a good overview of the user's current health status.
                 Today’s date is \(FHIRResource.functionCallIdentifierDateFormatter.string(from: .now)).
                 """,
-            enum: fhirStore.allResourcesFunctionCallIdentifier.suffix(resourceCountLimit)
+            enum: resourceIdentifiers,
+            minItems: 1,
+            maxItems: resourceCountLimit,
+            uniqueItems: true
         )
+    }
+
+    // `nil` intentionally omits the JSON Schema enum, while an empty array produces an invalid schema.
+    // swiftlint:disable:next discouraged_optional_collection
+    static func resourceIdentifierEnum(_ identifiers: [String], limit: Int) -> [String]? {
+        let limitedIdentifiers = Array(identifiers.suffix(limit))
+        return limitedIdentifiers.isEmpty ? nil : limitedIdentifiers
     }
     
     
@@ -53,8 +68,20 @@ public struct FHIRGetResourceLLMFunction: LLMFunction {
     
     
     public func execute() async throws -> String? {
-        try await processResourceCategories(resourceCategories)
-            .joined(separator: "\n\n")
+        do {
+            let output = try await processResourceCategories(resourceCategories)
+            return output.joined(separator: "\n\n")
+        } catch {
+            let nsError = error as NSError
+            let typeName = String(reflecting: type(of: error))
+            let description = nsError.localizedDescription
+            Self.logger.error("""
+                FHIR resource tool call failed; type=\(typeName, privacy: .public); \
+                domain=\(nsError.domain, privacy: .public); code=\(nsError.code); \
+                descriptionHash=\(description, privacy: .private(mask: .hash))
+                """)
+            throw error
+        }
     }
     
     

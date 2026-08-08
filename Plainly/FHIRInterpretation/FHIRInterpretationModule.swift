@@ -39,6 +39,7 @@ final class FHIRInterpretationModule: Module, EnvironmentAccessible, @unchecked 
     @MainActor var currentStudy: InProgressStudy?
     
     @ObservationIgnored private var schemaUpdateTask: Task<Void, Never>?
+    @ObservationIgnored private var schemaUpdateGeneration = 0
     
     @MainActor private var singleResourceSchema: LLMOpenAISchema {
         LLMOpenAISchema(
@@ -90,12 +91,30 @@ final class FHIRInterpretationModule: Module, EnvironmentAccessible, @unchecked 
     @MainActor
     func scheduleSchemaUpdate() {
         schemaUpdateTask?.cancel()
+        schemaUpdateGeneration &+= 1
+        let generation = schemaUpdateGeneration
         schemaUpdateTask = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(0.1))
-            guard !Task.isCancelled, let self else {
+            defer {
+                if let self, self.schemaUpdateGeneration == generation {
+                    self.schemaUpdateTask = nil
+                }
+            }
+            do {
+                try await Task.sleep(for: .seconds(0.1))
+                try Task.checkCancellation()
+            } catch is CancellationError {
+                return
+            } catch {
+                AppDiagnostics.configuration.logError(error, context: "Waiting to apply schema update")
                 return
             }
-            await self.applySchemas()
+            guard let self else {
+                return
+            }
+            guard self.isCurrentSchemaUpdate(generation) else {
+                return
+            }
+            await self.applySchemas(generation: generation)
         }
     }
 
@@ -103,17 +122,37 @@ final class FHIRInterpretationModule: Module, EnvironmentAccessible, @unchecked 
     @MainActor
     func updateSchemas() async {
         schemaUpdateTask?.cancel()
-        await applySchemas()
+        schemaUpdateTask = nil
+        schemaUpdateGeneration &+= 1
+        await applySchemas(generation: schemaUpdateGeneration)
     }
 
     @MainActor
-    private func applySchemas() async {
+    private func applySchemas(generation: Int) async {
+        guard isCurrentSchemaUpdate(generation) else {
+            return
+        }
+        let singleResourceSchema = self.singleResourceSchema
+        let multipleResourceSchema = self.multipleResourceSchema
         let summarizePrompt = currentStudy?.study.summarizeSingleResourcePrompt ?? .summarizeSingleFHIRResourceDefaultPrompt
+        let multipleResourcePrompt = currentStudy?.study.interpretMultipleResourcesPrompt
+            ?? .interpretMultipleResourcesDefaultPrompt
         await resourceSummarizer.update(llmSchema: singleResourceSchema, summarizationPrompt: summarizePrompt)
+        guard isCurrentSchemaUpdate(generation) else {
+            return
+        }
         await singleResourceInterpreter.update(llmSchema: singleResourceSchema, interpretationPrompt: .interpretSingleFHIRResource)
+        guard isCurrentSchemaUpdate(generation) else {
+            return
+        }
         multipleResourceInterpreter.changeLLMSchema(
             to: multipleResourceSchema,
-            using: currentStudy?.study.interpretMultipleResourcesPrompt ?? .interpretMultipleResourcesDefaultPrompt
+            using: multipleResourcePrompt
         )
+    }
+
+    @MainActor
+    private func isCurrentSchemaUpdate(_ generation: Int) -> Bool {
+        !Task.isCancelled && schemaUpdateGeneration == generation
     }
 }
