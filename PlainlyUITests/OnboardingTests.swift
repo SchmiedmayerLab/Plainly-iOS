@@ -131,9 +131,13 @@ class OnboardingTests: XCTestCase, Sendable {
         handleHealthAppOnboardingIfNecessary(healthApp)
         let getStartedButton = healthApp.buttons["UIA.Health.SuggestedAction.SetUpClinicalRecords.PrimaryButton"]
         let addInstitutionButton = healthApp.staticTexts["Sample Institution A"]
-        if getStartedButton.waitForExistence(timeout: 2), getStartedButton.isHittable,
+        if getStartedButton.waitForExistence(timeout: 5),
            !(healthApp.staticTexts["Suggestions"].waitForExistence(timeout: 2)
              && addInstitutionButton.waitForExistence(timeout: 2)) {
+            for _ in 0..<2 where !getStartedButton.isHittable {
+                healthApp.swipeUp()
+            }
+            XCTAssertTrue(getStartedButton.isHittable)
             getStartedButton.tap()
         }
 
