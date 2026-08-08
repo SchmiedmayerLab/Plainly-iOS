@@ -21,7 +21,6 @@ struct PlainlyCLI: AsyncParsableCommand {
         shouldDisplay: true,
         subcommands: [
             ExportConfigFile.self,
-            DecryptStudyReport.self,
             SimulateSession.self
         ],
         groupedSubcommands: [],

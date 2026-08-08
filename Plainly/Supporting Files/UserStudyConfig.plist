@@ -31,40 +31,5 @@
 		<key>STORAGE_BUCKET</key>
 		<string>som-rit-phi-lit-ai-dev.firebasestorage.app</string>
 	</dict>
-	<key>studyConfigs</key>
-	<dict>
-		<key>edu.stanford.plainly.gynStudy</key>
-		<dict>
-			<key>openAIAPIKey</key>
-			<string></string>
-			<key>openAIEndpoint</key>
-			<string>regular</string>
-			<key>reportEmail</key>
-			<string></string>
-		</dict>
-		<key>edu.stanford.plainly.spineAI</key>
-		<dict>
-			<key>openAIEndpoint</key>
-			<string>firebase-function:chat</string>
-			<key>reportEmail</key>
-			<string></string>
-		</dict>
-		<key>edu.stanford.plainly.languageStudy</key>
-		<dict>
-			<key>openAIEndpoint</key>
-			<string>firebase-function:chat</string>
-			<key>reportEmail</key>
-			<string></string>
-		</dict>
-		<key>edu.stanford.plainly.usabilityStudy</key>
-		<dict>
-			<key>openAIAPIKey</key>
-			<string></string>
-			<key>openAIEndpoint</key>
-			<string>regular</string>
-			<key>reportEmail</key>
-			<string></string>
-		</dict>
-	</dict>
 </dict>
 </plist>

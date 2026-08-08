@@ -25,7 +25,8 @@ let package = Package(
     dependencies: [
         .package(
             url: "https://github.com/SchmiedmayerLab/Spezi.git",
-            revision: "b5ce1a15688afffd83d7f757884e86e17a65b65c"
+            revision: "b5ce1a15688afffd83d7f757884e86e17a65b65c",
+            traits: [.trait(name: "Textual")]
         ),
         .package(url: "https://github.com/apple/FHIRModels.git", .upToNextMinor(from: "0.9.0")),
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.7.0")
@@ -74,8 +75,7 @@ let package = Package(
         ),
         .testTarget(
             name: "PlainlySharedTests",
-            dependencies: ["PlainlyShared", "PlainlyStudyDefinitions"],
-            resources: [.process("Resources")]
+            dependencies: ["PlainlyShared", "PlainlyStudyDefinitions"]
         )
     ]
 )

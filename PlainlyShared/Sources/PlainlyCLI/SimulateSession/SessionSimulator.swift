@@ -27,7 +27,7 @@ struct SessionSimulator: ~Copyable {
     private let resourceSummarizer: FHIRResourceSummarizer
 
     var sessionDesc: String {
-        "\(config.study.id) / \(config.bundle.singlePatient?.fullName ?? config.bundleInputName) @ \(config.model)/\(config.temperature) (\(runIdx + 1)/\(config.numberOfRuns))"
+        "\(config.study.id) / \(config.bundle.singlePatient?.fullName ?? config.bundleInputName) @ \(config.model) (\(runIdx + 1)/\(config.numberOfRuns))"
     }
 
     @MainActor
@@ -75,10 +75,7 @@ struct SessionSimulator: ~Copyable {
                 startTime: startTime,
                 endTime: endTime,
                 userInfo: userInfo,
-                llmConfig: .init(
-                    model: config.model,
-                    temperature: config.temperature
-                )
+                llmConfig: .init(model: config.model)
             ),
             initialQuestionnaireResponse: nil, // (obviously) not supported
             fhirResources: await studyReportFHIRResources(),
@@ -147,11 +144,11 @@ extension SessionSimulator {
                 throw ValidationError("GOOGLE_CREDENTIALS_PLIST environment variable must be set when using the 'Firebase' service.")
             }
             middlewares = [
-                OpenAIFirebaseInterceptor(firebaseConfig: firebaseConfig, studyId: config.study.id)
+                FirebaseChatInterceptor(firebaseConfig: firebaseConfig, studyId: config.study.id)
             ]
         case .firebaseEmulator:
             middlewares = [
-                OpenAIFirebaseInterceptor(
+                FirebaseChatInterceptor(
                     firebaseConfig: emulatorConfigFromEnvironment(),
                     studyId: config.study.id
                 )
@@ -161,7 +158,6 @@ extension SessionSimulator {
             FHIRStore()
             SessionCoordinator(config: .init(
                 model: config.model,
-                temperature: config.temperature,
                 resourceLimit: 1000,
                 summarizeSingleResourcePrompt: config.summarizeSingleResourcePrompt,
                 systemPrompt: config.systemPrompt

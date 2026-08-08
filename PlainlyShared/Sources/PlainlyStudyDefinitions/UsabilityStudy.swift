@@ -6,7 +6,7 @@
 // SPDX-License-Identifier: MIT
 //
 
-// swiftlint:disable all
+// swiftlint:disable line_length
 
 public import PlainlyShared
 
@@ -18,6 +18,8 @@ extension Study {
             id: "edu.stanford.plainly.usabilityStudy",
             title: "Plainly User Study",
             explainer: "During this study, you’ll complete a survey about your experiences navigating the healthcare system and have the opportunity to ask the chat questions about your health.",
+            llmModel: .gpt5_5,
+            ragEnabled: false,
             summarizeSingleResourcePrompt: nil,
             interpretMultipleResourcesPrompt: nil,
             chatTitleConfig: .default,

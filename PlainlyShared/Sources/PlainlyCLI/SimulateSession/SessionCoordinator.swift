@@ -16,7 +16,6 @@ import SpeziLLMOpenAI
 final class SessionCoordinator: Module, @unchecked Sendable {
     struct Config: Sendable {
         let model: LLMOpenAIParameters.ModelType
-        let temperature: Double
         let resourceLimit: Int
         let summarizeSingleResourcePrompt: FHIRPrompt
         let systemPrompt: FHIRPrompt
@@ -74,14 +73,14 @@ extension SessionCoordinator {
     private var singleResourceLLMSchema: any LLMSchema {
         LLMOpenAISchema(
             parameters: .init(modelType: config.model),
-            modelParameters: .init(temperature: config.temperature)
+            modelParameters: .deterministic
         )
     }
     
     @MainActor private var multipleResourceInterpreterOpenAISchema: LLMOpenAISchema {
         LLMOpenAISchema(
             parameters: .init(modelType: config.model),
-            modelParameters: .init(temperature: config.temperature)
+            modelParameters: .deterministic
         ) {
             FHIRGetResourceLLMFunction(
                 fhirStore: fhirStore,

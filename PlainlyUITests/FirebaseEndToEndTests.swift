@@ -72,8 +72,14 @@ final class FirebaseEndToEndTests: XCTestCase, Sendable {
             "The study session remained visible after ending the chat."
         )
         XCTAssertTrue(
-            startSession.waitForExistence(timeout: 30),
-            "The study did not dismiss after uploading its report to Firebase Storage."
+            app.staticTexts["You're All Set"].waitForExistence(timeout: 30),
+            "The confirmation was not shown after uploading the report to Firebase Storage."
+        )
+
+        app.buttons["Done"].tap()
+        XCTAssertTrue(
+            startSession.waitForExistence(timeout: 10),
+            "The study did not dismiss after confirming the completion."
         )
     }
 

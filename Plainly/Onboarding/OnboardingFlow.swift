@@ -38,10 +38,6 @@ struct OnboardingFlow: View {
         ManagedNavigationStack(didComplete: $completedOnboardingFlow, path: navigationPath) {
             Welcome()
             Disclaimer()
-            if Plainly.mode.requiresUserProvidedAPIKey {
-                OpenAIAPIKey()
-                OpenAIModelSelection()
-            }
             if HKHealthStore.isHealthDataAvailable() {
                 HealthKitPermissions()
             }

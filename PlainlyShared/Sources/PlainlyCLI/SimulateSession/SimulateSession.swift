@@ -22,7 +22,6 @@ struct SimulateSession: AsyncParsableCommand {
               bundleName          (required) Embedded patient name, or path to a FHIR bundle JSON
                                              file (resolved relative to the config file).
               model               (required) OpenAI model name (e.g. "gpt-4o").
-              temperature         (required) Sampling temperature.
               userQuestions       (required) List of questions the simulated patient asks.
               service             (optional) Backend: "OpenAI", "Firebase", or "Firebase-Emulator".
                                              Inferred from the environment when omitted (see below).

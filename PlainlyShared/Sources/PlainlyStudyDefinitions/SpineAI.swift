@@ -6,11 +6,9 @@
 // SPDX-License-Identifier: MIT
 //
 
-// swiftlint:disable all
-
 import Foundation
-public import PlainlyShared
 @preconcurrency import struct ModelsR4.Questionnaire
+public import PlainlyShared
 
 
 extension Study {
@@ -23,6 +21,8 @@ extension Study {
             id: "edu.stanford.plainly.spineAI",
             title: "SpineAI",
             explainer: "Welcome to the SpineAI Study!",
+            llmModel: .gpt5_5,
+            ragEnabled: true,
             summarizeSingleResourcePrompt: .spineAIResourcePrompt,
             interpretMultipleResourcesPrompt: .spineAISystemPrompt,
             chatTitleConfig: .studyTitle,

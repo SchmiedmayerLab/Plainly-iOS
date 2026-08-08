@@ -8,8 +8,7 @@ path = [
     "Plainly.xcodeproj/**",
     "Plainly/Resources/**",
     "Plainly/Supporting Files/**",
-    "PlainlyShared/Sources/PlainlyShared/Resources/**",
-    "PlainlyShared/Tests/PlainlySharedTests/Resources/*"
+    "PlainlyShared/Sources/PlainlyShared/Resources/**"
 ]
 SPDX-FileCopyrightText = "2025 Stanford University and the project authors (see CONTRIBUTORS.md)"
 SPDX-License-Identifier = "MIT"
