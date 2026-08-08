@@ -56,11 +56,6 @@ struct IntakeQuestionnaireSheet: View {
             }
         }
         .viewStateAlert(state: $viewState)
-        .onAppear {
-            AppDiagnostics.questionnaire.notice(
-                "Initial questionnaire sheet appeared; study=\(study.id, privacy: .public)"
-            )
-        }
         .onChange(of: viewState) { oldValue, newValue in
             if oldValue.isError && newValue == .idle {
                 // we were displaying an error but it got dismissed and we're now back in the idle state.
@@ -89,13 +84,7 @@ struct IntakeQuestionnaireSheet: View {
                 return
             }
             questionnaireState = .loaded(try await QuestionnaireLoader.shared.questionnaire(from: url))
-            AppDiagnostics.questionnaire.notice(
-                "Initial questionnaire became ready; study=\(study.id, privacy: .public)"
-            )
         } catch is CancellationError {
-            AppDiagnostics.questionnaire.notice(
-                "Initial questionnaire load cancelled; study=\(study.id, privacy: .public)"
-            )
             return
         } catch {
             AppDiagnostics.questionnaire.logError(error, context: "Initial questionnaire preparation")
@@ -108,10 +97,6 @@ struct IntakeQuestionnaireSheet: View {
     
     private func processQuestionnaireResponses(_ speziResponses: SpeziQuestionnaire.QuestionnaireResponses) async {
         let correlationID = AppDiagnostics.correlationID()
-        AppDiagnostics.questionnaire.notice("""
-            Questionnaire response processing started; correlation=\(correlationID, privacy: .public); \
-            study=\(study.id, privacy: .public)
-            """)
         viewState = .processing
         do {
             let fhirResponse = try ModelsR4.QuestionnaireResponse(speziResponses)
@@ -123,10 +108,6 @@ struct IntakeQuestionnaireSheet: View {
                 \(summary)
                 """
             self.fhirResponse = fhirResponse
-            AppDiagnostics.questionnaire.notice("""
-                Questionnaire response processing completed; correlation=\(correlationID, privacy: .public); \
-                study=\(study.id, privacy: .public)
-                """)
             dismiss()
         } catch {
             AppDiagnostics.questionnaire.logError(

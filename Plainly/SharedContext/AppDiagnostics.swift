@@ -13,7 +13,6 @@ import OSLog
 enum AppDiagnostics {
     private static let subsystem = Bundle.main.bundleIdentifier ?? "edu.stanford.llmonfhir"
 
-    static let lifecycle = Logger(subsystem: subsystem, category: "Lifecycle")
     static let configuration = Logger(subsystem: subsystem, category: "Configuration")
     static let healthRecords = Logger(subsystem: subsystem, category: "HealthRecords")
     static let questionnaire = Logger(subsystem: subsystem, category: "Questionnaire")
@@ -22,9 +21,6 @@ enum AppDiagnostics {
     static let network = Logger(subsystem: subsystem, category: "Network")
     static let firebase = Logger(subsystem: subsystem, category: "Firebase")
     static let report = Logger(subsystem: subsystem, category: "Report")
-
-    static let chatSignposter = OSSignposter(subsystem: subsystem, category: "Chat")
-    static let networkSignposter = OSSignposter(subsystem: subsystem, category: "Network")
 
     static func correlationID() -> String {
         String(UUID().uuidString.prefix(8))

@@ -39,10 +39,6 @@ struct UserStudyChatView: View {
         model.llmSession.context.count(where: { $0.role == .user })
     }
 
-    private var assistantMessageCount: Int {
-        model.llmSession.context.count(where: { $0.role == .assistant() })
-    }
-    
     var body: some View {
         @Bindable var model = model
         NavigationStack { // swiftlint:disable:this closure_body_length
@@ -78,50 +74,21 @@ struct UserStudyChatView: View {
                 }
                 .viewStateAlert(state: $viewState)
                 .onAppear {
-                    AppDiagnostics.chat.notice("""
-                        Chat view appeared; study=\(model.study.id, privacy: .public); \
-                        contextCount=\(model.llmSession.context.count); userCount=\(userMessageCount); \
-                        assistantCount=\(assistantMessageCount); sessionState=\(model.llmSession.state.description, privacy: .public)
-                        """)
                     model.didUploadHandler = {
                         dismiss()
                     }
                     _ = model.startStudy()
                     scheduleAssistantResponseGeneration()
                 }
-                .onChange(of: userMessageCount) { oldValue, newValue in
-                    AppDiagnostics.chat.notice("""
-                        User message count changed; old=\(oldValue); new=\(newValue); \
-                        contextCount=\(model.llmSession.context.count); inputEnabled=\(model.shouldEnableChatInput)
-                        """)
+                .onChange(of: userMessageCount) { _, _ in
                     scheduleAssistantResponseGeneration()
                 }
-                .onChange(of: model.llmSession.context.count) { oldValue, newValue in
-                    AppDiagnostics.chat.notice("""
-                        Chat context count changed; old=\(oldValue); new=\(newValue); userCount=\(userMessageCount); \
-                        assistantCount=\(assistantMessageCount); lastIsUser=\(model.llmSession.context.last?.role == .user)
-                        """)
-                }
-                .onChange(of: model.llmSession.state) { oldValue, newValue in
-                    AppDiagnostics.chat.notice("""
-                        LLM session state changed; old=\(oldValue.description, privacy: .public); \
-                        new=\(newValue.description, privacy: .public); contextCount=\(model.llmSession.context.count)
-                        """)
+                .onChange(of: model.llmSession.state) { _, newValue in
                     if case .error(let error) = newValue {
                         AppDiagnostics.chat.logError(error, context: "LLM session state")
                     }
                 }
-                .onChange(of: model.processingState) { oldValue, newValue in
-                    AppDiagnostics.chat.info("""
-                        Chat processing state changed; old=\(oldValue.statusDescription, privacy: .public); \
-                        new=\(newValue.statusDescription, privacy: .public)
-                        """)
-                }
                 .onDisappear {
-                    AppDiagnostics.chat.notice("""
-                        Chat view disappeared; cancellingGeneration=\(responseGenerationTask != nil); \
-                        contextCount=\(model.llmSession.context.count)
-                        """)
                     responseGenerationTask?.cancel()
                 }
         }
@@ -150,11 +117,6 @@ struct UserStudyChatView: View {
     private func scheduleAssistantResponseGeneration() {
         responseGenerationAttempt += 1
         let attempt = responseGenerationAttempt
-        AppDiagnostics.chat.notice("""
-            Scheduling assistant response; attempt=\(attempt); replacingTask=\(responseGenerationTask != nil); \
-            contextCount=\(model.llmSession.context.count); userCount=\(userMessageCount); \
-            assistantCount=\(assistantMessageCount)
-            """)
         responseGenerationTask?.cancel()
         responseGenerationTask = Task {
             await generateAssistantResponse(attempt: attempt)
@@ -165,16 +127,11 @@ struct UserStudyChatView: View {
         defer {
             if responseGenerationAttempt == attempt {
                 responseGenerationTask = nil
-                AppDiagnostics.chat.debug("Assistant response task cleared; attempt=\(attempt)")
             }
         }
         do {
             _ = try await model.generateAssistantResponse()
-            AppDiagnostics.chat.notice(
-                "Assistant response task returned; attempt=\(attempt); contextCount=\(model.llmSession.context.count)"
-            )
         } catch is CancellationError {
-            AppDiagnostics.chat.notice("Assistant response task cancelled; attempt=\(attempt)")
             return
         } catch {
             AppDiagnostics.chat.logError(error, context: "Assistant response task")

@@ -37,7 +37,6 @@ extension AppConfigFile {
             Self.logger.fault("Configuration resource is missing; resource=\(nameInBundle, privacy: .public)")
             return nil
         }
-        Self.logger.notice("Configuration resource found; resource=\(nameInBundle, privacy: .public)")
         self.init(contentsOf: url)
     }
     
@@ -68,13 +67,8 @@ extension AppConfigFile {
     /// Returns an empty ``Plainly/Plainly/Mode/standalone`` config if the file is not present or cannot be decoded.
     public static func current() -> Self {
         guard let configuration = Self(nameInBundle: "UserStudyConfig") else {
-            logger.fault("Using empty standalone configuration fallback")
             return Self(launchMode: .standalone, studyConfigs: [:], firebaseConfig: nil)
         }
-        logger.notice("""
-            Configuration loaded; studyCount=\(configuration.studyConfigs.count); \
-            hasFirebaseConfiguration=\(configuration.firebaseConfig != nil)
-            """)
         return configuration
     }
 }

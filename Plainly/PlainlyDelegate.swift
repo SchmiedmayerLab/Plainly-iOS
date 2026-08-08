@@ -25,10 +25,6 @@ import SpeziLLMOpenAI
 
 final class PlainlyDelegate: SpeziAppDelegate {
     override var configuration: Configuration {
-        AppDiagnostics.lifecycle.notice("""
-            Building application configuration; firebaseDisabled=\(FeatureFlags.disableFirebase); \
-            firebaseEmulator=\(FeatureFlags.useFirebaseEmulator); healthRecordsDisabled=\(FeatureFlags.disableHealthRecords)
-            """)
         return Configuration(standard: PlainlyStandard()) {
             if !FeatureFlags.disableFirebase, let config = firebaseConfig {
                 firebaseModules(using: config)
@@ -68,7 +64,6 @@ final class PlainlyDelegate: SpeziAppDelegate {
             )
             return nil
         }
-        AppDiagnostics.configuration.notice("Firebase configuration contains all required keys")
         return config
     }
     
@@ -111,7 +106,6 @@ final class PlainlyDelegate: SpeziAppDelegate {
     
     nonisolated private var openAITokenConfig: RemoteLLMInferenceAuthToken {
         if Plainly.mode.requiresUserProvidedAPIKey {
-            AppDiagnostics.configuration.notice("Direct inference is configured to use the Keychain credential")
             return .keychain(tag: .openAIKey, username: "Plainly_OpenAI_Token")
         } else {
             return .closure { @MainActor in
@@ -144,8 +138,6 @@ extension FirebaseOptions {
         defer {
             try? fileManager.removeItem(at: tmpUrl)
         }
-        AppDiagnostics.configuration.notice("Passing configuration to the Firebase SDK")
         self.init(contentsOfFile: tmpUrl.absoluteURL.path(percentEncoded: false))
-        AppDiagnostics.configuration.notice("Firebase SDK options initialized")
     }
 }

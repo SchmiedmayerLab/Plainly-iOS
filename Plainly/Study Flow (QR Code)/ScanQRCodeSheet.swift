@@ -124,13 +124,11 @@ private struct DataScannerView: UIViewControllerRepresentable {
         case (true, false):
             do {
                 try viewController.startScanning()
-                AppDiagnostics.study.info("Study QR code scanner started")
             } catch {
                 AppDiagnostics.study.logError(error, context: "Starting study QR code scanner")
             }
         case (false, true):
             viewController.stopScanning()
-            AppDiagnostics.study.info("Study QR code scanner stopped")
         }
     }
 }

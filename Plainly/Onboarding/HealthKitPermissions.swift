@@ -23,15 +23,6 @@ struct HealthKitPermissions: View {
         var isProcessing: Bool {
             self == .requesting || self == .recoveryAvailable
         }
-
-        var logValue: String {
-            switch self {
-            case .idle: "idle"
-            case .requesting: "requesting"
-            case .recoveryAvailable: "recoveryAvailable"
-            case .completed: "completed"
-            }
-        }
     }
 
     @Environment(PlainlyStandard.self) private var standard
@@ -82,18 +73,6 @@ struct HealthKitPermissions: View {
             }
         }
         .navigationBarBackButtonHidden(authorizationState.isProcessing)
-        .onAppear {
-            AppDiagnostics.healthRecords.notice("""
-                Health Records permission step appeared; hasHealthKitModule=\(healthKit != nil); \
-                isFullyAuthorized=\(healthKit?.isFullyAuthorized == true)
-                """)
-        }
-        .onChange(of: authorizationState) { oldValue, newValue in
-            AppDiagnostics.healthRecords.notice("""
-                Health Records permission state changed; from=\(oldValue.logValue, privacy: .public); \
-                to=\(newValue.logValue, privacy: .public)
-                """)
-        }
         .task(id: authorizationState) {
             guard authorizationState == .requesting else {
                 return
@@ -108,9 +87,6 @@ struct HealthKitPermissions: View {
             )
         }
         .onChange(of: healthKit?.isFullyAuthorized) { _, isFullyAuthorized in
-            AppDiagnostics.healthRecords.info(
-                "Health Records authorization observation changed; isFullyAuthorized=\(isFullyAuthorized == true)"
-            )
             if isFullyAuthorized == true {
                 completeAuthorization()
             }
@@ -123,10 +99,8 @@ struct HealthKitPermissions: View {
 
     private func requestAuthorization() {
         guard authorizationState == .idle else {
-            AppDiagnostics.healthRecords.warning("Ignoring duplicate Health Records permission request")
             return
         }
-        AppDiagnostics.healthRecords.notice("Health Records permission request started")
         authorizationState = .requesting
         guard let healthKit else {
             AppDiagnostics.healthRecords.fault("HealthKit module is unavailable during permission request")
@@ -139,9 +113,6 @@ struct HealthKitPermissions: View {
         }
         Task { @MainActor in
             if await healthKit.didAskForAuthorization(toRead: PlainlyStandard.recordTypes) {
-                AppDiagnostics.healthRecords.notice(
-                    "Health Records permission sheet was previously completed; continuing onboarding"
-                )
                 completeAuthorization()
                 return
             }
@@ -157,7 +128,6 @@ struct HealthKitPermissions: View {
                 completeAuthorization(fetchRecords: false)
                 return
             }
-            AppDiagnostics.healthRecords.notice("Health Records permission request returned")
             completeAuthorization()
         }
     }
@@ -165,9 +135,6 @@ struct HealthKitPermissions: View {
     private func monitorAuthorizationDecision(using healthKit: HealthKit) async {
         while authorizationState.isProcessing {
             if await healthKit.didAskForAuthorization(toRead: PlainlyStandard.recordTypes) {
-                AppDiagnostics.healthRecords.notice(
-                    "Health Records permission decision detected by fallback monitor"
-                )
                 completeAuthorization()
                 return
             }
@@ -177,12 +144,8 @@ struct HealthKitPermissions: View {
 
     private func completeAuthorization(fetchRecords: Bool = true) {
         guard authorizationState != .completed else {
-            AppDiagnostics.healthRecords.info("Ignoring duplicate completion of Health Records permission step")
             return
         }
-        AppDiagnostics.healthRecords.notice(
-            "Completing Health Records permission step; willFetchRecords=\(fetchRecords)"
-        )
         authorizationState = .completed
         if fetchRecords {
             Task { await standard.fetchRecordsFromHealthKit() }

@@ -67,7 +67,6 @@ final class FHIRInterpretationModule: Module, EnvironmentAccessible, @unchecked 
     
     @MainActor
     func configure() {
-        AppDiagnostics.configuration.notice("FHIR interpretation module configuration started")
         resourceSummarizer = FHIRResourceSummarizer(
             localStorage: localStorage,
             llmRunner: llmRunner,
@@ -85,16 +84,12 @@ final class FHIRInterpretationModule: Module, EnvironmentAccessible, @unchecked 
             llmSchema: multipleResourceSchema,
             fhirStore: fhirStore
         )
-        AppDiagnostics.configuration.notice("FHIR interpretation module configuration completed")
     }
     
     
     /// Schedules a schema update, coalescing rapid preference changes into a single update.
     @MainActor
     func scheduleSchemaUpdate() {
-        if schemaUpdateTask != nil {
-            AppDiagnostics.configuration.info("Replacing a pending schema update task")
-        }
         schemaUpdateTask?.cancel()
         schemaUpdateGeneration &+= 1
         let generation = schemaUpdateGeneration
@@ -108,18 +103,15 @@ final class FHIRInterpretationModule: Module, EnvironmentAccessible, @unchecked 
                 try await Task.sleep(for: .seconds(0.1))
                 try Task.checkCancellation()
             } catch is CancellationError {
-                AppDiagnostics.configuration.info("Scheduled schema update cancelled")
                 return
             } catch {
                 AppDiagnostics.configuration.logError(error, context: "Waiting to apply schema update")
                 return
             }
             guard let self else {
-                AppDiagnostics.configuration.warning("Scheduled schema update lost its interpretation module")
                 return
             }
             guard self.isCurrentSchemaUpdate(generation) else {
-                AppDiagnostics.configuration.info("Discarding a stale scheduled schema update; generation=\(generation)")
                 return
             }
             await self.applySchemas(generation: generation)
@@ -129,7 +121,6 @@ final class FHIRInterpretationModule: Module, EnvironmentAccessible, @unchecked 
     /// Immediately updates the schemas used by the interpretation module.
     @MainActor
     func updateSchemas() async {
-        AppDiagnostics.configuration.notice("Immediate schema update requested")
         schemaUpdateTask?.cancel()
         schemaUpdateTask = nil
         schemaUpdateGeneration &+= 1
@@ -139,35 +130,24 @@ final class FHIRInterpretationModule: Module, EnvironmentAccessible, @unchecked 
     @MainActor
     private func applySchemas(generation: Int) async {
         guard isCurrentSchemaUpdate(generation) else {
-            AppDiagnostics.configuration.info("Skipping a stale schema update; generation=\(generation)")
             return
         }
-        let studyID = currentStudy?.study.id
         let singleResourceSchema = self.singleResourceSchema
         let multipleResourceSchema = self.multipleResourceSchema
         let summarizePrompt = currentStudy?.study.summarizeSingleResourcePrompt ?? .summarizeSingleFHIRResourceDefaultPrompt
         let multipleResourcePrompt = currentStudy?.study.interpretMultipleResourcesPrompt
             ?? .interpretMultipleResourcesDefaultPrompt
-        AppDiagnostics.configuration.notice("""
-            Applying inference schemas; generation=\(generation); hasStudy=\(studyID != nil); \
-            study=\(studyID ?? "none", privacy: .public); model=\(String(describing: self.openAIModel), privacy: .public)
-            """)
         await resourceSummarizer.update(llmSchema: singleResourceSchema, summarizationPrompt: summarizePrompt)
         guard isCurrentSchemaUpdate(generation) else {
-            AppDiagnostics.configuration.info("Schema update superseded after resource summarizer update; generation=\(generation)")
             return
         }
         await singleResourceInterpreter.update(llmSchema: singleResourceSchema, interpretationPrompt: .interpretSingleFHIRResource)
         guard isCurrentSchemaUpdate(generation) else {
-            AppDiagnostics.configuration.info("Schema update superseded after resource interpreter update; generation=\(generation)")
             return
         }
         multipleResourceInterpreter.changeLLMSchema(
             to: multipleResourceSchema,
             using: multipleResourcePrompt
-        )
-        AppDiagnostics.configuration.notice(
-            "Inference schemas applied; generation=\(generation); study=\(studyID ?? "none", privacy: .public)"
         )
     }
 

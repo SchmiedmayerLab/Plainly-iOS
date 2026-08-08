@@ -21,20 +21,10 @@ final class FirebaseUpload: Module, EnvironmentAccessible, Sendable {
     func configure() {
         Task {
             do {
-                AppDiagnostics.firebase.notice("""
-                    Firebase anonymous authentication starting; emulator=\(FeatureFlags.useFirebaseEmulator); \
-                    hadExistingUser=\(Auth.auth().currentUser != nil)
-                    """)
                 if FeatureFlags.useFirebaseEmulator {
                     try? await accountService.logout()
-                    AppDiagnostics.firebase.info(
-                        "Firebase emulator logout completed; hasCurrentUser=\(Auth.auth().currentUser != nil)"
-                    )
                 }
                 try await accountService.signUpAnonymously()
-                AppDiagnostics.firebase.notice(
-                    "Firebase anonymous authentication completed; hasCurrentUser=\(Auth.auth().currentUser != nil)"
-                )
             } catch {
                 AppDiagnostics.firebase.logError(error, context: "Firebase anonymous authentication")
             }
@@ -52,18 +42,11 @@ final class FirebaseUpload: Module, EnvironmentAccessible, Sendable {
                 NSLocalizedDescriptionKey: "Unable to upload: failed to find user"
             ])
         }
-        AppDiagnostics.report.notice("""
-            Report upload starting; correlation=\(correlationID, privacy: .public); study=\(study.id, privacy: .public); \
-            fileExists=\(FileManager.default.fileExists(atPath: url.path(percentEncoded: false)))
-            """)
         let storageRef = Storage.storage().reference(withPath: "/studies/\(study.id)/users/\(userId)/\(UUID().uuidString).json")
         let metadata = StorageMetadata()
         metadata.contentType = "application/octet-stream"
         do {
             _ = try await storageRef.putFileAsync(from: url, metadata: metadata)
-            AppDiagnostics.report.notice(
-                "Report upload completed; correlation=\(correlationID, privacy: .public); study=\(study.id, privacy: .public)"
-            )
         } catch {
             AppDiagnostics.report.logError(error, context: "Report upload", correlationID: correlationID)
             throw error

@@ -33,8 +33,7 @@
             default = "YES">
          </TestPlanReference>
          <TestPlanReference
-            reference = "container:Plainly Firebase End-to-End.xctestplan"
-            default = "NO">
+            reference = "container:Plainly Firebase End-to-End.xctestplan">
          </TestPlanReference>
       </TestPlans>
       <Testables>
