@@ -69,11 +69,6 @@ final class PendingReportStore: Module, EnvironmentAccessible, Sendable {
         }
     }
 
-    /// Cancels an upload attempt that is still running; the reports it did not reach stay retained.
-    func cancelPendingUploads() {
-        uploadTask?.cancel()
-    }
-
     /// Keeps a report that could not be uploaded, so that a later launch can retry it.
     ///
     /// Reports are stored under a fresh identifier: sessions of the same study share a file name, so
