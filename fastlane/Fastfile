@@ -28,7 +28,7 @@ APP_CONFIG = {
   default_version_name: "0.1.0",
   default_release_notes: "Bug fixes and performance improvements.",
   scheme: "Plainly",
-  project_path: "Plainly.xcodeproj",
+  project_path: File.expand_path("../Plainly.xcodeproj", __dir__),
   plist_path: "Plainly/Supporting Files/Info.plist"
 }.freeze
 
