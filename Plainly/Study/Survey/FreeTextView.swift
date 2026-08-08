@@ -22,7 +22,7 @@ final class FreeTextAnswerState {
         if isOptional {
             return true
         }
-        return answers[questionIndex]?.isEmpty == false
+        return answers[questionIndex]?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
     }
 }
 

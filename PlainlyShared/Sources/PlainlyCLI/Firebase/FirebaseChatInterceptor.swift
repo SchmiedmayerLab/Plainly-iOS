@@ -19,14 +19,19 @@ struct FirebaseChatInterceptor: ClientMiddleware, Sendable {
     private let auth: FirebaseAuth
     private let firebaseConfig: FirebaseConfig
     private let studyId: String
+    private let chatFunctionName: String
+    private let ragEnabled: Bool
 
+    /// The study's dispatch settings are copied rather than retained, because `Study` is not `Sendable`.
     init(
         firebaseConfig: FirebaseConfig,
-        studyId: String
+        study: Study
     ) {
         self.auth = FirebaseAuth(config: firebaseConfig)
         self.firebaseConfig = firebaseConfig
-        self.studyId = studyId
+        self.studyId = study.id
+        self.chatFunctionName = study.chatFunctionName
+        self.ragEnabled = study.ragEnabled
     }
     
     func intercept(
@@ -43,11 +48,11 @@ struct FirebaseChatInterceptor: ClientMiddleware, Sendable {
             throw MiddlewareError(description: "Missing Body")
         }
         let stream = try await streamFirebaseFunctionCall(
-            name: "chat",
+            name: chatFunctionName,
             queryItems: [
-                "ragEnabled": "true",
+                "ragEnabled": ragEnabled ? "true" : "false",
                 "studyId": studyId
-            ].compactMapValues { $0 },
+            ],
             body: input
         )
         let res = HTTPResponse(

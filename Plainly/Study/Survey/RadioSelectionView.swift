@@ -46,6 +46,7 @@ struct RadioSelectionView: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .accessibilityAddTraits(selectedValue == value ? .isSelected : [])
         }
     }
 }

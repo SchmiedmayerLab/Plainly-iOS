@@ -44,7 +44,7 @@ All chat requests are dispatched to the Firebase `chat` function, which holds th
 
 When running Plainly via Xcode, you can use the `--mode` CLI flag to control the behavior of the app (configurable via the Run scheme):
 - `--mode test` loads the bundled synthetic patients instead of health records;
-- `--mode study:<study-id>` launches Plainly into its study mode, loads the study with the specified ID from the UserStudyConfig.plist file, and automatically opens it;
+- `--mode study:<study-id>` launches Plainly into its study mode, loads the study with the specified ID from `PlainlyStudyDefinitions`, and automatically opens it;
 - `--mode study` launches Plainly into its study mode, showing a "Scan QR Code" button to select and open a study.
 
 ### Firebase End-to-End Test

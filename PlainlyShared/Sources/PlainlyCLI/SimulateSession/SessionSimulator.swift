@@ -144,13 +144,13 @@ extension SessionSimulator {
                 throw ValidationError("GOOGLE_CREDENTIALS_PLIST environment variable must be set when using the 'Firebase' service.")
             }
             middlewares = [
-                FirebaseChatInterceptor(firebaseConfig: firebaseConfig, studyId: config.study.id)
+                FirebaseChatInterceptor(firebaseConfig: firebaseConfig, study: config.study)
             ]
         case .firebaseEmulator:
             middlewares = [
                 FirebaseChatInterceptor(
                     firebaseConfig: emulatorConfigFromEnvironment(),
-                    studyId: config.study.id
+                    study: config.study
                 )
             ]
         }

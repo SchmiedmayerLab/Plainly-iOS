@@ -506,6 +506,10 @@ extension StudyChatViewModel {
                 AppDiagnostics.report.error("Study report generation returned no file")
                 return false
             }
+            // Retaining the report moves the file, so this only cleans up after a successful upload.
+            defer {
+                try? FileManager.default.removeItem(at: reportFile)
+            }
             do {
                 try await uploader.uploadReport(at: reportFile, for: study)
                 return true

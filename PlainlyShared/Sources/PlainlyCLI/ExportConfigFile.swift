@@ -15,7 +15,6 @@ import PlainlyStudyDefinitions
 
 private let launchHelp: ArgumentHelp = "The app's launch mode. Defaults to study and should probably not be customized."
 private let firebaseHelp: ArgumentHelp = "Firebase GoogleService-Info.plist file that should be embedded into the config file"
-private let studiesHelp: ArgumentHelp = "The studies that should be included in the config file. Omit to include all studies."
 
 
 struct ExportConfigFile: ParsableCommand {
@@ -31,8 +30,6 @@ struct ExportConfigFile: ParsableCommand {
     @Option(name: [.customShort("l"), .customLong("launchMode")], help: launchHelp) var launchMode: AppLaunchMode = .study(studyId: nil)
 
     @Option(name: [.customShort("f"), .customLong("firebaseConfig")], help: firebaseHelp) var firebaseConfigFilePath: URL?
-
-    @Option(name: .customLong("studies"), help: studiesHelp) var includedStudyIds: [String] = Study.allStudies.map(\.id)
 
     @Argument(help: "Output path where the resulting UserStudyConfig.plist file should be stored") var outputUrl: URL
 
@@ -67,63 +64,10 @@ struct ExportConfigFile: ParsableCommand {
         let data = try encoder.encode(config)
         try data.write(to: outputUrl)
     }
-
-
-    private func studyValue<V>(
-        for studyId: Study.ID,
-        in values: [StudyIdIdentified<V>],
-        default defaultValue: @autoclosure () -> V
-    ) -> V {
-        _studyValue(for: studyId, in: values) ?? defaultValue()
-    }
-    
-    private func studyValue<V>(
-        for studyId: Study.ID,
-        in values: [StudyIdIdentified<V>],
-        default defaultValue: @autoclosure () -> V?
-    ) -> V? {
-        _studyValue(for: studyId, in: values) ?? defaultValue()
-    }
-    
-    private func _studyValue<V>(for studyId: Study.ID, in values: [StudyIdIdentified<V>]) -> V? {
-        values.last { $0.studyId == studyId }?.value ?? values.last(where: \.isWildcard)?.value
-    }
 }
 
 
 // MARK: Utils
-
-extension ExportConfigFile {
-    struct StudyIdIdentified<Value: ExpressibleByArgument>: ExpressibleByArgument {
-        let studyId: String
-        let value: Value
-
-        var isWildcard: Bool {
-            studyId == "*"
-        }
-
-        init?(argument: String) {
-            guard let idx = argument.firstIndex(of: ":") else {
-                return nil
-            }
-            self.studyId = String(argument[..<idx])
-            guard let value = Value(argument: String(argument[argument.index(after: idx)...])) else {
-                return nil
-            }
-            self.value = value
-        }
-    }
-}
-
-extension Array {
-    fileprivate func validate<V>(optionName: String) throws where Element == ExportConfigFile.StudyIdIdentified<V> {
-        guard count(where: \.isWildcard) <= 1 else {
-            throw NSError(domain: "edu.stanford.plainly.CLI", code: 0, userInfo: [
-                NSLocalizedDescriptionKey: "Multiple wildcard entries in \(optionName). At most one is allowed!"
-            ])
-        }
-    }
-}
 
 extension AppLaunchMode: ExpressibleByArgument {
     public static var allValueStrings: [String] {

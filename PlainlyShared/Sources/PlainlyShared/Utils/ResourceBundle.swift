@@ -116,10 +116,10 @@ extension ModelsR4.Patient {
             switch (givenNames.isEmpty, familyName.isEmpty) {
             case (true, true): // we have nothing
                 continue
-            case (true, false): // we have given names, but no family name
-                return givenNames.joined(separator: " ")
-            case (false, true): // family name yes given names no
+            case (true, false): // family name, but no given names
                 return familyName
+            case (false, true): // given names, but no family name
+                return givenNames.joined(separator: " ")
             case (false, false):
                 return "\(givenNames.joined(separator: " ")) \(familyName)"
             }

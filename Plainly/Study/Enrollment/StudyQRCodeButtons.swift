@@ -48,7 +48,7 @@ struct CreateQRCodeButton: View {
             isPresented = true
         } label: {
             Image(systemName: "qrcode.viewfinder")
-                .accessibilityLabel("Scan code to enroll in study")
+                .accessibilityLabel("Create study enrollment code")
         }
         .fullScreenCover(isPresented: $isPresented) {
             CreateEnrollmentQRCodeSheet()
