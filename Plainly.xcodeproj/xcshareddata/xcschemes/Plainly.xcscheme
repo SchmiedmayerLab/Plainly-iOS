@@ -33,8 +33,7 @@
             default = "YES">
          </TestPlanReference>
          <TestPlanReference
-            reference = "container:Plainly Firebase End-to-End.xctestplan"
-            default = "NO">
+            reference = "container:Plainly Firebase End-to-End.xctestplan">
          </TestPlanReference>
       </TestPlans>
       <Testables>
@@ -51,7 +50,7 @@
       </Testables>
    </TestAction>
    <LaunchAction
-      buildConfiguration = "Debug"
+      buildConfiguration = "Release"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       launchStyle = "0"

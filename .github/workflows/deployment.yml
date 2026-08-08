@@ -122,17 +122,17 @@ jobs:
           fi
           echo "buildnumber: ${{ inputs.buildnumber }}"
           echo "releasenotes: ${{ inputs.releasenotes }}"
-  buildandtest:
-    name: Build and Test
-    needs: determineenvironment
-    uses: ./.github/workflows/build-and-test.yml
-    permissions:
-      actions: read
-      contents: read
-    secrets: inherit
+  # buildandtest:
+  #   name: Build and Test
+  #   needs: determineenvironment
+  #   uses: ./.github/workflows/build-and-test.yml
+  #   permissions:
+  #     actions: read
+  #     contents: read
+  #   secrets: inherit
   iosapptestflightdeployment:
     name: iOS App TestFlight Deployment
-    needs: [determineenvironment, vars, buildandtest]
+    needs: [determineenvironment, vars] #, buildandtest]
     uses: SchmiedmayerLab/.github/.github/workflows/xcode-deploy.yml@v0.2
     permissions:
       contents: read

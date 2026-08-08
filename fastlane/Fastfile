@@ -7,6 +7,18 @@
 #
 
 require "fileutils"
+require "xcodeproj"
+
+[
+  Xcodeproj::Project::Object::XCRemoteSwiftPackageReference,
+  Xcodeproj::Project::Object::XCLocalSwiftPackageReference
+].each do |package_reference|
+  next if package_reference.method_defined?(:traits)
+
+  package_reference.class_eval do
+    attribute :traits, Array
+  end
+end
 
 default_platform(:ios)
 
@@ -16,8 +28,12 @@ APP_CONFIG = {
   default_version_name: "0.1.0",
   default_release_notes: "Bug fixes and performance improvements.",
   scheme: "Plainly",
+  project_path: "Plainly.xcodeproj",
   plist_path: "Plainly/Supporting Files/Info.plist"
 }.freeze
+
+SPEZI_PACKAGE_URL = "https://github.com/SchmiedmayerLab/Spezi".freeze
+SPEZI_REQUIRED_TRAIT = "Textual".freeze
 
 SCREENSHOTS_DIRECTORY = File.expand_path("screenshots", __dir__).freeze
 SCREENSHOT_STATUS_BAR_TIME = "2026-01-09T09:41:00.000-08:00".freeze
@@ -37,6 +53,29 @@ def installed_provisioning_profile(app_identifier)
 
   profile_path = matching_profiles.max_by { |path| File.mtime(path) }
   FastlaneCore::ProvisioningProfile.uuid(profile_path)
+end
+
+def ensure_swift_package_trait(project_path:, repository_url:, trait:)
+  project = Xcodeproj::Project.open(project_path)
+  package_reference = project.root_object.package_references.find do |reference|
+    reference.is_a?(Xcodeproj::Project::Object::XCRemoteSwiftPackageReference) &&
+      reference.repositoryURL == repository_url
+  end
+  UI.user_error!("No Swift package reference found for #{repository_url}.") unless package_reference
+
+  unless package_reference.traits&.include?(trait)
+    UI.important("Restoring the #{trait} trait for #{repository_url}.")
+    package_reference.traits = Array(package_reference.traits) + [trait]
+    project.save
+  end
+
+  verified_project = Xcodeproj::Project.open(project_path)
+  verified_reference = verified_project.root_object.package_references.find do |reference|
+    reference.is_a?(Xcodeproj::Project::Object::XCRemoteSwiftPackageReference) &&
+      reference.repositoryURL == repository_url
+  end
+  trait_is_present = verified_reference&.traits&.include?(trait)
+  UI.user_error!("The #{trait} trait is missing for #{repository_url}.") unless trait_is_present
 end
 
 platform :ios do
@@ -152,6 +191,12 @@ platform :ios do
     update_app_identifier(
       plist_path: APP_CONFIG[:plist_path],
       app_identifier: appidentifier
+    )
+
+    ensure_swift_package_trait(
+      project_path: APP_CONFIG[:project_path],
+      repository_url: SPEZI_PACKAGE_URL,
+      trait: SPEZI_REQUIRED_TRAIT
     )
 
     build_app(
