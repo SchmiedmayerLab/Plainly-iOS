@@ -15,13 +15,9 @@ import SwiftUI
 struct OpenAIModelSelection: View {
     static let supportedModels: [LLMOpenAIParameters.ModelType] = [
         .gpt5,
-        .gpt3_5_turbo,
-        .gpt4_turbo,
         .gpt4o,
         .o1,
-        .o1_mini,
-        .o3_mini,
-        .o3_mini_high
+        .o3_mini
     ]
     
     @Environment(ManagedNavigationStack.Path.self) private var path
