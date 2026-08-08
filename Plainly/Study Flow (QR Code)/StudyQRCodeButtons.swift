@@ -28,9 +28,6 @@ struct ScanQRCodeButton: View {
             do {
                 let result = try StudyQRCodeHandler.processQRCode(payload: payload)
                 didScan(result)
-                AppDiagnostics.study.notice(
-                    "Study QR code processed; study=\(result.study.id, privacy: .public)"
-                )
                 showQRCodeScanner = false
                 return .stopScanning
             } catch {

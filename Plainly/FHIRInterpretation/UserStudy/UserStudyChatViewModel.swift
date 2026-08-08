@@ -150,12 +150,6 @@ final class UserStudyChatViewModel: Sendable {
         self.initialQuestionnaireResponse = initialQuestionnaireResponse
         self.interpretationModule = interpretationModule
         self.uploader = uploader
-        AppDiagnostics.chat.notice("""
-            Chat model initialized; study=\(inProgressStudy.study.id, privacy: .public); \
-            endpoint=\(inProgressStudy.config.openAIEndpoint.rawValue, privacy: .public); \
-            taskCount=\(inProgressStudy.study.tasks.count); hasQuestionnaireResponse=\(initialQuestionnaireResponse != nil); \
-            hasUploader=\(uploader != nil); hasDirectCredential=\(inProgressStudy.config.openAIAPIKey?.isEmpty == false)
-            """)
         configureMessageLimits()
     }
     
@@ -189,9 +183,6 @@ final class UserStudyChatViewModel: Sendable {
     ///
     /// - Parameter dismiss: The dismiss action from the environment to close the view
     func handleDismiss(dismiss: DismissAction) {
-        AppDiagnostics.chat.notice(
-            "Chat dismissal requested; contextCount=\(self.llmSession.context.count); sessionState=\(self.llmSession.state.description, privacy: .public)"
-        )
         interpreter.cancel()
         resetStudy()
         dismiss()
@@ -222,9 +213,6 @@ final class UserStudyChatViewModel: Sendable {
     /// This method clears all survey answers and resets the navigation state,
     /// bringing the study back to its starting point.
     func resetStudy() {
-        AppDiagnostics.study.notice(
-            "Resetting study progress; study=\(self.study.id, privacy: .public); taskCount=\(self.study.tasks.count)"
-        )
         study.resetAllAnswers()
         taskStartTimes.removeAll()
         taskEndTimes.removeAll()
@@ -236,9 +224,6 @@ final class UserStudyChatViewModel: Sendable {
     /// This preserves system messages but removes all conversation history,
     /// providing the user with a fresh chat while maintaining the interpreter context.
     func startNewConversation() {
-        AppDiagnostics.chat.notice(
-            "Starting new conversation; previousContextCount=\(self.llmSession.context.count)"
-        )
         interpreter.startNewConversation(using: study.interpretMultipleResourcesPrompt)
     }
     
@@ -249,9 +234,6 @@ final class UserStudyChatViewModel: Sendable {
     /// - returns: `true` if the survey was successfully started, `false` if not (because the study contains no tasks)
     func startStudy() -> Bool {
         guard let task = study.tasks.first else {
-            AppDiagnostics.study.warning(
-                "Study start requested but no tasks are configured; study=\(self.study.id, privacy: .public)"
-            )
             return false
         }
         navigationState = .task(
@@ -262,25 +244,17 @@ final class UserStudyChatViewModel: Sendable {
         )
         taskStartTimes[task.id] = .now
         presentedSheet = .instructions
-        AppDiagnostics.study.notice("""
-            Study started; study=\(self.study.id, privacy: .public); task=\(task.id, privacy: .public); \
-            taskCount=\(self.study.tasks.count); presentingInstructions=true
-            """)
         return true
     }
     
     
     func endStudy() {
-        AppDiagnostics.study.notice(
-            "Study completion requested; study=\(self.study.id, privacy: .public); contextCount=\(self.llmSession.context.count)"
-        )
         navigationState = .completed
         Task {
             presentedSheet = .uploadingReport
             let didUpload = await uploadReport()
             presentedSheet = nil
             if didUpload {
-                AppDiagnostics.report.notice("Study report workflow completed and will dismiss the study")
                 didUploadHandler?()
             } else {
                 AppDiagnostics.report.error("Study report workflow finished without a successful upload")
@@ -315,18 +289,11 @@ final class UserStudyChatViewModel: Sendable {
             switch newTaskState {
             case .chatting:
                 presentedSheet = .instructions
-                AppDiagnostics.study.notice(
-                    "Advanced to chat task; task=\(nextTask.id, privacy: .public); index=\(nextTaskIdx)"
-                )
             case .answeringSurvey:
                 presentedSheet = .survey
-                AppDiagnostics.study.notice(
-                    "Advanced directly to survey task; task=\(nextTask.id, privacy: .public); index=\(nextTaskIdx)"
-                )
             }
         } else {
             // no next task.
-            AppDiagnostics.study.notice("No additional study task remains; ending study")
             endStudy()
         }
     }
@@ -492,9 +459,6 @@ extension UserStudyChatViewModel {
             AppDiagnostics.chat.logError(error, context: "Updating chat processing state")
             // Alerts and sheets can not be displayed at the same time.
             if presentedSheet != nil {
-                AppDiagnostics.chat.info(
-                    "Dismissing presented sheet before surfacing an LLM session error"
-                )
                 // We have to first dismiss all sheets.
                 presentedSheet = nil
                 // Wait for animation to complete
@@ -516,31 +480,9 @@ extension UserStudyChatViewModel {
     /// to the interpreter to generate the actual response.
     func generateAssistantResponse() async throws -> LLMContextEntity? {
         let correlationID = AppDiagnostics.correlationID()
-        let signpostID = AppDiagnostics.chatSignposter.makeSignpostID()
-        let interval = AppDiagnostics.chatSignposter.beginInterval(
-            "AssistantResponseGeneration",
-            id: signpostID,
-            "correlation=\(correlationID, privacy: .public)"
-        )
-        defer {
-            AppDiagnostics.chatSignposter.endInterval("AssistantResponseGeneration", interval)
-        }
-        AppDiagnostics.chat.notice("""
-            Assistant response generation entered; correlation=\(correlationID, privacy: .public); \
-            contextCount=\(self.llmSession.context.count); \
-            userCount=\(self.llmSession.context.count(where: { $0.role == .user })); \
-            assistantCount=\(self.llmSession.context.count(where: { $0.role == .assistant() })); \
-            sessionState=\(self.llmSession.state.description, privacy: .public); isProcessing=\(self.isProcessing)
-            """)
-        logTranscript(stage: "before assistant generation", correlationID: correlationID)
         await updateProcessingState()
         processingState = await processingState.calculateNewProcessingState(basedOn: llmSession)
         guard shouldGenerateResponse else {
-            AppDiagnostics.chat.warning("""
-                Assistant response generation skipped; correlation=\(correlationID, privacy: .public); \
-                sessionState=\(self.llmSession.state.description, privacy: .public); isProcessing=\(self.isProcessing); \
-                lastIsUser=\(self.llmSession.context.last?.role == .user); contextCount=\(self.llmSession.context.count)
-                """)
             return nil
         }
         processingState = .processingSystemPrompts
@@ -549,15 +491,9 @@ extension UserStudyChatViewModel {
 
     private func requestAssistantResponse(correlationID: String) async throws -> LLMContextEntity {
         do {
-            AppDiagnostics.chat.notice(
-                "Calling FHIR interpreter for assistant response; correlation=\(correlationID, privacy: .public)"
-            )
             let response = try await interpreter.generateAssistantResponse()
             try Task.checkCancellation()
             guard let response, response.role == .assistant() else {
-                AppDiagnostics.chat.fault(
-                    "FHIR interpreter returned no completed assistant response; correlation=\(correlationID, privacy: .public)"
-                )
                 throw UserStudyResponseGenerationError.emptyResponse
             }
             await updateProcessingState()
@@ -565,16 +501,8 @@ extension UserStudyChatViewModel {
             if let currentTaskId {
                 try? assistantMessagesByTask.append(response.id.uuidString, forKey: currentTaskId)
             }
-            AppDiagnostics.chat.notice("""
-                Assistant response generation completed; correlation=\(correlationID, privacy: .public); \
-                contextCount=\(self.llmSession.context.count); sessionState=\(self.llmSession.state.description, privacy: .public)
-                """)
-            logTranscript(stage: "after assistant generation", correlationID: correlationID)
             return response
         } catch let error as CancellationError {
-            AppDiagnostics.chat.notice(
-                "Assistant response generation cancelled; correlation=\(correlationID, privacy: .public)"
-            )
             throw error
         } catch {
             AppDiagnostics.chat.logError(
@@ -585,100 +513,6 @@ extension UserStudyChatViewModel {
             processingState = .error
             throw error
         }
-    }
-
-    private func logTranscript(stage: String, correlationID: String) {
-        let context = llmSession.context
-        AppDiagnostics.chatTranscript.notice("""
-            LLM transcript snapshot; stage=\(stage, privacy: .public); correlation=\(correlationID, privacy: .public); \
-            contextCount=\(context.count); chatCount=\(context.chat.count)
-            """)
-
-        for (index, entity) in context.enumerated() {
-            logContextEntity(entity, index: index, stage: stage, correlationID: correlationID)
-        }
-
-        for (index, entity) in context.chat.enumerated() {
-            logChatEntity(entity, index: index, stage: stage, correlationID: correlationID)
-        }
-    }
-
-    private func logContextEntity(
-        _ entity: LLMContextEntity,
-        index: Int,
-        stage: String,
-        correlationID: String
-    ) {
-        let role: String
-        let toolCalls: [LLMContextEntity.ToolCall]
-        switch entity.role {
-        case .user:
-            role = "user"
-            toolCalls = []
-        case .assistant(let calls):
-            role = "assistant"
-            toolCalls = calls
-        case .system:
-            role = "system"
-            toolCalls = []
-        case .tool(_, let name):
-            role = "tool_\(name)"
-            toolCalls = []
-        }
-
-        AppDiagnostics.chatTranscript.notice("""
-            LLM context entity; stage=\(stage, privacy: .public); correlation=\(correlationID, privacy: .public); \
-            index=\(index); role=\(role, privacy: .public); id=\(entity.id.uuidString, privacy: .public); \
-            complete=\(entity.complete); contentBytes=\(entity.content.utf8.count); toolCallCount=\(toolCalls.count)
-            """)
-        AppDiagnostics.logPublicPayload(
-            entity.content,
-            context: "LLM context content; stage=\(stage); index=\(index); role=\(role)",
-            correlationID: correlationID
-        )
-        for (toolCallIndex, toolCall) in toolCalls.enumerated() {
-            logToolCall(
-                toolCall,
-                entityIndex: index,
-                toolCallIndex: toolCallIndex,
-                stage: stage,
-                correlationID: correlationID
-            )
-        }
-    }
-
-    private func logToolCall(
-        _ toolCall: LLMContextEntity.ToolCall,
-        entityIndex: Int,
-        toolCallIndex: Int,
-        stage: String,
-        correlationID: String
-    ) {
-        AppDiagnostics.chatTranscript.notice("""
-            LLM tool call; stage=\(stage, privacy: .public); correlation=\(correlationID, privacy: .public); \
-            entityIndex=\(entityIndex); toolCallIndex=\(toolCallIndex); id=\(toolCall.id, privacy: .public); \
-            name=\(toolCall.name, privacy: .public)
-            """)
-        AppDiagnostics.logPublicPayload(
-            toolCall.arguments,
-            context: """
-                LLM tool call arguments; stage=\(stage); entityIndex=\(entityIndex); toolCallIndex=\(toolCallIndex)
-                """,
-            correlationID: correlationID
-        )
-    }
-
-    private func logChatEntity(_ entity: ChatEntity, index: Int, stage: String, correlationID: String) {
-        AppDiagnostics.chatTranscript.notice("""
-            Rendered chat entity; stage=\(stage, privacy: .public); correlation=\(correlationID, privacy: .public); \
-            index=\(index); role=\(entity.role.rawValue, privacy: .public); \
-            id=\(entity.id.uuidString, privacy: .public); complete=\(entity.complete); contentBytes=\(entity.content.utf8.count)
-            """)
-        AppDiagnostics.logPublicPayload(
-            entity.content,
-            context: "Rendered chat content; stage=\(stage); index=\(index); role=\(entity.role.rawValue)",
-            correlationID: correlationID
-        )
     }
 }
 
@@ -691,13 +525,9 @@ extension UserStudyChatViewModel {
     /// - returns: a flag indicating whether the upload was successful.
     private func uploadReport() async -> Bool {
         guard let uploader else {
-            AppDiagnostics.report.warning("Report upload skipped because no Firebase uploader is configured")
             return false
         }
         do {
-            AppDiagnostics.report.notice(
-                "Study report generation and upload started; study=\(self.study.id, privacy: .public)"
-            )
             // This sleep is exclusively for cosmetic reasons;
             // it allows the "submitting response" sheet to stick around long enough for the user to read the text.
             // Otherwise, there would be no indication in the UI that the upload actually took place & succeeded.
@@ -718,9 +548,6 @@ extension UserStudyChatViewModel {
     ///
     /// - Returns: The URL of the generated report file, or nil if generation fails
     func generateStudyReportFile(encryptIfPossible: Bool) async throws -> URL? {
-        AppDiagnostics.report.info(
-            "Study report file generation started; encryptionRequested=\(encryptIfPossible); hasEncryptionKey=\(self.inProgressStudy.config.encryptionKey != nil)"
-        )
         // IDEA: have a text-only version here (if unguided) to replicate the old MultipleResourcesChatView (ie, ChatView export) behaviour!!!
         guard var studyReport = await generateStudyReport() else {
             return nil
@@ -731,7 +558,6 @@ extension UserStudyChatViewModel {
         let tempDir = FileManager.default.temporaryDirectory
         let reportURL = tempDir.appendingPathComponent("survey_report_\(study.id.lowercased()).json")
         try studyReport.write(to: reportURL)
-        AppDiagnostics.report.info("Study report file written to the temporary directory")
         return reportURL
     }
     
@@ -756,7 +582,6 @@ extension UserStudyChatViewModel {
             encoder.dateEncodingStrategy = .iso8601
             encoder.outputFormatting = [.prettyPrinted, .withoutEscapingSlashes]
             let data = try encoder.encode(report)
-            AppDiagnostics.report.info("Study report encoding completed; bytes=\(data.count)")
             return data
         } catch {
             AppDiagnostics.report.logError(error, context: "Study report encoding")

@@ -74,21 +74,6 @@ struct StudyHomeView: View {
 
     private var observedContent: some View {
         presentationContent
-            .onAppear {
-                logAppearance()
-            }
-            .onChange(of: fhirInterpretationModule.currentStudy?.study.id) { oldValue, newValue in
-                logStudySelectionChange(from: oldValue, to: newValue)
-            }
-            .onChange(of: isPresentingQuestionnaire) { _, isPresented in
-                logQuestionnairePresentation(isPresented)
-            }
-            .onChange(of: questionnaireResponse != nil) { _, hasResponse in
-                logQuestionnaireResponseAvailability(hasResponse)
-            }
-            .onChange(of: isPresentingUserStudyChatView) { _, isPresented in
-                logChatPresentation(isPresented)
-            }
             .task {
                 await prepareInitialStudyState()
             }
@@ -217,18 +202,13 @@ struct StudyHomeView: View {
         PrimaryActionButton {
             if fhirInterpretationModule.currentStudy != nil {
                 if isMissingPreChatQuestionnaire {
-                    AppDiagnostics.questionnaire.notice("Presenting required initial questionnaire")
                     isPresentingQuestionnaire = true
                     return
                 }
                 // the HealthKit permissions should already have been granted via the onboarding, but we re-request them here, just in case,
                 // to make sure everything is in a proper state when the study gets launched.
-                AppDiagnostics.healthRecords.notice("Refreshing Health Records authorization before chat")
                 do {
                     try await healthKit.askForAuthorization()
-                    AppDiagnostics.healthRecords.notice(
-                        "Health Records authorization refresh returned before chat"
-                    )
                 } catch {
                     AppDiagnostics.healthRecords.logError(
                         error,
@@ -237,10 +217,8 @@ struct StudyHomeView: View {
                     throw error
                 }
                 await fhirInterpretationModule.updateSchemas()
-                AppDiagnostics.chat.notice("Presenting study chat after schema update")
                 isPresentingUserStudyChatView = true
             } else {
-                AppDiagnostics.study.notice("Presenting study QR code scanner")
                 isPresentingQRCodeScanner = true
             }
         } label: {
@@ -282,13 +260,6 @@ extension StudyHomeView {
         preloadedStudy = nil
     }
 
-    private func logSelectedStudy(_ studyID: Study.ID) {
-        let description = String(describing: studyID)
-        AppDiagnostics.study.notice(
-            "Study selected from QR code; study=\(description, privacy: .public)"
-        )
-    }
-
     @MainActor
     private func processStudyQRCode(_ payload: String) -> QRCodeScanningResponse {
         guard fhirInterpretationModule.currentStudy == nil else {
@@ -302,7 +273,6 @@ extension StudyHomeView {
                 config: scanResult.studyConfig,
                 userInfo: scanResult.userInfo
             )
-            logSelectedStudy(scanResult.study.id)
             return .stopScanning
         } catch {
             AppDiagnostics.study.logError(error, context: "Selecting study from QR code")
@@ -310,79 +280,26 @@ extension StudyHomeView {
         }
     }
 
-    private func logAppearance() {
-        AppDiagnostics.study.notice("""
-            Study home appeared; hasPreloadedStudy=\(self.preloadedStudy != nil); \
-            hasCurrentStudy=\(self.fhirInterpretationModule.currentStudy != nil); hasUploader=\(self.uploader != nil)
-            """)
-    }
-
-    private func logQuestionnairePresentation(_ isPresented: Bool) {
-        AppDiagnostics.questionnaire.notice(
-            "Questionnaire presentation changed; isPresented=\(isPresented)"
-        )
-    }
-
-    private func logQuestionnaireResponseAvailability(_ hasResponse: Bool) {
-        AppDiagnostics.questionnaire.notice(
-            "Questionnaire response availability changed; hasResponse=\(hasResponse)"
-        )
-    }
-
-    private func logChatPresentation(_ isPresented: Bool) {
-        AppDiagnostics.chat.notice(
-            "Chat presentation changed; isPresented=\(isPresented)"
-        )
-    }
-
     @MainActor
     private func prepareInitialStudyState() async {
         if let preloadedStudy {
-            logApplyingPreloadedStudy(preloadedStudy.study.id)
             fhirInterpretationModule.currentStudy = preloadedStudy
         }
-        AppDiagnostics.study.notice("Study home initial preparation started")
         await standard.fetchRecordsFromHealthKit()
         await fhirInterpretationModule.updateSchemas()
-        AppDiagnostics.study.notice("Study home initial preparation completed")
-    }
-
-    private func logStudySelectionChange(from oldValue: Study.ID?, to newValue: Study.ID?) {
-        let oldDescription = oldValue.map { String(describing: $0) } ?? "none"
-        let newDescription = newValue.map { String(describing: $0) } ?? "none"
-        AppDiagnostics.study.notice("""
-            Selected study changed; old=\(oldDescription, privacy: .public); \
-            new=\(newDescription, privacy: .public)
-            """)
-    }
-
-    private func logApplyingPreloadedStudy(_ studyID: Study.ID) {
-        let description = String(describing: studyID)
-        AppDiagnostics.study.notice(
-            "Applying preloaded study; study=\(description, privacy: .public)"
-        )
     }
 
     private func preloadInitialQuestionnaire() async {
         guard let study = fhirInterpretationModule.currentStudy?.study else {
-            AppDiagnostics.questionnaire.info("Questionnaire preload skipped because no study is selected")
             return
         }
         do {
             guard let url = try study.initialQuestionnaireURL(in: .main) else {
-                AppDiagnostics.questionnaire.info(
-                    "Questionnaire preload not required; study=\(study.id, privacy: .public)"
-                )
                 return
             }
             _ = try await QuestionnaireLoader.shared.questionnaire(from: url)
-            AppDiagnostics.questionnaire.info(
-                "Questionnaire preload completed; study=\(study.id, privacy: .public)"
-            )
         } catch is CancellationError {
-            AppDiagnostics.questionnaire.info(
-                "Questionnaire preload cancelled; study=\(study.id, privacy: .public)"
-            )
+            return
         } catch {
             AppDiagnostics.questionnaire.logError(error, context: "Questionnaire preload")
         }

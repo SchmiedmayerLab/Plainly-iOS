@@ -51,10 +51,6 @@ final class OpenAIRequestInterceptor: Module, EnvironmentAccessible, ClientMiddl
         dispatchPrecondition(condition: .notOnQueue(.main))
         switch endpoint {
         case .regular:
-            AppDiagnostics.network.notice("""
-                Passing direct inference request to the HTTP client; correlation=\(correlationID, privacy: .public); \
-                operation=\(operationID, privacy: .public); hasBody=\(body != nil)
-                """)
             return try await interceptDirectRequest(
                 request,
                 body: body,
@@ -84,11 +80,7 @@ extension OpenAIRequestInterceptor {
         next: @Sendable @concurrent (HTTPRequest, HTTPBody?, URL) async throws -> (HTTPResponse, HTTPBody?)
     ) async throws -> (HTTPResponse, HTTPBody?) {
         do {
-            let response = try await next(request, body, baseURL)
-            AppDiagnostics.network.notice(
-                "Direct inference HTTP request returned; correlation=\(correlationID, privacy: .public); status=\(response.0.status.code)"
-            )
-            return response
+            return try await next(request, body, baseURL)
         } catch {
             AppDiagnostics.network.logError(error, context: "Direct inference HTTP request", correlationID: correlationID)
             throw error
@@ -103,11 +95,6 @@ extension OpenAIRequestInterceptor {
         correlationID: String
     ) async throws -> (HTTPResponse, HTTPBody?) {
         let input = try await firebaseRequestBody(body, operationID: operationID, correlationID: correlationID)
-        AppDiagnostics.network.notice("""
-            Routing inference request through Firebase; correlation=\(correlationID, privacy: .public); \
-            operation=\(operationID, privacy: .public); function=\(functionName, privacy: .public); \
-            bodyBytes=\(input.utf8.count); hasStudyID=\(studyID != nil)
-            """)
         let stream = streamFirebaseFunctionCall(
             name: functionName,
             queryItems: [
@@ -152,11 +139,6 @@ extension OpenAIRequestInterceptor {
                 """)
             throw Error("Invalid Body Encoding")
         }
-        AppDiagnostics.logPublicPayload(
-            input,
-            context: "Firebase inference request body; operation=\(operationID)",
-            correlationID: correlationID
-        )
         return input
     }
 
@@ -177,30 +159,12 @@ extension OpenAIRequestInterceptor {
             let task = Task {
                 await runFirebaseStream(
                     callable,
-                    functionName: name,
                     body: body,
                     continuation: continuation,
                     correlationID: correlationID
                 )
             }
-            continuation.onTermination = { @Sendable termination in
-                let reason: StaticString
-                let hasError: Bool
-                switch termination {
-                case .cancelled:
-                    reason = "cancelled"
-                    hasError = false
-                case .finished(let error):
-                    reason = "finished"
-                    hasError = error != nil
-                @unknown default:
-                    reason = "unknown"
-                    hasError = false
-                }
-                AppDiagnostics.network.notice("""
-                    Firebase response body consumer terminated; correlation=\(correlationID, privacy: .public); \
-                    reason=\(reason, privacy: .public); hasError=\(hasError)
-                    """)
+            continuation.onTermination = { @Sendable _ in
                 task.cancel()
             }
         }
@@ -208,35 +172,15 @@ extension OpenAIRequestInterceptor {
 
     private func runFirebaseStream(
         _ callable: FirebaseChatCallable,
-        functionName: String,
         body: String,
         continuation: AsyncThrowingStream<HTTPBody.ByteChunk, any Swift.Error>.Continuation,
         correlationID: String
     ) async {
-        let signpostID = AppDiagnostics.networkSignposter.makeSignpostID()
-        let interval = AppDiagnostics.networkSignposter.beginInterval(
-            "FirebaseChatStream",
-            id: signpostID,
-            "correlation=\(correlationID, privacy: .public)"
-        )
-        defer {
-            AppDiagnostics.networkSignposter.endInterval("FirebaseChatStream", interval)
-        }
         do {
-            AppDiagnostics.network.notice("""
-                Firebase callable stream starting; correlation=\(correlationID, privacy: .public); \
-                function=\(functionName, privacy: .public)
-                """)
             let stream = try callable.stream(body)
             try await forwardFirebaseStream(stream, continuation: continuation, correlationID: correlationID)
-            AppDiagnostics.network.notice(
-                "Firebase callable stream completed; correlation=\(correlationID, privacy: .public)"
-            )
             continuation.finish()
         } catch is CancellationError {
-            AppDiagnostics.network.notice(
-                "Firebase callable stream cancelled; correlation=\(correlationID, privacy: .public)"
-            )
             continuation.finish()
         } catch {
             AppDiagnostics.network.logError(error, context: "Firebase callable stream", correlationID: correlationID)
@@ -280,26 +224,16 @@ extension OpenAIRequestInterceptor {
                 guard let chunk else {
                     continue
                 }
-                logFirebaseResponseChunk(chunk, index: forwardedChunkCount + 1, correlationID: correlationID)
                 let isDone = chunk.trimmingCharacters(in: .whitespacesAndNewlines) == "data: [DONE]"
                 if isDone {
                     completionChunk = chunk
-                    AppDiagnostics.network.info(
-                        "Firebase completion marker received; correlation=\(correlationID, privacy: .public)"
-                    )
                 } else {
-                    if forwardedChunkCount == 0 {
-                        AppDiagnostics.network.notice(
-                            "Firebase first response chunk received; correlation=\(correlationID, privacy: .public)"
-                        )
-                    }
                     forwardedChunkCount += 1
                     forwardedByteCount += chunk.utf8.count
                     continuation.yield(HTTPBody.ByteChunk(chunk.utf8))
                 }
             case .result:
                 receivedTerminalResult = true
-                logFirebaseTerminalResult(forwardedChunkCount, forwardedByteCount, completionChunk != nil, correlationID)
                 if let completionChunk {
                     continuation.yield(HTTPBody.ByteChunk(completionChunk.utf8))
                 }
@@ -326,27 +260,6 @@ extension OpenAIRequestInterceptor {
         case .result(.some):
             throw Error("Firebase chat function returned an unexpected nonempty result")
         }
-    }
-
-    private func logFirebaseResponseChunk(_ chunk: String, index: Int, correlationID: String) {
-        AppDiagnostics.logPublicPayload(
-            chunk,
-            context: "Firebase raw response event; event=\(index)",
-            correlationID: correlationID
-        )
-    }
-
-    private func logFirebaseTerminalResult(
-        _ chunkCount: Int,
-        _ byteCount: Int,
-        _ hasCompletionMarker: Bool,
-        _ correlationID: String
-    ) {
-        AppDiagnostics.network.notice("""
-            Firebase terminal result received; correlation=\(correlationID, privacy: .public); \
-            forwardedChunks=\(chunkCount); forwardedBytes=\(byteCount); \
-            hasCompletionMarker=\(hasCompletionMarker)
-            """)
     }
 }
 
