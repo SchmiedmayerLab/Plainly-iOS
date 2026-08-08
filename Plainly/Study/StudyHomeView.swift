@@ -211,7 +211,9 @@ struct StudyHomeView: View {
     
     @ViewBuilder private var pendingReportsView: some View {
         if let pendingReports, pendingReports.pendingCount > 0 {
-            PendingReportsView(count: pendingReports.pendingCount, isUploading: pendingReports.isUploading)
+            PendingReportsView(count: pendingReports.pendingCount, isUploading: pendingReports.isUploading) {
+                pendingReports.retryPendingUploads()
+            }
         }
     }
 
