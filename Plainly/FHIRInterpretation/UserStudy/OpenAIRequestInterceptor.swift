@@ -16,6 +16,8 @@ import Spezi
 
 @Observable
 final class OpenAIRequestInterceptor: Module, EnvironmentAccessible, ClientMiddleware, @unchecked Sendable {
+    private typealias FirebaseChatCallable = Callable<String, StreamResponse<String?, String?>>
+
     private struct Error: LocalizedError, CustomDebugStringConvertible {
         let description: String
 
@@ -41,7 +43,7 @@ final class OpenAIRequestInterceptor: Module, EnvironmentAccessible, ClientMiddl
         operationID: String,
         next: @Sendable @concurrent (HTTPRequest, HTTPBody?, URL) async throws -> (HTTPResponse, HTTPBody?)
     ) async throws -> (HTTPResponse, HTTPBody?) {
-        let maxBodySize = 7 * 1024 * 1024 // 7 MB
+        let correlationID = AppDiagnostics.correlationID()
         let (endpoint, studyId) = await MainActor.run {
             let study = interpretationModule.currentStudy
             return (study?.config.openAIEndpoint ?? .regular, study?.study.id)
@@ -49,39 +51,115 @@ final class OpenAIRequestInterceptor: Module, EnvironmentAccessible, ClientMiddl
         dispatchPrecondition(condition: .notOnQueue(.main))
         switch endpoint {
         case .regular:
-            return try await next(request, body, baseURL)
+            AppDiagnostics.network.notice("""
+                Passing direct inference request to the HTTP client; correlation=\(correlationID, privacy: .public); \
+                operation=\(operationID, privacy: .public); hasBody=\(body != nil)
+                """)
+            return try await interceptDirectRequest(
+                request,
+                body: body,
+                baseURL: baseURL,
+                correlationID: correlationID,
+                next: next
+            )
         case .firebaseFunction(let name):
-            guard let data = try await body?.data(upTo: maxBodySize),
-                  let input = String(bytes: data, encoding: .utf8) else {
-                throw Error("Missing Body")
-            }
-            let stream = streamFirebaseFunctionCall(
-                name: name,
-                queryItems: [
-                    "ragEnabled": "true",
-                    "studyId": studyId,
-                    "mockChatError": FeatureFlags.useFirebaseMockChatError ? "true" : nil,
-                    "mockChatErrorAfterChunk": FeatureFlags.useFirebaseMockChatErrorAfterChunk ? "true" : nil
-                ].compactMapValues { $0 },
-                body: input
+            return try await interceptFirebaseRequest(
+                body: body,
+                operationID: operationID,
+                functionName: name,
+                studyID: studyId,
+                correlationID: correlationID
             )
-            let res = HTTPResponse(
-                status: .ok,
-                headerFields: [
-                    .contentType: "text/event-stream",
-                    .cacheControl: "no-cache",
-                    .connection: "keep-alive"
-                ]
-            )
-            let body = HTTPBody(stream, length: .unknown)
-            return (res, body)
         }
+    }
+}
+
+
+extension OpenAIRequestInterceptor {
+    private func interceptDirectRequest(
+        _ request: HTTPRequest,
+        body: HTTPBody?,
+        baseURL: URL,
+        correlationID: String,
+        next: @Sendable @concurrent (HTTPRequest, HTTPBody?, URL) async throws -> (HTTPResponse, HTTPBody?)
+    ) async throws -> (HTTPResponse, HTTPBody?) {
+        do {
+            let response = try await next(request, body, baseURL)
+            AppDiagnostics.network.notice(
+                "Direct inference HTTP request returned; correlation=\(correlationID, privacy: .public); status=\(response.0.status.code)"
+            )
+            return response
+        } catch {
+            AppDiagnostics.network.logError(error, context: "Direct inference HTTP request", correlationID: correlationID)
+            throw error
+        }
+    }
+
+    private func interceptFirebaseRequest(
+        body: HTTPBody?,
+        operationID: String,
+        functionName: String,
+        studyID: String?,
+        correlationID: String
+    ) async throws -> (HTTPResponse, HTTPBody?) {
+        let input = try await firebaseRequestBody(body, operationID: operationID, correlationID: correlationID)
+        AppDiagnostics.network.notice("""
+            Routing inference request through Firebase; correlation=\(correlationID, privacy: .public); \
+            operation=\(operationID, privacy: .public); function=\(functionName, privacy: .public); \
+            bodyBytes=\(input.utf8.count); hasStudyID=\(studyID != nil)
+            """)
+        let stream = streamFirebaseFunctionCall(
+            name: functionName,
+            queryItems: [
+                "ragEnabled": "true",
+                "studyId": studyID,
+                "mockChatError": FeatureFlags.useFirebaseMockChatError ? "true" : nil,
+                "mockChatErrorAfterChunk": FeatureFlags.useFirebaseMockChatErrorAfterChunk ? "true" : nil
+            ].compactMapValues { $0 },
+            body: input,
+            correlationID: correlationID
+        )
+        let response = HTTPResponse(
+            status: .ok,
+            headerFields: [.contentType: "text/event-stream", .cacheControl: "no-cache", .connection: "keep-alive"]
+        )
+        return (response, HTTPBody(stream, length: .unknown))
+    }
+
+    private func firebaseRequestBody(
+        _ body: HTTPBody?,
+        operationID: String,
+        correlationID: String
+    ) async throws -> String {
+        guard let body else {
+            AppDiagnostics.network.fault("""
+                Firebase inference request body is missing; correlation=\(correlationID, privacy: .public); \
+                operation=\(operationID, privacy: .public)
+                """)
+            throw Error("Missing Body")
+        }
+        let data: ArraySlice<UInt8>
+        do {
+            data = try await body.data(upTo: 7 * 1024 * 1024)
+        } catch {
+            AppDiagnostics.network.logError(error, context: "Reading Firebase inference request body", correlationID: correlationID)
+            throw error
+        }
+        guard let input = String(bytes: data, encoding: .utf8) else {
+            AppDiagnostics.network.fault("""
+                Firebase inference request body is not UTF-8; correlation=\(correlationID, privacy: .public); \
+                operation=\(operationID, privacy: .public); bodyBytes=\(data.count)
+                """)
+            throw Error("Invalid Body Encoding")
+        }
+        return input
     }
 
     private func streamFirebaseFunctionCall(
         name: String,
         queryItems: [String: String],
         body: String,
+        correlationID: String
     ) -> AsyncThrowingStream<HTTPBody.ByteChunk, any Swift.Error> {
         let callableName = firebaseCallableName(name: name, queryItems: queryItems)
         let callable = Functions.functions()
@@ -92,19 +170,72 @@ final class OpenAIRequestInterceptor: Module, EnvironmentAccessible, ClientMiddl
             )
         return AsyncThrowingStream(HTTPBody.ByteChunk.self) { continuation in
             let task = Task {
-                do {
-                    let stream = try callable.stream(body)
-                    try await forwardFirebaseStream(stream, continuation: continuation)
-                    continuation.finish()
-                } catch is CancellationError {
-                    continuation.finish()
-                } catch {
-                    continuation.finish(throwing: error)
-                }
+                await runFirebaseStream(
+                    callable,
+                    functionName: name,
+                    body: body,
+                    continuation: continuation,
+                    correlationID: correlationID
+                )
             }
-            continuation.onTermination = { @Sendable _ in
+            continuation.onTermination = { @Sendable termination in
+                let reason: StaticString
+                let hasError: Bool
+                switch termination {
+                case .cancelled:
+                    reason = "cancelled"
+                    hasError = false
+                case .finished(let error):
+                    reason = "finished"
+                    hasError = error != nil
+                @unknown default:
+                    reason = "unknown"
+                    hasError = false
+                }
+                AppDiagnostics.network.notice("""
+                    Firebase response body consumer terminated; correlation=\(correlationID, privacy: .public); \
+                    reason=\(reason, privacy: .public); hasError=\(hasError)
+                    """)
                 task.cancel()
             }
+        }
+    }
+
+    private func runFirebaseStream(
+        _ callable: FirebaseChatCallable,
+        functionName: String,
+        body: String,
+        continuation: AsyncThrowingStream<HTTPBody.ByteChunk, any Swift.Error>.Continuation,
+        correlationID: String
+    ) async {
+        let signpostID = AppDiagnostics.networkSignposter.makeSignpostID()
+        let interval = AppDiagnostics.networkSignposter.beginInterval(
+            "FirebaseChatStream",
+            id: signpostID,
+            "correlation=\(correlationID, privacy: .public)"
+        )
+        defer {
+            AppDiagnostics.networkSignposter.endInterval("FirebaseChatStream", interval)
+        }
+        do {
+            AppDiagnostics.network.notice("""
+                Firebase callable stream starting; correlation=\(correlationID, privacy: .public); \
+                function=\(functionName, privacy: .public)
+                """)
+            let stream = try callable.stream(body)
+            try await forwardFirebaseStream(stream, continuation: continuation, correlationID: correlationID)
+            AppDiagnostics.network.notice(
+                "Firebase callable stream completed; correlation=\(correlationID, privacy: .public)"
+            )
+            continuation.finish()
+        } catch is CancellationError {
+            AppDiagnostics.network.notice(
+                "Firebase callable stream cancelled; correlation=\(correlationID, privacy: .public)"
+            )
+            continuation.finish()
+        } catch {
+            AppDiagnostics.network.logError(error, context: "Firebase callable stream", correlationID: correlationID)
+            continuation.finish(throwing: error)
         }
     }
 
@@ -129,9 +260,12 @@ final class OpenAIRequestInterceptor: Module, EnvironmentAccessible, ClientMiddl
 
     private func forwardFirebaseStream<Stream: AsyncSequence>(
         _ stream: Stream,
-        continuation: AsyncThrowingStream<HTTPBody.ByteChunk, any Swift.Error>.Continuation
+        continuation: AsyncThrowingStream<HTTPBody.ByteChunk, any Swift.Error>.Continuation,
+        correlationID: String
     ) async throws where Stream.Element == StreamResponse<String?, String?> {
         var completionChunk: String?
+        var forwardedChunkCount = 0
+        var forwardedByteCount = 0
         var receivedTerminalResult = false
         for try await event in stream {
             try Task.checkCancellation()
@@ -144,11 +278,26 @@ final class OpenAIRequestInterceptor: Module, EnvironmentAccessible, ClientMiddl
                 let isDone = chunk.trimmingCharacters(in: .whitespacesAndNewlines) == "data: [DONE]"
                 if isDone {
                     completionChunk = chunk
+                    AppDiagnostics.network.info(
+                        "Firebase completion marker received; correlation=\(correlationID, privacy: .public)"
+                    )
                 } else {
+                    if forwardedChunkCount == 0 {
+                        AppDiagnostics.network.notice(
+                            "Firebase first response chunk received; correlation=\(correlationID, privacy: .public)"
+                        )
+                    }
+                    forwardedChunkCount += 1
+                    forwardedByteCount += chunk.utf8.count
                     continuation.yield(HTTPBody.ByteChunk(chunk.utf8))
                 }
             case .result:
                 receivedTerminalResult = true
+                AppDiagnostics.network.notice("""
+                    Firebase terminal result received; correlation=\(correlationID, privacy: .public); \
+                    forwardedChunks=\(forwardedChunkCount); forwardedBytes=\(forwardedByteCount); \
+                    hasCompletionMarker=\(completionChunk != nil)
+                    """)
                 if let completionChunk {
                     continuation.yield(HTTPBody.ByteChunk(completionChunk.utf8))
                 }
@@ -158,6 +307,10 @@ final class OpenAIRequestInterceptor: Module, EnvironmentAccessible, ClientMiddl
             }
         }
         guard receivedTerminalResult else {
+            AppDiagnostics.network.fault("""
+                Firebase stream ended without a terminal result; correlation=\(correlationID, privacy: .public); \
+                forwardedChunks=\(forwardedChunkCount); forwardedBytes=\(forwardedByteCount)
+                """)
             throw Error("Firebase chat function ended without a terminal result")
         }
     }
@@ -168,15 +321,15 @@ final class OpenAIRequestInterceptor: Module, EnvironmentAccessible, ClientMiddl
             return chunk
         case .result(nil):
             return nil
-        case .result(let result?):
-            throw Error("Firebase chat function returned an unexpected result: \(result)")
+        case .result(.some):
+            throw Error("Firebase chat function returned an unexpected nonempty result")
         }
     }
 }
 
 
 extension HTTPBody {
-    fileprivate func data(upTo maxSize: Int) async throws -> some Collection<UInt8> {
+    fileprivate func data(upTo maxSize: Int) async throws -> ArraySlice<UInt8> {
         try await ArraySlice(collecting: self, upTo: maxSize)
     }
 }

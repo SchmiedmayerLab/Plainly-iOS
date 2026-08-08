@@ -126,7 +126,7 @@ extension QuestionnaireResponses.ImageAnnotation {
               let annotatedImage = self.draw(onto: baseImage) else {
             return nil
         }
-        if questionnaire == (try? Study.spineAI.initialQuestionnaire(from: .main)).flatMap({ try? Questionnaire($0) }),
+        if questionnaire.metadata.id == Study.spineAIQuestionnaireIdentifier,
            config.inputImage == .namedInMainBundle(filename: "bodymap.png"),
            let labeledImageUrl = Bundle.main.url(forResource: "bodymap+labels", withExtension: "png"),
            let labeledImage = UIImage(contentsOfFile: labeledImageUrl.absoluteURL.path) {

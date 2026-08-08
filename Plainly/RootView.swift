@@ -32,18 +32,55 @@ struct RootView: View {
                 }
             }
         }
+        .onAppear {
+            logRoutingState(reason: "appeared")
+        }
+        .onChange(of: didCompleteOnboarding) { _, _ in
+            logRoutingState(reason: "onboarding state changed")
+        }
     }
 
     private func studyConfig(for studyId: Study.ID) -> StudyConfig? {
         if FeatureFlags.useFirebaseEmulator {
-            StudyConfig(
+            AppDiagnostics.configuration.notice(
+                "Using Firebase emulator study configuration; study=\(studyId, privacy: .public)"
+            )
+            return StudyConfig(
                 openAIAPIKey: nil,
                 openAIEndpoint: .firebaseFunction(name: "chat"),
                 reportEmail: "",
                 encryptionKey: nil
             )
         } else {
-            AppConfigFile.current().studyConfigs[studyId]
+            let config = AppConfigFile.current().studyConfigs[studyId]
+            if config == nil {
+                AppDiagnostics.configuration.fault(
+                    "No bundled study configuration matches the selected study; study=\(studyId, privacy: .public)"
+                )
+            } else {
+                AppDiagnostics.configuration.notice(
+                    "Bundled study configuration selected; study=\(studyId, privacy: .public)"
+                )
+            }
+            return config
+        }
+    }
+
+    private func logRoutingState(reason: String) {
+        switch Plainly.mode {
+        case .standalone:
+            AppDiagnostics.lifecycle.notice(
+                "Root routing evaluated; reason=\(reason, privacy: .public); onboardingComplete=\(didCompleteOnboarding); mode=standalone"
+            )
+        case .test:
+            AppDiagnostics.lifecycle.notice(
+                "Root routing evaluated; reason=\(reason, privacy: .public); onboardingComplete=\(didCompleteOnboarding); mode=test"
+            )
+        case .study(let studyId):
+            AppDiagnostics.lifecycle.notice("""
+                Root routing evaluated; reason=\(reason, privacy: .public); onboardingComplete=\(didCompleteOnboarding); \
+                mode=study; hasStudyID=\(studyId != nil)
+                """)
         }
     }
 }

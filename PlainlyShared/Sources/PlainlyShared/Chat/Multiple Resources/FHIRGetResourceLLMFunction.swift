@@ -6,6 +6,7 @@
 // SPDX-License-Identifier: MIT
 //
 
+private import Foundation
 private import ModelsR4
 private import os
 public import SpeziFHIR
@@ -67,8 +68,26 @@ public struct FHIRGetResourceLLMFunction: LLMFunction {
     
     
     public func execute() async throws -> String? {
-        try await processResourceCategories(resourceCategories)
-            .joined(separator: "\n\n")
+        Self.logger.notice(
+            "FHIR resource tool call started; requestedCategoryCount=\(resourceCategories.count)"
+        )
+        do {
+            let output = try await processResourceCategories(resourceCategories)
+            Self.logger.notice(
+                "FHIR resource tool call completed; outputSectionCount=\(output.count, privacy: .private(mask: .hash))"
+            )
+            return output.joined(separator: "\n\n")
+        } catch {
+            let nsError = error as NSError
+            let typeName = String(reflecting: type(of: error))
+            let description = nsError.localizedDescription
+            Self.logger.error("""
+                FHIR resource tool call failed; type=\(typeName, privacy: .public); \
+                domain=\(nsError.domain, privacy: .public); code=\(nsError.code); \
+                descriptionHash=\(description, privacy: .private(mask: .hash))
+                """)
+            throw error
+        }
     }
     
     
@@ -91,8 +110,12 @@ public struct FHIRGetResourceLLMFunction: LLMFunction {
     private func processResourceCategory(_ resourceCategory: String) async throws -> [String] {
         var fittingResources = await Array(fhirStore.llmRelevantResources(filteredBy: resourceCategory))
         guard !fittingResources.isEmpty else {
+            Self.logger.info("FHIR resource tool category had no matching resources")
             return [String(localized: "The medical record does not include any FHIR resources for the search term \(resourceCategory).")]
         }
+        Self.logger.info(
+            "FHIR resource tool category matched resources; matchCount=\(fittingResources.count, privacy: .private(mask: .hash))"
+        )
         fittingResources = Self.filterFittingResources(fittingResources)
         return try await summarizeFHIRResources(fittingResources, resourceCategory: resourceCategory)
     }
