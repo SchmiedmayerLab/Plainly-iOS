@@ -91,9 +91,15 @@ public final class FHIRMultipleResourceInterpreter: Sendable {
     ///
     /// This  creates an entirely new session and replaces the current one.
     public func startNewConversation(using prompt: FHIRPrompt) {
+        let hadActiveGeneration = currentGenerationTask != nil
+        if hadActiveGeneration {
+            currentGenerationIdentifier &+= 1
+            currentGenerationTask?.cancel()
+            currentGenerationTask = nil
+        }
         Self.logger.notice("""
             Starting new conversation; previousContextCount=\(self.llmSession.context.count); \
-            replacingGeneration=\(self.currentGenerationTask != nil)
+            replacingGeneration=\(hadActiveGeneration)
             """)
         let newLLMSession = llmRunner(with: llmSchema)
         newLLMSession.context = createInterpretationContext(using: prompt)

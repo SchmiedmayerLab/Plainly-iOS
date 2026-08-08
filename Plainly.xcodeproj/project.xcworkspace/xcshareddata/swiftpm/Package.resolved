@@ -168,7 +168,6 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/SchmiedmayerLab/Spezi",
       "state" : {
-        "branch" : "fix-managed-navigation-state",
         "revision" : "9319c45fc28d59d54dd3bee2451898099d88ef39"
       }
     },

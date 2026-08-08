@@ -62,13 +62,13 @@ final class PlainlyDelegate: SpeziAppDelegate {
             return nil
         }
         let missingKeys = config.missingRequiredKeys
-        if missingKeys.isEmpty {
-            AppDiagnostics.configuration.notice("Firebase configuration contains all required keys")
-        } else {
+        guard missingKeys.isEmpty else {
             AppDiagnostics.configuration.fault(
-                "Firebase configuration is missing required keys: \(missingKeys.joined(separator: ","), privacy: .public)"
+                "Firebase configuration contains missing or invalid required keys: \(missingKeys.joined(separator: ","), privacy: .public)"
             )
+            return nil
         }
+        AppDiagnostics.configuration.notice("Firebase configuration contains all required keys")
         return config
     }
     

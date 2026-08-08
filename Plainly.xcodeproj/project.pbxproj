@@ -574,8 +574,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/SchmiedmayerLab/Spezi";
 			requirement = {
-				branch = "fix-managed-navigation-state";
-				kind = branch;
+				kind = revision;
+				revision = 9319c45fc28d59d54dd3bee2451898099d88ef39;
 			};
 			traits = (
 				Textual,

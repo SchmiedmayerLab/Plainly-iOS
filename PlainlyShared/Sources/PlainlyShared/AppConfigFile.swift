@@ -127,7 +127,7 @@ extension AppConfigFile {
         
         private let entries: [String: Value]
 
-        /// Names of required Firebase configuration entries that are absent.
+        /// Names of required Firebase configuration entries that are absent or invalid.
         public var missingRequiredKeys: [String] {
             let requiredKeys = [
                 "API_KEY",
@@ -138,7 +138,12 @@ extension AppConfigFile {
                 "PROJECT_ID",
                 "STORAGE_BUCKET"
             ]
-            return requiredKeys.filter { entries[$0] == nil }
+            return requiredKeys.filter { key in
+                guard case .string(let value) = entries[key] else {
+                    return true
+                }
+                return value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            }
         }
         
         private init(entries: [String: Value]) {
