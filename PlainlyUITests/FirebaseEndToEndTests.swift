@@ -112,9 +112,54 @@ final class FirebaseEndToEndTests: XCTestCase, Sendable {
         )
     }
 
+    /// A report that cannot be uploaded is kept on device, surfaced on the home screen, and retried.
+    func testFailedReportUploadIsRetainedAndRetried() throws {
+        let app = launchApp(mockUploadError: true)
+        _ = startSession(in: app)
+
+        XCTAssertTrue(
+            app.descendants(matching: .any)
+                .matching(NSPredicate(format: "label == %@", expectedResponse))
+                .firstMatch
+                .waitForExistence(timeout: 30),
+            "The Firebase-backed streaming chat response did not appear."
+        )
+
+        let nextTask = app.buttons["Proceed to the next task"]
+        XCTAssertTrue(nextTask.waitForExistence(timeout: 5))
+        nextTask.tap()
+        XCTAssertTrue(app.alerts["End Chat?"].waitForExistence(timeout: 5))
+        app.alerts["End Chat?"].buttons["End Chat"].tap()
+
+        XCTAssertTrue(
+            app.staticTexts["You're All Set"].waitForExistence(timeout: 30),
+            "The completion confirmation was not shown after a failed upload."
+        )
+        app.buttons["Done"].tap()
+
+        let pendingNotice = app.staticTexts["A session is saved and waiting to be sent."]
+        XCTAssertTrue(
+            pendingNotice.waitForExistence(timeout: 15),
+            "The home screen did not report the session that is waiting to be sent."
+        )
+
+        // Relaunching without the failure injected should drain the retained report.
+        app.terminate()
+        let retryApp = launchApp()
+        XCTAssertTrue(
+            retryApp.staticTexts["Language Study"].waitForExistence(timeout: 10),
+            "The study home screen did not appear after relaunching."
+        )
+        XCTAssertTrue(
+            retryApp.staticTexts["A session is saved and waiting to be sent."].waitForNonExistence(timeout: 30),
+            "The retained report was not uploaded on the next launch."
+        )
+    }
+
     private func launchApp(
         mockChatError: Bool = false,
-        mockChatErrorAfterChunk: Bool = false
+        mockChatErrorAfterChunk: Bool = false,
+        mockUploadError: Bool = false
     ) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = [
@@ -129,6 +174,9 @@ final class FirebaseEndToEndTests: XCTestCase, Sendable {
         }
         if mockChatErrorAfterChunk {
             app.launchArguments.append("--useFirebaseMockChatErrorAfterChunk")
+        }
+        if mockUploadError {
+            app.launchArguments.append("--useFirebaseMockUploadError")
         }
         app.launch()
         return app

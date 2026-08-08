@@ -9,15 +9,20 @@
 import SwiftUI
 
 
-/// Confirms that the session ended and its report reached the study team.
+/// Confirms that the session ended, and whether its report already reached the study team.
 struct StudyCompletedSheet: View {
     let studyTitle: String
+    let didUpload: Bool
     let onDone: @MainActor () -> Void
+
+    private var message: LocalizedStringResource {
+        didUpload ? "STUDY_COMPLETED_MESSAGE \(studyTitle)" : "STUDY_COMPLETED_MESSAGE_PENDING \(studyTitle)"
+    }
 
     var body: some View {
         BottomSheet {
             VStack(spacing: 24) {
-                Image(systemName: "checkmark.circle.fill")
+                Image(systemName: didUpload ? "checkmark.circle.fill" : "clock.badge.checkmark.fill")
                     .font(.system(size: 64))
                     .foregroundStyle(.tint)
                     .accessibilityHidden(true)
@@ -26,7 +31,7 @@ struct StudyCompletedSheet: View {
                         .font(.title2)
                         .fontWeight(.bold)
                         .multilineTextAlignment(.center)
-                    Text("STUDY_COMPLETED_MESSAGE \(studyTitle)")
+                    Text(message)
                         .font(.body)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -49,9 +54,16 @@ struct StudyCompletedSheet: View {
 }
 
 
-#Preview {
+#Preview("Uploaded") {
     Color.clear
         .sheet(isPresented: .constant(true)) {
-            StudyCompletedSheet(studyTitle: "Plainly REI study") {}
+            StudyCompletedSheet(studyTitle: "Plainly REI study", didUpload: true) {}
+        }
+}
+
+#Preview("Waiting to upload") {
+    Color.clear
+        .sheet(isPresented: .constant(true)) {
+            StudyCompletedSheet(studyTitle: "Plainly REI study", didUpload: false) {}
         }
 }

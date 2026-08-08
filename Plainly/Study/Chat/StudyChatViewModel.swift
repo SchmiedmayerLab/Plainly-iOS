@@ -88,6 +88,7 @@ final class StudyChatViewModel: Sendable {
     }
     
     private let uploader: FirebaseUpload?
+    private let pendingReports: PendingReportStore?
     
     private let interpretationModule: FHIRInterpretationModule
     
@@ -111,8 +112,11 @@ final class StudyChatViewModel: Sendable {
     /// This alert is presented when the user taps the continue button while in a study that contains no tasks.
     var isShowingConfirmEndChatAlert = false
     
-    /// Called when the firebase upload completed successfully.
+    /// Called once the participant acknowledges that the session is complete.
     var onStudyCompleted: (@MainActor () -> Void)?
+
+    /// Whether the session's report reached Firebase Storage, as opposed to being kept for a later retry.
+    private(set) var didUploadReport = false
 
     /// Controls the visibility of the dismiss confirmation dialog
     var isDismissDialogPresented = false
@@ -145,12 +149,14 @@ final class StudyChatViewModel: Sendable {
         inProgressStudy: InProgressStudy,
         initialQuestionnaireResponse: ModelsR4.QuestionnaireResponse?,
         interpretationModule: FHIRInterpretationModule,
-        uploader: FirebaseUpload?
+        uploader: FirebaseUpload?,
+        pendingReports: PendingReportStore?
     ) {
         self.inProgressStudy = inProgressStudy
         self.initialQuestionnaireResponse = initialQuestionnaireResponse
         self.interpretationModule = interpretationModule
         self.uploader = uploader
+        self.pendingReports = pendingReports
         configureMessageLimits()
     }
     
@@ -219,12 +225,8 @@ final class StudyChatViewModel: Sendable {
         navigationState = .completed
         Task {
             presentedSheet = .uploadingReport
-            if await uploadReport() {
-                presentedSheet = .studyCompleted
-            } else {
-                presentedSheet = nil
-                AppDiagnostics.report.error("Study report workflow finished without a successful upload")
-            }
+            didUploadReport = await uploadReport()
+            presentedSheet = .studyCompleted
         }
     }
 
@@ -504,10 +506,16 @@ extension StudyChatViewModel {
                 AppDiagnostics.report.error("Study report generation returned no file")
                 return false
             }
-            try await uploader.uploadReport(at: reportFile, for: study)
-            return true
+            do {
+                try await uploader.uploadReport(at: reportFile, for: study)
+                return true
+            } catch {
+                AppDiagnostics.report.logError(error, context: "Study report upload")
+                pendingReports?.retainForRetry(reportAt: reportFile, for: study)
+                return false
+            }
         } catch {
-            AppDiagnostics.report.logError(error, context: "Study report workflow")
+            AppDiagnostics.report.logError(error, context: "Study report generation")
             return false
         }
     }

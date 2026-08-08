@@ -33,6 +33,11 @@ final class FirebaseUpload: Module, EnvironmentAccessible, Sendable {
     
     func uploadReport(at url: URL, for study: Study) async throws {
         let correlationID = AppDiagnostics.correlationID()
+        guard !FeatureFlags.useFirebaseMockUploadError else {
+            throw NSError(domain: "edu.stanford.plainly", code: 0, userInfo: [
+                NSLocalizedDescriptionKey: "Simulated report upload failure"
+            ])
+        }
         guard let userId = Auth.auth().currentUser?.uid else {
             AppDiagnostics.report.fault("""
                 Report upload cannot start because Firebase has no authenticated user; \

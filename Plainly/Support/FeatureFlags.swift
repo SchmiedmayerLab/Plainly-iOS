@@ -31,6 +31,10 @@ enum FeatureFlags {
     static let useFirebaseMockChatErrorAfterChunk =
         useFirebaseEmulator && CommandLine.arguments.contains("--useFirebaseMockChatErrorAfterChunk")
 
+    /// Fails study report uploads so end-to-end tests can exercise the retry on a later launch.
+    static let useFirebaseMockUploadError =
+        useFirebaseEmulator && CommandLine.arguments.contains("--useFirebaseMockUploadError")
+
     /// Disables clinical health record access for tests that do not exercise Health Records.
     static let disableHealthRecords = CommandLine.arguments.contains("--disableHealthRecords")
 

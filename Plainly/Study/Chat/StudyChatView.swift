@@ -49,7 +49,7 @@ struct StudyChatView: View {
                     case .uploadingReport:
                         uploadSheet()
                     case .studyCompleted:
-                        StudyCompletedSheet(studyTitle: model.study.title) {
+                        StudyCompletedSheet(studyTitle: model.study.title, didUpload: model.didUploadReport) {
                             model.finishCompletedStudy()
                         }
                     }

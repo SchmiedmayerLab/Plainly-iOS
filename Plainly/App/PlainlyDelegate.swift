@@ -95,6 +95,7 @@ final class PlainlyDelegate: SpeziAppDelegate {
             FirebaseFunctions()
         }
         FirebaseUpload()
+        PendingReportStore()
     }
 
     private func firebaseOptions(using config: AppConfigFile.FirebaseConfigDictionary) -> FirebaseOptions {

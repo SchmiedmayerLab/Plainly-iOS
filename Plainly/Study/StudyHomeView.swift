@@ -22,6 +22,7 @@ struct StudyHomeView: View {
     @Environment(HealthKit.self) private var healthKit
     @Environment(FHIRInterpretationModule.self) private var fhirInterpretationModule
     @Environment(FirebaseUpload.self) private var uploader: FirebaseUpload?
+    @Environment(PendingReportStore.self) private var pendingReports: PendingReportStore?
     @WaitingState private var waitingState
     
     @State private var isPresentingQuestionnaire = false
@@ -71,6 +72,14 @@ struct StudyHomeView: View {
             .fullScreenCover(isPresented: $isPresentingStudyChatView) {
                 chatSheetContent
             }
+            .onChange(of: isPresentingStudyChatView) { _, isPresenting in
+                guard !isPresenting else {
+                    return
+                }
+                Task {
+                    await pendingReports?.uploadPendingReports()
+                }
+            }
     }
 
     private var observedContent: some View {
@@ -105,7 +114,8 @@ struct StudyHomeView: View {
                 inProgressStudy: currentStudy,
                 initialQuestionnaireResponse: questionnaireResponse,
                 interpretationModule: fhirInterpretationModule,
-                uploader: uploader
+                uploader: uploader,
+                pendingReports: pendingReports
             ))
         } else {
             ContentUnavailableView("Study not selected", systemImage: "document.badge.gearshape")
@@ -182,6 +192,8 @@ struct StudyHomeView: View {
 
     private var bottomSection: some View {
         VStack(spacing: 16) {
+            pendingReportsView
+                .padding(.horizontal, 32)
             primaryActionButton
                 .padding(.horizontal, 32)
                 .transforming { view in
@@ -199,6 +211,12 @@ struct StudyHomeView: View {
         .padding(.bottom, 24)
     }
     
+    @ViewBuilder private var pendingReportsView: some View {
+        if let pendingReports, pendingReports.pendingCount > 0 {
+            PendingReportsView(count: pendingReports.pendingCount, isUploading: pendingReports.isUploading)
+        }
+    }
+
     private var primaryActionButton: some View {
         PrimaryActionButton {
             if fhirInterpretationModule.currentStudy != nil {

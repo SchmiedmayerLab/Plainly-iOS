@@ -71,7 +71,7 @@ Use the `export-config` tool in the PlainlyShared folder to do so:
 swift run PlainlyCLI export-config -f ~/GoogleService-Info.plist ../Plainly/Supporting\ Files/UserStudyConfig.plist
 ```
 
-Study reports are uploaded to Firebase Storage; there is no on-device fallback delivery path.
+Study reports are uploaded to Firebase Storage. A report that cannot be uploaded is kept in Application Support, surfaced on the study home screen, and retried when the participant returns to that screen or relaunches the app.
 
 ## Session Simulation
 
