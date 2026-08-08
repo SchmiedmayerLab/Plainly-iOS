@@ -14,6 +14,9 @@ public import PlainlyShared
 
 
 extension Study {
+    /// The canonical FHIR identifier of the SpineAI intake questionnaire.
+    public static let spineAIQuestionnaireIdentifier = "https://spineai.stanford.edu/fhir/Questionnaire/lumbar-spine-triage"
+
     /// Plainly's SpineAI study
     public static var spineAI: Study {
         Study(

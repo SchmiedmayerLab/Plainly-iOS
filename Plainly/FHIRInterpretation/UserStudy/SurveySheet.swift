@@ -54,8 +54,11 @@ struct SurveySheet: View {
         SurveyView(task: task, userDisplayableTaskIdx: taskIdx + 1) { answers in
             do {
                 try model.submitSurveyAnswers(answers, for: task)
+                AppDiagnostics.study.notice(
+                    "Study task survey submitted; task=\(task.id, privacy: .public)"
+                )
             } catch {
-                print("Error submitting answers: \(error)")
+                AppDiagnostics.study.logError(error, context: "Submitting study task survey")
             }
         } onDismiss: {
             model.presentedSheet = nil

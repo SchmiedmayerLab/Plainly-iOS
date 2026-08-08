@@ -33,6 +33,11 @@ public final class Study: Identifiable {
     
     /// Initial Questionnaire that should be asked before the user enters the chat view.
     private let _initialQuestionnaire: String?
+
+    /// Whether the study presents an initial questionnaire before starting a session.
+    public var hasInitialQuestionnaire: Bool {
+        _initialQuestionnaire != nil
+    }
     
     /// The tasks that make up this survey
     public private(set) var tasks: [Task]
@@ -60,15 +65,24 @@ public final class Study: Identifiable {
     }
     
     
-    public func initialQuestionnaire(from bundle: Bundle) throws -> Questionnaire? {
+    /// Resolves the initial questionnaire resource without loading or decoding it.
+    public func initialQuestionnaireURL(in bundle: Bundle) throws -> URL? {
         guard let initialQuestionnaire = _initialQuestionnaire else {
             return nil
         }
-        
+
         guard let url = bundle.url(forResource: initialQuestionnaire, withExtension: "json") else {
             throw NSError(domain: "edu.stanford.plainly.shared", code: 0, userInfo: [
                 NSLocalizedDescriptionKey: "Unable to find resource '\(initialQuestionnaire).json'"
             ])
+        }
+        return url
+    }
+
+    /// Loads and decodes the initial questionnaire, if one is configured for the study.
+    public func initialQuestionnaire(from bundle: Bundle) throws -> Questionnaire? {
+        guard let url = try initialQuestionnaireURL(in: bundle) else {
+            return nil
         }
         let data = try Data(contentsOf: url)
         return try JSONDecoder().decode(Questionnaire.self, from: data)

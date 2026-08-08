@@ -25,7 +25,7 @@ let package = Package(
     dependencies: [
         .package(
             url: "https://github.com/SchmiedmayerLab/Spezi.git",
-            revision: "e7a66a44bea90bfc93ddaed5ac84cd1727fb0e56"
+            branch: "fix-managed-navigation-state"
         ),
         .package(url: "https://github.com/apple/FHIRModels.git", .upToNextMinor(from: "0.9.0")),
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.7.0")

@@ -16,35 +16,57 @@ import SpeziFirebaseAccount
 
 @MainActor
 final class FirebaseUpload: Module, EnvironmentAccessible, Sendable {
-    @Application(\.logger) private var logger
     @Dependency(FirebaseAccountService.self) private var accountService
     
     func configure() {
         Task {
             do {
+                AppDiagnostics.firebase.notice("""
+                    Firebase anonymous authentication starting; emulator=\(FeatureFlags.useFirebaseEmulator); \
+                    hadExistingUser=\(Auth.auth().currentUser != nil)
+                    """)
                 if FeatureFlags.useFirebaseEmulator {
-                    logger.notice("User before logout when using Firebase Emulator: \(Auth.auth().currentUser?.uid ?? "n/a")")
                     try? await accountService.logout()
-                    logger.notice("User after logout when using Firebase Emulator: \(Auth.auth().currentUser?.uid ?? "n/a")")
+                    AppDiagnostics.firebase.info(
+                        "Firebase emulator logout completed; hasCurrentUser=\(Auth.auth().currentUser != nil)"
+                    )
                 }
-                logger.notice("User before anonymous sign up: \(Auth.auth().currentUser?.uid ?? "n/a")")
                 try await accountService.signUpAnonymously()
-                logger.notice("User after anonymous sign up: \(Auth.auth().currentUser?.uid ?? "n/a")")
+                AppDiagnostics.firebase.notice(
+                    "Firebase anonymous authentication completed; hasCurrentUser=\(Auth.auth().currentUser != nil)"
+                )
             } catch {
-                logger.error("Error signing in: \(error)")
+                AppDiagnostics.firebase.logError(error, context: "Firebase anonymous authentication")
             }
         }
     }
     
     func uploadReport(at url: URL, for study: Study) async throws {
+        let correlationID = AppDiagnostics.correlationID()
         guard let userId = Auth.auth().currentUser?.uid else {
+            AppDiagnostics.report.fault("""
+                Report upload cannot start because Firebase has no authenticated user; \
+                correlation=\(correlationID, privacy: .public); study=\(study.id, privacy: .public)
+                """)
             throw NSError(domain: "edu.stanford.plainly", code: 0, userInfo: [
                 NSLocalizedDescriptionKey: "Unable to upload: failed to find user"
             ])
         }
+        AppDiagnostics.report.notice("""
+            Report upload starting; correlation=\(correlationID, privacy: .public); study=\(study.id, privacy: .public); \
+            fileExists=\(FileManager.default.fileExists(atPath: url.path(percentEncoded: false)))
+            """)
         let storageRef = Storage.storage().reference(withPath: "/studies/\(study.id)/users/\(userId)/\(UUID().uuidString).json")
         let metadata = StorageMetadata()
         metadata.contentType = "application/octet-stream"
-        _ = try await storageRef.putFileAsync(from: url, metadata: metadata)
+        do {
+            _ = try await storageRef.putFileAsync(from: url, metadata: metadata)
+            AppDiagnostics.report.notice(
+                "Report upload completed; correlation=\(correlationID, privacy: .public); study=\(study.id, privacy: .public)"
+            )
+        } catch {
+            AppDiagnostics.report.logError(error, context: "Report upload", correlationID: correlationID)
+            throw error
+        }
     }
 }

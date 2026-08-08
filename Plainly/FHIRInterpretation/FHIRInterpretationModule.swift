@@ -66,6 +66,7 @@ final class FHIRInterpretationModule: Module, EnvironmentAccessible, @unchecked 
     
     @MainActor
     func configure() {
+        AppDiagnostics.configuration.notice("FHIR interpretation module configuration started")
         resourceSummarizer = FHIRResourceSummarizer(
             localStorage: localStorage,
             llmRunner: llmRunner,
@@ -83,16 +84,30 @@ final class FHIRInterpretationModule: Module, EnvironmentAccessible, @unchecked 
             llmSchema: multipleResourceSchema,
             fhirStore: fhirStore
         )
+        AppDiagnostics.configuration.notice("FHIR interpretation module configuration completed")
     }
     
     
     /// Schedules a schema update, coalescing rapid preference changes into a single update.
     @MainActor
     func scheduleSchemaUpdate() {
+        if schemaUpdateTask != nil {
+            AppDiagnostics.configuration.info("Replacing a pending schema update task")
+        }
         schemaUpdateTask?.cancel()
         schemaUpdateTask = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(0.1))
-            guard !Task.isCancelled, let self else {
+            do {
+                try await Task.sleep(for: .seconds(0.1))
+                try Task.checkCancellation()
+            } catch is CancellationError {
+                AppDiagnostics.configuration.info("Scheduled schema update cancelled")
+                return
+            } catch {
+                AppDiagnostics.configuration.logError(error, context: "Waiting to apply schema update")
+                return
+            }
+            guard let self else {
+                AppDiagnostics.configuration.warning("Scheduled schema update lost its interpretation module")
                 return
             }
             await self.applySchemas()
@@ -102,18 +117,27 @@ final class FHIRInterpretationModule: Module, EnvironmentAccessible, @unchecked 
     /// Immediately updates the schemas used by the interpretation module.
     @MainActor
     func updateSchemas() async {
+        AppDiagnostics.configuration.notice("Immediate schema update requested")
         schemaUpdateTask?.cancel()
         await applySchemas()
     }
 
     @MainActor
     private func applySchemas() async {
+        let studyID = currentStudy?.study.id
+        AppDiagnostics.configuration.notice("""
+            Applying inference schemas; hasStudy=\(studyID != nil); \
+            study=\(studyID ?? "none", privacy: .public); model=\(String(describing: self.openAIModel), privacy: .public)
+            """)
         let summarizePrompt = currentStudy?.study.summarizeSingleResourcePrompt ?? .summarizeSingleFHIRResourceDefaultPrompt
         await resourceSummarizer.update(llmSchema: singleResourceSchema, summarizationPrompt: summarizePrompt)
         await singleResourceInterpreter.update(llmSchema: singleResourceSchema, interpretationPrompt: .interpretSingleFHIRResource)
         multipleResourceInterpreter.changeLLMSchema(
             to: multipleResourceSchema,
             using: currentStudy?.study.interpretMultipleResourcesPrompt ?? .interpretMultipleResourcesDefaultPrompt
+        )
+        AppDiagnostics.configuration.notice(
+            "Inference schemas applied; study=\(studyID ?? "none", privacy: .public)"
         )
     }
 }

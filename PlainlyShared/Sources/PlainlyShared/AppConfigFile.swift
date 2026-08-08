@@ -7,11 +7,14 @@
 //
 
 public import Foundation
+private import OSLog
 private import SpeziFoundation
 
 
 /// The `UserStudyConfig.plist` file bundled with the app/
 public struct AppConfigFile: Codable {
+    private static let logger = Logger(subsystem: "edu.stanford.llmonfhir", category: "Configuration")
+
     /// The app's intended launch mode.
     public let appLaunchMode: AppLaunchMode
     /// The studies bundled with the app.
@@ -31,8 +34,10 @@ extension AppConfigFile {
     /// Attempts to load a configuration from a plist file in the main bundle.
     public init?(nameInBundle: String) {
         guard let url = Bundle.main.url(forResource: nameInBundle, withExtension: "plist") else {
+            Self.logger.fault("Configuration resource is missing; resource=\(nameInBundle, privacy: .public)")
             return nil
         }
+        Self.logger.notice("Configuration resource found; resource=\(nameInBundle, privacy: .public)")
         self.init(contentsOf: url)
     }
     
@@ -48,6 +53,12 @@ extension AppConfigFile {
                 self = try PropertyListDecoder().decode(Self.self, from: data)
             }
         } catch {
+            let nsError = error as NSError
+            let typeName = String(reflecting: type(of: error))
+            Self.logger.error("""
+                Configuration decoding failed; file=\(url.lastPathComponent, privacy: .public); \
+                type=\(typeName, privacy: .public); domain=\(nsError.domain, privacy: .public); code=\(nsError.code)
+                """)
             return nil
         }
     }
@@ -56,7 +67,15 @@ extension AppConfigFile {
     ///
     /// Returns an empty ``Plainly/Plainly/Mode/standalone`` config if the file is not present or cannot be decoded.
     public static func current() -> Self {
-        Self(nameInBundle: "UserStudyConfig") ?? Self(launchMode: .standalone, studyConfigs: [:], firebaseConfig: nil)
+        guard let configuration = Self(nameInBundle: "UserStudyConfig") else {
+            logger.fault("Using empty standalone configuration fallback")
+            return Self(launchMode: .standalone, studyConfigs: [:], firebaseConfig: nil)
+        }
+        logger.notice("""
+            Configuration loaded; studyCount=\(configuration.studyConfigs.count); \
+            hasFirebaseConfiguration=\(configuration.firebaseConfig != nil)
+            """)
+        return configuration
     }
 }
 
@@ -107,6 +126,20 @@ extension AppConfigFile {
         }
         
         private let entries: [String: Value]
+
+        /// Names of required Firebase configuration entries that are absent.
+        public var missingRequiredKeys: [String] {
+            let requiredKeys = [
+                "API_KEY",
+                "BUNDLE_ID",
+                "GCM_SENDER_ID",
+                "GOOGLE_APP_ID",
+                "PLIST_VERSION",
+                "PROJECT_ID",
+                "STORAGE_BUCKET"
+            ]
+            return requiredKeys.filter { entries[$0] == nil }
+        }
         
         private init(entries: [String: Value]) {
             self.entries = entries
@@ -126,6 +159,7 @@ extension AppConfigFile {
         public func asNSDictionary() -> NSDictionary {
             NSDictionary(dictionary: entries.mapValues(\.anyValue))
         }
+
         // swiftlint:enable legacy_objc_type
     }
 }

@@ -25,7 +25,11 @@ import SpeziLLMOpenAI
 
 final class PlainlyDelegate: SpeziAppDelegate {
     override var configuration: Configuration {
-        Configuration(standard: PlainlyStandard()) {
+        AppDiagnostics.lifecycle.notice("""
+            Building application configuration; firebaseDisabled=\(FeatureFlags.disableFirebase); \
+            firebaseEmulator=\(FeatureFlags.useFirebaseEmulator); healthRecordsDisabled=\(FeatureFlags.disableHealthRecords)
+            """)
+        return Configuration(standard: PlainlyStandard()) {
             if !FeatureFlags.disableFirebase, let config = firebaseConfig {
                 firebaseModules(using: config)
             }
@@ -52,12 +56,26 @@ final class PlainlyDelegate: SpeziAppDelegate {
     }
 
     private var firebaseConfig: AppConfigFile.FirebaseConfigDictionary? {
-        FeatureFlags.useFirebaseEmulator ? .emulator : AppConfigFile.current().firebaseConfig
+        let config = FeatureFlags.useFirebaseEmulator ? .emulator : AppConfigFile.current().firebaseConfig
+        guard let config else {
+            AppDiagnostics.configuration.fault("Firebase configuration is unavailable")
+            return nil
+        }
+        let missingKeys = config.missingRequiredKeys
+        if missingKeys.isEmpty {
+            AppDiagnostics.configuration.notice("Firebase configuration contains all required keys")
+        } else {
+            AppDiagnostics.configuration.fault(
+                "Firebase configuration is missing required keys: \(missingKeys.joined(separator: ","), privacy: .public)"
+            )
+        }
+        return config
     }
     
     @ModuleBuilder
     private func firebaseModules(using config: AppConfigFile.FirebaseConfigDictionary) -> ModuleCollection {
-        ConfigureFirebaseApp(options: FirebaseOptions(config)!) // swiftlint:disable:this force_unwrapping
+        let options = firebaseOptions(using: config)
+        ConfigureFirebaseApp(options: options)
         AccountConfiguration(
             service: FirebaseAccountService(
                 providers: [],
@@ -74,6 +92,14 @@ final class PlainlyDelegate: SpeziAppDelegate {
         }
         FirebaseUpload()
     }
+
+    private func firebaseOptions(using config: AppConfigFile.FirebaseConfigDictionary) -> FirebaseOptions {
+        guard let options = FirebaseOptions(config) else {
+            AppDiagnostics.configuration.fault("FirebaseOptions could not be created from the configured keys")
+            preconditionFailure("Invalid Firebase configuration")
+        }
+        return options
+    }
     
     private var accountEmulatorSettings: (host: String, port: Int)? {
         if FeatureFlags.useFirebaseEmulator {
@@ -85,10 +111,19 @@ final class PlainlyDelegate: SpeziAppDelegate {
     
     nonisolated private var openAITokenConfig: RemoteLLMInferenceAuthToken {
         if Plainly.mode.requiresUserProvidedAPIKey {
+            AppDiagnostics.configuration.notice("Direct inference is configured to use the Keychain credential")
             return .keychain(tag: .openAIKey, username: "Plainly_OpenAI_Token")
         } else {
             return .closure { @MainActor in
-                Self.spezi?.module(FHIRInterpretationModule.self)?.currentStudy?.config.openAIAPIKey
+                guard let study = Self.spezi?.module(FHIRInterpretationModule.self)?.currentStudy else {
+                    AppDiagnostics.configuration.error("Inference credential requested before a study was selected")
+                    return nil
+                }
+                let key = study.config.openAIAPIKey
+                if case .regular = study.config.openAIEndpoint, key?.isEmpty != false {
+                    AppDiagnostics.configuration.fault("Direct inference is missing its configured credential")
+                }
+                return key
             }
         }
     }
@@ -103,11 +138,14 @@ extension FirebaseOptions {
         do {
             try config.asNSDictionary().write(to: tmpUrl)
         } catch {
+            AppDiagnostics.configuration.logError(error, context: "Writing temporary Firebase configuration")
             return nil
         }
         defer {
             try? fileManager.removeItem(at: tmpUrl)
         }
+        AppDiagnostics.configuration.notice("Passing configuration to the Firebase SDK")
         self.init(contentsOfFile: tmpUrl.absoluteURL.path(percentEncoded: false))
+        AppDiagnostics.configuration.notice("Firebase SDK options initialized")
     }
 }

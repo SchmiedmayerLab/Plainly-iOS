@@ -1,5 +1,5 @@
 {
-  "originHash" : "837e0cbf1f78855d9ff24aaa1221e30d5c537e57c27e32663e1cdabf81de338f",
+  "originHash" : "17daa2f2ba26c030853d077a041622a4ce7132a1197117bccd32c7314769e0f2",
   "pins" : [
     {
       "identity" : "abseil-cpp-binary",
@@ -168,7 +168,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/SchmiedmayerLab/Spezi",
       "state" : {
-        "revision" : "e7a66a44bea90bfc93ddaed5ac84cd1727fb0e56"
+        "branch" : "fix-managed-navigation-state",
+        "revision" : "9319c45fc28d59d54dd3bee2451898099d88ef39"
       }
     },
     {

@@ -123,8 +123,9 @@ platform :ios do
     run_tests(
       scheme: APP_CONFIG[:scheme],
       testplan: "Plainly Firebase End-to-End",
+      configuration: "Release",
       derived_data_path: ".derivedData/firebase-e2e",
-      devices: ["iPhone 17"],
+      devices: ["iPhone 17 Pro"],
       only_testing: [
         "PlainlyUITests/FirebaseEndToEndTests/testChatAndReportUploadThroughFirebaseEmulators",
         "PlainlyUITests/FirebaseEndToEndTests/testChatErrorThroughFirebaseEmulators",
