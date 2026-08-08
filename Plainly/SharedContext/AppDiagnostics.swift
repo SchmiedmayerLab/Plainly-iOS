@@ -19,6 +19,7 @@ enum AppDiagnostics {
     static let questionnaire = Logger(subsystem: subsystem, category: "Questionnaire")
     static let study = Logger(subsystem: subsystem, category: "Study")
     static let chat = Logger(subsystem: subsystem, category: "Chat")
+    static let chatTranscript = Logger(subsystem: subsystem, category: "ChatTranscript")
     static let network = Logger(subsystem: subsystem, category: "Network")
     static let firebase = Logger(subsystem: subsystem, category: "Firebase")
     static let report = Logger(subsystem: subsystem, category: "Report")
@@ -28,6 +29,45 @@ enum AppDiagnostics {
 
     static func correlationID() -> String {
         String(UUID().uuidString.prefix(8))
+    }
+
+    /// Temporarily logs complete diagnostic payloads in chunks small enough to remain readable in Console.
+    ///
+    /// - Important: The payload is intentionally public and may contain study or health information.
+    static func logPublicPayload(_ payload: String, context: String, correlationID: String) {
+        let chunks = payload.chunks(maximumCharacterCount: 700)
+        if chunks.isEmpty {
+            chatTranscript.notice("""
+                \(context, privacy: .public); correlation=\(correlationID, privacy: .public); \
+                part=0/0; characters=0; payload=<empty>
+                """)
+            return
+        }
+
+        for (index, chunk) in chunks.enumerated() {
+            chatTranscript.notice("""
+                \(context, privacy: .public); correlation=\(correlationID, privacy: .public); \
+                part=\(index + 1)/\(chunks.count); characters=\(chunk.count); payload=\(chunk, privacy: .public)
+                """)
+        }
+    }
+}
+
+
+extension String {
+    fileprivate func chunks(maximumCharacterCount: Int) -> [String] {
+        var chunks: [String] = []
+        var startIndex = startIndex
+        while startIndex < endIndex {
+            let chunkEndIndex = index(
+                startIndex,
+                offsetBy: maximumCharacterCount,
+                limitedBy: self.endIndex
+            ) ?? self.endIndex
+            chunks.append(String(self[startIndex..<chunkEndIndex]))
+            startIndex = chunkEndIndex
+        }
+        return chunks
     }
 }
 

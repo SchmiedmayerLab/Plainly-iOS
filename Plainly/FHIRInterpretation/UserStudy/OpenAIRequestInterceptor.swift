@@ -152,6 +152,11 @@ extension OpenAIRequestInterceptor {
                 """)
             throw Error("Invalid Body Encoding")
         }
+        AppDiagnostics.logPublicPayload(
+            input,
+            context: "Firebase inference request body; operation=\(operationID)",
+            correlationID: correlationID
+        )
         return input
     }
 
@@ -275,6 +280,7 @@ extension OpenAIRequestInterceptor {
                 guard let chunk else {
                     continue
                 }
+                logFirebaseResponseChunk(chunk, index: forwardedChunkCount + 1, correlationID: correlationID)
                 let isDone = chunk.trimmingCharacters(in: .whitespacesAndNewlines) == "data: [DONE]"
                 if isDone {
                     completionChunk = chunk
@@ -293,11 +299,7 @@ extension OpenAIRequestInterceptor {
                 }
             case .result:
                 receivedTerminalResult = true
-                AppDiagnostics.network.notice("""
-                    Firebase terminal result received; correlation=\(correlationID, privacy: .public); \
-                    forwardedChunks=\(forwardedChunkCount); forwardedBytes=\(forwardedByteCount); \
-                    hasCompletionMarker=\(completionChunk != nil)
-                    """)
+                logFirebaseTerminalResult(forwardedChunkCount, forwardedByteCount, completionChunk != nil, correlationID)
                 if let completionChunk {
                     continuation.yield(HTTPBody.ByteChunk(completionChunk.utf8))
                 }
@@ -324,6 +326,27 @@ extension OpenAIRequestInterceptor {
         case .result(.some):
             throw Error("Firebase chat function returned an unexpected nonempty result")
         }
+    }
+
+    private func logFirebaseResponseChunk(_ chunk: String, index: Int, correlationID: String) {
+        AppDiagnostics.logPublicPayload(
+            chunk,
+            context: "Firebase raw response event; event=\(index)",
+            correlationID: correlationID
+        )
+    }
+
+    private func logFirebaseTerminalResult(
+        _ chunkCount: Int,
+        _ byteCount: Int,
+        _ hasCompletionMarker: Bool,
+        _ correlationID: String
+    ) {
+        AppDiagnostics.network.notice("""
+            Firebase terminal result received; correlation=\(correlationID, privacy: .public); \
+            forwardedChunks=\(chunkCount); forwardedBytes=\(byteCount); \
+            hasCompletionMarker=\(hasCompletionMarker)
+            """)
     }
 }
 

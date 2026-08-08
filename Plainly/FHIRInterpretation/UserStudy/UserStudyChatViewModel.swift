@@ -532,6 +532,7 @@ extension UserStudyChatViewModel {
             assistantCount=\(self.llmSession.context.count(where: { $0.role == .assistant() })); \
             sessionState=\(self.llmSession.state.description, privacy: .public); isProcessing=\(self.isProcessing)
             """)
+        logTranscript(stage: "before assistant generation", correlationID: correlationID)
         await updateProcessingState()
         processingState = await processingState.calculateNewProcessingState(basedOn: llmSession)
         guard shouldGenerateResponse else {
@@ -568,6 +569,7 @@ extension UserStudyChatViewModel {
                 Assistant response generation completed; correlation=\(correlationID, privacy: .public); \
                 contextCount=\(self.llmSession.context.count); sessionState=\(self.llmSession.state.description, privacy: .public)
                 """)
+            logTranscript(stage: "after assistant generation", correlationID: correlationID)
             return response
         } catch let error as CancellationError {
             AppDiagnostics.chat.notice(
@@ -583,6 +585,100 @@ extension UserStudyChatViewModel {
             processingState = .error
             throw error
         }
+    }
+
+    private func logTranscript(stage: String, correlationID: String) {
+        let context = llmSession.context
+        AppDiagnostics.chatTranscript.notice("""
+            LLM transcript snapshot; stage=\(stage, privacy: .public); correlation=\(correlationID, privacy: .public); \
+            contextCount=\(context.count); chatCount=\(context.chat.count)
+            """)
+
+        for (index, entity) in context.enumerated() {
+            logContextEntity(entity, index: index, stage: stage, correlationID: correlationID)
+        }
+
+        for (index, entity) in context.chat.enumerated() {
+            logChatEntity(entity, index: index, stage: stage, correlationID: correlationID)
+        }
+    }
+
+    private func logContextEntity(
+        _ entity: LLMContextEntity,
+        index: Int,
+        stage: String,
+        correlationID: String
+    ) {
+        let role: String
+        let toolCalls: [LLMContextEntity.ToolCall]
+        switch entity.role {
+        case .user:
+            role = "user"
+            toolCalls = []
+        case .assistant(let calls):
+            role = "assistant"
+            toolCalls = calls
+        case .system:
+            role = "system"
+            toolCalls = []
+        case .tool(_, let name):
+            role = "tool_\(name)"
+            toolCalls = []
+        }
+
+        AppDiagnostics.chatTranscript.notice("""
+            LLM context entity; stage=\(stage, privacy: .public); correlation=\(correlationID, privacy: .public); \
+            index=\(index); role=\(role, privacy: .public); id=\(entity.id.uuidString, privacy: .public); \
+            complete=\(entity.complete); contentBytes=\(entity.content.utf8.count); toolCallCount=\(toolCalls.count)
+            """)
+        AppDiagnostics.logPublicPayload(
+            entity.content,
+            context: "LLM context content; stage=\(stage); index=\(index); role=\(role)",
+            correlationID: correlationID
+        )
+        for (toolCallIndex, toolCall) in toolCalls.enumerated() {
+            logToolCall(
+                toolCall,
+                entityIndex: index,
+                toolCallIndex: toolCallIndex,
+                stage: stage,
+                correlationID: correlationID
+            )
+        }
+    }
+
+    private func logToolCall(
+        _ toolCall: LLMContextEntity.ToolCall,
+        entityIndex: Int,
+        toolCallIndex: Int,
+        stage: String,
+        correlationID: String
+    ) {
+        AppDiagnostics.chatTranscript.notice("""
+            LLM tool call; stage=\(stage, privacy: .public); correlation=\(correlationID, privacy: .public); \
+            entityIndex=\(entityIndex); toolCallIndex=\(toolCallIndex); id=\(toolCall.id, privacy: .public); \
+            name=\(toolCall.name, privacy: .public)
+            """)
+        AppDiagnostics.logPublicPayload(
+            toolCall.arguments,
+            context: """
+                LLM tool call arguments; stage=\(stage); entityIndex=\(entityIndex); toolCallIndex=\(toolCallIndex)
+                """,
+            correlationID: correlationID
+        )
+    }
+
+    private func logChatEntity(_ entity: ChatEntity, index: Int, stage: String, correlationID: String) {
+        AppDiagnostics.chatTranscript.notice("""
+            Rendered chat entity; stage=\(stage, privacy: .public); correlation=\(correlationID, privacy: .public); \
+            index=\(index); role=\(entity.role.rawValue, privacy: .public); \
+            id=\(entity.id.uuidString, privacy: .public); complete=\(entity.complete); contentBytes=\(entity.content.utf8.count)
+            """)
+        AppDiagnostics.logPublicPayload(
+            entity.content,
+            context: "Rendered chat content; stage=\(stage); index=\(index); role=\(entity.role.rawValue)",
+            correlationID: correlationID
+        )
     }
 }
 
