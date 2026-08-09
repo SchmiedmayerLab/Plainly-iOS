@@ -25,7 +25,7 @@ let package = Package(
     dependencies: [
         .package(
             url: "https://github.com/SchmiedmayerLab/Spezi.git",
-            revision: "b5ce1a15688afffd83d7f757884e86e17a65b65c",
+            revision: "0bad0628825cc9ff3eb93f299be4313b5e4b5927",
             traits: [.trait(name: "Textual")]
         ),
         .package(url: "https://github.com/apple/FHIRModels.git", .upToNextMinor(from: "0.9.0")),
@@ -40,6 +40,7 @@ let package = Package(
                 .product(name: "SpeziLLM", package: "Spezi"),
                 .product(name: "SpeziLLMOpenAI", package: "Spezi"),
                 .product(name: "SpeziLocalStorage", package: "Spezi"),
+                .product(name: "SpeziQuestionnaire", package: "Spezi"),
                 .product(name: "SpeziFHIR", package: "Spezi")
             ],
             resources: [

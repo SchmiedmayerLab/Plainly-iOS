@@ -45,4 +45,13 @@ struct StudyTests {
     func studyDefinitionsAreValid() {
         #expect(Study.validateAllStudies().isEmpty)
     }
+
+    /// Studies are built fresh on every lookup, so they have to compare by what they define.
+    @Test
+    func studiesCompareByValue() throws {
+        let study = try #require(Study.withId(Study.gynStudy.id))
+
+        #expect(study == Study.gynStudy)
+        #expect(Set(Study.allStudies + Study.allStudies).count == Study.allStudies.count)
+    }
 }

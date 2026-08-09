@@ -10,7 +10,7 @@ import Foundation
 import SpeziFoundation
 
 
-extension Study.Task.Question.Kind {
+extension Study.Task {
     /// The user-selectable options associated with a ``TaskQuestionType/scale(responseOptions:)``
     public struct AnswerOptions: Hashable, RandomAccessCollection, ExpressibleByArrayLiteral, Sendable {
         private let storage: [String]
@@ -37,47 +37,7 @@ extension Study.Task.Question.Kind {
 }
 
 
-extension Study.Task.Question.Kind.AnswerOptions: Codable {
-    public var stringValue: String {
-        if let key = Self.presets.first(where: { $0.value == self })?.key {
-            "<\(key)>"
-        } else {
-            storage.joined(separator: ";")
-        }
-    }
-    
-    public init(stringValue string: some StringProtocol) {
-        if string.first == "<", string.last == ">", let preset = Self.presets[String(string.dropFirst().dropLast())] {
-            self = preset
-        } else {
-            self.init(string.split(separator: ";").map { $0.trimmingWhitespace() })
-        }
-    }
-    
-    public init(from decoder: any Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        let stringValue = try container.decode(String.self)
-        self.init(stringValue: stringValue)
-    }
-    
-    public func encode(to encoder: any Encoder) throws {
-        var container = encoder.singleValueContainer()
-        try container.encode(stringValue)
-    }
-}
-
-
-extension Study.Task.Question.Kind.AnswerOptions {
-    /// All hardcoded presets.
-    public static let presets: [String: Self] = [
-        "clarityScale": clarityScale,
-        "effectivenessScale": effectivenessScale,
-        "confidentnessScale": confidentnessScale,
-        "comparisonScale": comparisonScale,
-        "balancedEaseScale": balancedEaseScale,
-        "frequencyOptions": frequencyOptions
-    ]
-    
+extension Study.Task.AnswerOptions {
     /// A clarity scale.
     public static let clarityScale: Self = [
         "Very clear",

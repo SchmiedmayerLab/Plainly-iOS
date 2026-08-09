@@ -21,6 +21,8 @@ struct StudyChatView: View {
     @State private var viewState: ViewState = .idle
     @State private var responseGenerationTask: Task<Void, Never>?
     @State private var responseGenerationAttempt = 0
+    /// An error that can only be shown once the presented sheet has gone away.
+    @State private var pendingError: AnyLocalizedError?
 
     private var userMessageCount: Int {
         model.llmSession.context.count(where: { $0.role == .user })
@@ -40,7 +42,7 @@ struct StudyChatView: View {
                         }
                     )
                 }
-                .sheet(item: $model.presentedSheet) { sheet in
+                .sheet(item: $model.presentedSheet, onDismiss: presentPendingError) { sheet in
                     switch sheet {
                     case .instructions:
                         taskInstructionSheet()
@@ -119,14 +121,29 @@ struct StudyChatView: View {
             return
         } catch {
             AppDiagnostics.chat.logError(error, context: "Assistant response task")
-            model.presentedSheet = nil
-            do {
-                try await Task.sleep(for: .seconds(0.5))
-            } catch {
-                return
-            }
-            viewState = .error(AnyLocalizedError(error: error))
+            present(AnyLocalizedError(error: error))
         }
+    }
+
+    /// Shows the error, waiting for any presented sheet to go away first.
+    ///
+    /// A sheet and an alert cannot be presented at the same time, and a generation that fails while a
+    /// sheet is still animating in would otherwise lose its alert.
+    private func present(_ error: AnyLocalizedError) {
+        guard model.presentedSheet != nil else {
+            viewState = .error(error)
+            return
+        }
+        pendingError = error
+        model.presentedSheet = nil
+    }
+
+    private func presentPendingError() {
+        guard let pendingError else {
+            return
+        }
+        self.pendingError = nil
+        viewState = .error(pendingError)
     }
 
     @ViewBuilder
