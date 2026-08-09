@@ -77,21 +77,14 @@ extension Study {
                     title: nil,
                     instructions: "Before we end our session, feel free to ask the app any medical questions you might have related to your health",
                     assistantMessagesLimit: 1...10,
-                    questions: [
-                        effectivenessQuestion,
-                        .freeText("What surprised you about the LLM’s answer, either positively or negatively"),
-                        .scale("Compared to other sources of health information (e.g. websites, informational leaflets, doctors) how do you rate the LLM’s responses?", options: .comparisonScale),
-                        .freeText("What were the most and least useful features of the LLM? Do you have any suggestions to share"),
-                        .freeText("How has the LLM impacted your ability to manage your health?"),
-                        .netPromoterScore("On a scale of 0-10 how likely are you to recommend this tool to a friend or colleague?", range: 1...10)
-                    ]
+                    questions: [effectivenessQuestion] + sessionFeedbackQuestions
                 ),
                 Task(
                     id: "6",
                     title: nil,
                     instructions: nil,
                     assistantMessagesLimit: nil,
-                    questions: finalTaskQuestions
+                    questions: futureUseQuestions
                 ),
                 Task(
                     id: "7",
@@ -107,7 +100,20 @@ extension Study {
 }
 
 
-private let finalTaskQuestions: [Questionnaire.Task] = [
+private let sessionFeedbackQuestions: [Questionnaire.Task] = [
+    .freeText("What surprised you about the LLM’s answer, either positively or negatively"),
+    .scale("Compared to other sources of health information (e.g. websites, informational leaflets, doctors) how do you rate the LLM’s responses?", options: .comparisonScale),
+    .freeText("What were the most and least useful features of the LLM? Do you have any suggestions to share"),
+    .freeText("How has the LLM impacted your ability to manage your health?"),
+    .scale(
+        "On a scale of 0-10 how likely are you to recommend this tool to a friend or colleague?",
+        range: 0...10,
+        labels: [0: "Would not recommend", 10: "Would recommend"]
+    )
+]
+
+
+private let futureUseQuestions: [Questionnaire.Task] = [
     .instructional("In the future if you had a chatbot like Plainly available…"),
     .scale("How easy would it be to access or obtain information about your medical condition?", options: .balancedEaseScale),
     .scale("How frequently do you anticipate having problems learning about your medical condition because of difficulty understanding written information?", options: .frequencyOptions),

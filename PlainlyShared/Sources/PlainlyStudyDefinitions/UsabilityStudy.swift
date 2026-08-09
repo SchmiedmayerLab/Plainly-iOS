@@ -71,7 +71,11 @@ extension Study {
                         .scale("Compared to other sources of health information (e.g., websites, doctors), how do you rate the LLM's responses?", options: .comparisonScale),
                         .freeText("What were the most and least useful features of the LLM? Do you have any suggestions to share?", isOptional: true),
                         .freeText("How has the LLM impacted your ability to manage your health?", isOptional: true),
-                        .netPromoterScore("On a scale of 0-10, how likely are you to recommend this tool to a friend or colleague?", range: 0...10)
+                        .scale(
+                            "On a scale of 0-10, how likely are you to recommend this tool to a friend or colleague?",
+                            range: 0...10,
+                            labels: [0: "Would not recommend", 10: "Would recommend"]
+                        )
                     ]
                 ),
                 Task(

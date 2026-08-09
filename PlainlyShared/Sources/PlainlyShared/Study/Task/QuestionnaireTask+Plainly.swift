@@ -43,12 +43,27 @@ extension Questionnaire.Task {
         return choice(text, options: choices, isOptional: isOptional)
     }
 
-    /// A Net Promoter Score question.
+    /// A question answered by picking a number from a range.
     ///
-    /// Presented as the same labelled scale as any other choice question, with the score as the option
-    /// identifier so that it is what the study reports.
-    public static func netPromoterScore(_ text: String, range: ClosedRange<Int>, isOptional: Bool = false) -> Self {
-        choice(text, options: range.map { .init(id: "\($0)", title: "\($0)") }, isOptional: isOptional)
+    /// - Important: Unlike ``scale(_:options:)``, which reports an option's position, this reports the
+    ///     number itself, so a range stays comparable no matter which values it covers. A `0...10`
+    ///     question therefore collects `0` through `10`, not `1` through `11`.
+    ///
+    /// - parameter labels: Descriptions for individual values, typically the ends of the range, shown
+    ///     next to the number they describe.
+    public static func scale(
+        _ text: String,
+        range: ClosedRange<Int>,
+        labels: [Int: String] = [:],
+        isOptional: Bool = false
+    ) -> Self {
+        let options = range.map { value in
+            Kind.ChoiceConfig.Option(
+                id: "\(value)",
+                title: labels[value].map { "\(value) (\($0))" } ?? "\(value)"
+            )
+        }
+        return choice(text, options: options, isOptional: isOptional)
     }
 
     private static func choice(

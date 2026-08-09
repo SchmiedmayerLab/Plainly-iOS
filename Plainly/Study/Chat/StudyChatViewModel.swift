@@ -193,9 +193,11 @@ final class StudyChatViewModel: Sendable {
             taskEndTimes[task.id] = .now
         }
         inProgressStudy.responses[task.id] = responses
-        if isCurrentTask {
-            advanceToNextTask()
+        guard isCurrentTask else {
+            presentedSheet = nil
+            return
         }
+        advanceToNextTask()
     }
     
     /// Resets the study to its initial state
@@ -249,34 +251,28 @@ final class StudyChatViewModel: Sendable {
             return
         }
         let nextTaskIdx = study.tasks.index(after: currentTaskIdx)
-        if let nextTask = study.tasks[safe: nextTaskIdx] {
-            let newTaskState = { () -> NavigationState.TaskState in
-                if (nextTask.instructions ?? "").isEmpty,
-                   nextTask.assistantMessagesLimit == nil || nextTask.assistantMessagesLimit == 0...0,
-                   !nextTask.questions.isEmpty {
-                    // if the next task has no instructions and no/empty messaging limits, but does have questions, we directly go to the survey
-                    .answeringSurvey
-                } else {
-                    // otherwise, we simply show the instructions sheet
-                    .chatting
-                }
-            }()
-            navigationState = .task(
-                task: nextTask,
-                taskIdx: nextTaskIdx,
-                numTotalTasks: study.tasks.count,
-                taskState: newTaskState
-            )
-            taskStartTimes[nextTask.id] = .now
-            switch newTaskState {
-            case .chatting:
-                presentedSheet = .instructions
-            case .answeringSurvey:
-                presentedSheet = .survey
-            }
-        } else {
+        guard let nextTask = study.tasks[safe: nextTaskIdx] else {
             // no next task.
             endStudy()
+            return
+        }
+        // A task without a chat has nothing to introduce, so its questions carry straight on from the
+        // ones the participant just answered.
+        let newTaskState: NavigationState.TaskState = nextTask.hasChat || nextTask.questions.isEmpty
+            ? .chatting
+            : .answeringSurvey
+        navigationState = .task(
+            task: nextTask,
+            taskIdx: nextTaskIdx,
+            numTotalTasks: study.tasks.count,
+            taskState: newTaskState
+        )
+        taskStartTimes[nextTask.id] = .now
+        switch newTaskState {
+        case .chatting:
+            presentedSheet = .instructions
+        case .answeringSurvey:
+            presentedSheet = .survey
         }
     }
     

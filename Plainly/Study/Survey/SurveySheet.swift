@@ -13,7 +13,8 @@ import SwiftUI
 
 /// Presents the questions of the current study task.
 ///
-/// Each task is its own ``Questionnaire``, so the chat runs between presentations rather than inside one.
+/// Each task is its own ``Questionnaire``. When the next task has no chat, the sheet stays up and
+/// carries straight on with that task's questions, so consecutive questionnaires read as one flow.
 struct SurveySheet: View {
     private var model: StudyChatViewModel
 
@@ -25,20 +26,19 @@ struct SurveySheet: View {
             ) { result in
                 switch result {
                 case .completed(let responses):
-                    submit(responses, for: task)
+                    // Advancing decides what to present next, so the sheet is never dismissed here:
+                    // clearing it first would cancel out the next task's presentation.
+                    model.submitSurveyResponses(responses, for: task)
                 case .cancelled:
                     model.presentedSheet = nil
                 }
             }
+            // A questionnaire keeps its own answers, so the next task needs one of its own.
+            .id(task.id)
         }
     }
 
     init(model: StudyChatViewModel) {
         self.model = model
-    }
-
-    private func submit(_ responses: QuestionnaireResponses, for task: Study.Task) {
-        model.presentedSheet = nil
-        model.submitSurveyResponses(responses, for: task)
     }
 }
