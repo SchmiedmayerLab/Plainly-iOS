@@ -40,9 +40,11 @@ You can build and run the application using [Xcode](https://developer.apple.com/
 
 For development without participant data, the app includes [Synthea](https://pubmed.ncbi.nlm.nih.gov/29025144/)-based synthetic patients.
 
+All chat requests are dispatched to the Firebase `chat` function, which holds the inference credentials and resolves the provider and endpoint from the model identifier a study defines. The app never talks to an inference API directly, so local testing requires either the Firebase emulator (see below) or the staging backend.
+
 When running Plainly via Xcode, you can use the `--mode` CLI flag to control the behavior of the app (configurable via the Run scheme):
-- `--mode standalone` launches a developer-facing standalone mode for local testing;
-- `--mode study:<study-id>` launches Plainly into its study mode, loads the study with the specified ID from the UserStudyConfig.plist file, and automatically opens it;
+- `--mode test` loads the bundled synthetic patients instead of health records;
+- `--mode study:<study-id>` launches Plainly into its study mode, loads the study with the specified ID from `PlainlyStudyDefinitions`, and automatically opens it;
 - `--mode study` launches Plainly into its study mode, showing a "Scan QR Code" button to select and open a study.
 
 ### Firebase End-to-End Test
@@ -58,47 +60,18 @@ The script initializes the `Plainly-Firebase` submodule, starts the local emulat
 
 ### UserStudyConfig.plist File
 
-Plainly contains a UserStudyConfig.plist file, which is loaded on launch and used to configure the app and populate it with studies.
-The UserStudyConfig.plist file contains the following:
-- Firebase configuration: used, if present, to connect the app to a Firebase environment for uploading study reports
-- app launch mode: used to control how the app should behave upon launch (e.g., whether study-only mode should be enabled and whether to directly launch a study)
-- list of available studies (see the `Study` type within the iOS codebase for more details)
+Everything a study *does* — its prompts, tasks, model, retrieval, and chat function — is defined by the `Study` type in `PlainlyStudyDefinitions` and versioned with the code.
+The UserStudyConfig.plist file therefore carries only what cannot live in an open-source repository:
+- Firebase configuration: connects the app to a Firebase environment for chat completions and study report uploads
+- app launch mode: controls how the app behaves upon launch (e.g., whether to directly launch a study)
 
-The UserStudyConfig.plist file bundled with the repository is missing some data (the OpenAI key, the Firebase credentials, and the study report encryption key).
-You can use the `export-config` tool in the PlainlyShared folder to generate a complete config file:
+The file bundled with the repository carries placeholder Firebase credentials and must be regenerated for a real deployment.
+Use the `export-config` tool in the PlainlyShared folder to do so:
 ```bash
-swift run PlainlyCLI export-config \
-    -f ~/GoogleService-Info.plist \
-    -o edu.stanford.plainly.study1:sk-123 \
-    -o edu.stanford.plainly.study2:sk-456 \
-    -k edu.stanford.plainly.study1:./public_key1.pem \
-    -k edu.stanford.plainly.study2:./public_key2.pem \
-    ../Plainly/Supporting\ Files/UserStudyConfig.plist
+swift run PlainlyCLI export-config -f ~/GoogleService-Info.plist ../Plainly/Supporting\ Files/UserStudyConfig.plist
 ```
 
-Some flags use a `-x <studyId>:<value>` format and can be specified multiple times to specify each study's value.
-You can also add one entry that uses `*` as the study ID to define a default value for all studies not explicitly listed.
-For example, `-o '*':$OPENAI_KEY` would define the OpenAI key used by all studies that don't have a `-o` entry of their own.
-
-### Study Report File Encryption
-
-The report files generated from the usability study are optionally encrypted using the public key stored in UserStudyConfig.plist.
-
-You can generate a public/private key pair using the following commands:
-```bash
-# generate private key
-openssl genpkey -algorithm X25519 -out private_key.pem
-
-# extract public key
-openssl pkey -in private_key.pem -pubout -out public_key.pem
-```
-
-Use the `export-config` tool shown above to place your public key in the user study config file:
-
-To decrypt a report file created by the app, you can use the `decrypt-study-report` tool in the PlainlyShared folder:
-```bash
-swift run PlainlyCLI decrypt-study-report -k private_key.pem studyReport report.json
-```
+Study reports are uploaded to Firebase Storage. A report that cannot be uploaded is kept in Application Support, surfaced on the study home screen, and retried when the participant returns to that screen or relaunches the app.
 
 ## Session Simulation
 
@@ -134,7 +107,7 @@ Each entry in the JSON config defines the parameters of one simulation:
 - `numberOfRuns` — how many times to repeat this session
 - `studyId` — the study whose prompts and context to use
 - `bundleName` — name of an embedded synthetic patient, or a path to a FHIR bundle JSON file (resolved relative to the config file)
-- `model` / `temperature` — OpenAI model and sampling temperature
+- `model` — the model identifier to request
 - `userQuestions` — the questions the simulated patient asks
 - `service` *(optional)* — `"OpenAI"`, `"Firebase"`, or `"Firebase-Emulator"`; if omitted, inferred from the environment (`OPENAI_API_KEY` → OpenAI, `GOOGLE_CREDENTIALS_PLIST` → Firebase, otherwise Firebase-Emulator)
 - `name` *(optional)* — human-readable label used as the output filename prefix
@@ -148,7 +121,6 @@ The example config below performs six simulated runs of the `edu.stanford.plainl
     "studyId": "edu.stanford.plainly.gynStudy",
     "bundleName": "Elena Kim",
     "model": "gpt-4o",
-    "temperature": 1,
     "service": "OpenAI",
     "userQuestions": [
         "Tell me about my recent diagnoses and how they affect my fertility.",
@@ -160,7 +132,6 @@ The example config below performs six simulated runs of the `edu.stanford.plainl
     "studyId": "edu.stanford.plainly.gynStudy",
     "bundleName": "Elena Kim",
     "model": "gpt-4o",
-    "temperature": 1,
     "service": "Firebase",
     "userQuestions": [
         "Tell me about my recent diagnoses and how they affect my fertility.",

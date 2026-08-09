@@ -10,6 +10,7 @@
 
 public import Foundation
 public import struct ModelsR4.Questionnaire
+public import SpeziLLMOpenAI
 
 
 /// Manages a collection of survey tasks and their responses.
@@ -18,6 +19,9 @@ public final class Study: Identifiable {
         case `default`
         case studyTitle
     }
+
+    /// The Firebase function that serves chat completions unless a study opts into another one.
+    public static let defaultChatFunctionName = "chat"
     
     /// The survey's unique identifier.
     public let id: String
@@ -25,9 +29,20 @@ public final class Study: Identifiable {
     public let title: String
     /// A brief explainer detailing what the survey does.
     public let explainer: String
-    
+    /// The identifier of the model used to generate the study's chat responses.
+    ///
+    /// The inference backend resolves the provider and endpoint from this identifier, so it is not
+    /// restricted to models served by OpenAI itself.
+    public let llmModel: LLMOpenAIParameters.ModelType
+    /// Whether responses should be augmented with retrieval over the study's knowledge base.
+    public let ragEnabled: Bool
+    /// The name of the Firebase function that generates the study's chat completions.
+    ///
+    /// May carry query items, e.g. `chat?verbose=true`; they are merged into the callable's name.
+    public let chatFunctionName: String
+
     public let summarizeSingleResourcePrompt: FHIRPrompt
-    public var interpretMultipleResourcesPrompt: FHIRPrompt
+    public let interpretMultipleResourcesPrompt: FHIRPrompt
     
     public let chatTitleConfig: ChatTitleConfig
     
@@ -48,15 +63,21 @@ public final class Study: Identifiable {
         id: String,
         title: String,
         explainer: String,
+        llmModel: LLMOpenAIParameters.ModelType,
+        ragEnabled: Bool,
         summarizeSingleResourcePrompt: FHIRPrompt?,
         interpretMultipleResourcesPrompt: FHIRPrompt?,
         chatTitleConfig: ChatTitleConfig,
         initialQuestionnaire: String?,
-        tasks: [Task]
+        tasks: [Task],
+        chatFunctionName: String = Study.defaultChatFunctionName
     ) {
         self.id = id
         self.title = title
         self.explainer = explainer
+        self.llmModel = llmModel
+        self.ragEnabled = ragEnabled
+        self.chatFunctionName = chatFunctionName
         self.summarizeSingleResourcePrompt = summarizeSingleResourcePrompt ?? .summarizeSingleFHIRResourceDefaultPrompt
         self.interpretMultipleResourcesPrompt = interpretMultipleResourcesPrompt ?? .interpretMultipleResourcesDefaultPrompt
         self.chatTitleConfig = chatTitleConfig
@@ -135,6 +156,9 @@ extension Study: Codable {
         case id = "id"
         case title = "title"
         case explainer = "explainer"
+        case llmModel = "llm_model"
+        case ragEnabled = "rag_enabled"
+        case chatFunctionName = "chat_function_name"
         case tasks = "tasks"
         case summarizeSingleResourcePrompt = "prompt_summarize_single_resource"
         case interpretMultipleResourcesPrompt = "prompt_interpret_multiple_resources"
@@ -148,13 +172,17 @@ extension Study: Codable {
             id: try container.decode(String.self, forKey: .id),
             title: try container.decode(String.self, forKey: .title),
             explainer: try container.decode(String.self, forKey: .explainer),
+            llmModel: try container.decode(LLMOpenAIParameters.ModelType.self, forKey: .llmModel),
+            ragEnabled: try container.decode(Bool.self, forKey: .ragEnabled),
             summarizeSingleResourcePrompt: try container.decodeIfPresent(String.self, forKey: .summarizeSingleResourcePrompt)
                 .flatMap { $0.isEmpty ? nil : FHIRPrompt(promptText: $0) },
             interpretMultipleResourcesPrompt: try container.decodeIfPresent(String.self, forKey: .interpretMultipleResourcesPrompt)
                 .flatMap { $0.isEmpty ? nil : FHIRPrompt(promptText: $0) },
             chatTitleConfig: try container.decode(ChatTitleConfig.self, forKey: .chatTitleConfig),
             initialQuestionnaire: try container.decodeIfPresent(String.self, forKey: .initialQuestionnaire),
-            tasks: try container.decode([Task].self, forKey: .tasks)
+            tasks: try container.decode([Task].self, forKey: .tasks),
+            chatFunctionName: try container.decodeIfPresent(String.self, forKey: .chatFunctionName)
+                ?? Study.defaultChatFunctionName
         )
     }
     
@@ -163,6 +191,9 @@ extension Study: Codable {
         try container.encode(id, forKey: .id)
         try container.encode(title, forKey: .title)
         try container.encode(explainer, forKey: .explainer)
+        try container.encode(llmModel, forKey: .llmModel)
+        try container.encode(ragEnabled, forKey: .ragEnabled)
+        try container.encode(chatFunctionName, forKey: .chatFunctionName)
         if summarizeSingleResourcePrompt != .summarizeSingleFHIRResourceDefaultPrompt {
             try container.encode(summarizeSingleResourcePrompt.promptText, forKey: .summarizeSingleResourcePrompt)
         } else {

@@ -8,7 +8,6 @@
 
 
 import ArgumentParser
-import CryptoKit
 import Foundation
 import PlainlyShared
 import PlainlyStudyDefinitions
@@ -16,13 +15,6 @@ import PlainlyStudyDefinitions
 
 private let launchHelp: ArgumentHelp = "The app's launch mode. Defaults to study and should probably not be customized."
 private let firebaseHelp: ArgumentHelp = "Firebase GoogleService-Info.plist file that should be embedded into the config file"
-private let studiesHelp: ArgumentHelp = "The studies that should be included in the config file. Omit to include all studies."
-private let openAIHelp: ArgumentHelp = "Per-study OpenAI API keys"
-private let encryptionHelp: ArgumentHelp = "Defines the public_key.pem that should be used to encrypt a study's report files"
-private let emailHelp: ArgumentHelp = """
-    Defines the email address to which a study's report files should be sent, if the firebase upload is not available.
-    """
-private let endpointHelp: ArgumentHelp = "Each study's OpenAI Endpoint. Defaults to 'regular' if omitted"
 
 
 struct ExportConfigFile: ParsableCommand {
@@ -31,7 +23,7 @@ struct ExportConfigFile: ParsableCommand {
         abstract: "Creates a UserStudyConfig.plist file that can be embedded into the app",
         discussion: #"""
             Note: in order to create the sample plist file that is commited to the repo, use the following command:
-                swift run PlainlyCLI export-config -f '<emulator>' --allow-empty-api-keys ../Plainly/Supporting\ Files/UserStudyConfig.plist
+                swift run PlainlyCLI export-config -f '<emulator>' ../Plainly/Supporting\ Files/UserStudyConfig.plist
             """#
     )
 
@@ -39,27 +31,19 @@ struct ExportConfigFile: ParsableCommand {
 
     @Option(name: [.customShort("f"), .customLong("firebaseConfig")], help: firebaseHelp) var firebaseConfigFilePath: URL?
 
-    @Option(name: .customLong("studies"), help: studiesHelp) var includedStudyIds: [String] = Study.allStudies.map(\.id)
-
-    @Option(name: [.customShort("o"), .customLong("openAIKey")], help: openAIHelp) var openAIKeys: [StudyIdIdentified<String>] = []
-
-    @Option(name: [.customShort("k"), .customLong("encryptionKey")], help: encryptionHelp) var encryptionKeys: [StudyIdIdentified<URL>] = []
-
-    @Option(name: [.customShort("e"), .customLong("reportEmail")], help: emailHelp) var reportEmails: [StudyIdIdentified<String>] = []
-
-    @Option(name: .customLong("studyEndpoint"), help: endpointHelp) var studyEndpoints: [StudyIdIdentified<StudyConfig.OpenAIEndpointConfig>] = []
-
-    // used to generate the default UserStudyConfig.plist file that is commited to the repo.
-    @Flag(help: .hidden) var allowEmptyAPIKeys = false
-
     @Argument(help: "Output path where the resulting UserStudyConfig.plist file should be stored") var outputUrl: URL
 
 
     func run() throws {
-        try openAIKeys.validate(optionName: "OpenAI Key")
-        try encryptionKeys.validate(optionName: "Encryption Key")
-        try reportEmails.validate(optionName: "Report Email")
-        try studyEndpoints.validate(optionName: "Study Endpoint")
+        let issues = Study.validateAllStudies()
+        guard issues.isEmpty else {
+            throw NSError(domain: "edu.stanford.plainly.CLI", code: 0, userInfo: [
+                NSLocalizedDescriptionKey: """
+                    The bundled studies are invalid:
+                    \(issues.map { "- \($0)" }.joined(separator: "\n"))
+                    """
+            ])
+        }
 
         let firebaseConfig: AppConfigFile.FirebaseConfigDictionary? = try {
             guard let firebaseConfigFilePath else {
@@ -73,26 +57,6 @@ struct ExportConfigFile: ParsableCommand {
         }()
         let config = AppConfigFile(
             launchMode: launchMode,
-            studyConfigs: try Study.allStudies.reduce(into: [:]) { configs, study in
-                configs[study.id] = StudyConfig(
-                    openAIAPIKey: try studyValue(
-                        for: study.id,
-                        in: openAIKeys,
-                        what: "OpenAI API Key",
-                        isRequired: !allowEmptyAPIKeys,
-                        default: ""
-                    ),
-                    openAIEndpoint: studyValue(for: study.id, in: studyEndpoints, default: .regular),
-                    reportEmail: studyValue( for: study.id, in: reportEmails, default: ""),
-                    encryptionKey: try { () -> Curve25519.KeyAgreement.PublicKey? in
-                        if let url = studyValue(for: study.id, in: encryptionKeys, default: nil) {
-                            try Curve25519.KeyAgreement.PublicKey(contentsOf: url)
-                        } else {
-                            nil
-                        }
-                    }()
-                )
-            },
             firebaseConfig: firebaseConfig
         )
         let encoder = PropertyListEncoder()
@@ -100,85 +64,14 @@ struct ExportConfigFile: ParsableCommand {
         let data = try encoder.encode(config)
         try data.write(to: outputUrl)
     }
-
-
-    private func studyValue<V>(
-        for studyId: Study.ID,
-        in values: [StudyIdIdentified<V>],
-        what: String,
-        isRequired: Bool,
-        default defaultValue: @autoclosure () -> V
-    ) throws -> V {
-        if let value = _studyValue(for: studyId, in: values) {
-            return value
-        } else if !isRequired {
-            return defaultValue()
-        } else {
-            throw NSError(domain: "edu.stanford.plainly.CLI", code: 0, userInfo: [
-                NSLocalizedDescriptionKey: "Missing \(what) for study '\(studyId)'"
-            ])
-        }
-    }
-
-    private func studyValue<V>(
-        for studyId: Study.ID,
-        in values: [StudyIdIdentified<V>],
-        default defaultValue: @autoclosure () -> V
-    ) -> V {
-        _studyValue(for: studyId, in: values) ?? defaultValue()
-    }
-    
-    private func studyValue<V>(
-        for studyId: Study.ID,
-        in values: [StudyIdIdentified<V>],
-        default defaultValue: @autoclosure () -> V?
-    ) -> V? {
-        _studyValue(for: studyId, in: values) ?? defaultValue()
-    }
-    
-    private func _studyValue<V>(for studyId: Study.ID, in values: [StudyIdIdentified<V>]) -> V? {
-        values.last { $0.studyId == studyId }?.value ?? values.last(where: \.isWildcard)?.value
-    }
 }
 
 
 // MARK: Utils
 
-extension ExportConfigFile {
-    struct StudyIdIdentified<Value: ExpressibleByArgument>: ExpressibleByArgument {
-        let studyId: String
-        let value: Value
-
-        var isWildcard: Bool {
-            studyId == "*"
-        }
-
-        init?(argument: String) {
-            guard let idx = argument.firstIndex(of: ":") else {
-                return nil
-            }
-            self.studyId = String(argument[..<idx])
-            guard let value = Value(argument: String(argument[argument.index(after: idx)...])) else {
-                return nil
-            }
-            self.value = value
-        }
-    }
-}
-
-extension Array {
-    fileprivate func validate<V>(optionName: String) throws where Element == ExportConfigFile.StudyIdIdentified<V> {
-        guard count(where: \.isWildcard) <= 1 else {
-            throw NSError(domain: "edu.stanford.plainly.CLI", code: 0, userInfo: [
-                NSLocalizedDescriptionKey: "Multiple wildcard entries in \(optionName). At most one is allowed!"
-            ])
-        }
-    }
-}
-
 extension AppLaunchMode: ExpressibleByArgument {
     public static var allValueStrings: [String] {
-        var allOptions = [Self.standalone, .test, .study(studyId: nil)]
+        var allOptions = [Self.test, .study(studyId: nil)]
         for study in Study.allStudies {
             allOptions.append(.study(studyId: study.id))
         }
@@ -192,5 +85,3 @@ extension URL: @retroactive ExpressibleByArgument {
         self = URL(filePath: argument, relativeTo: .currentDirectory())
     }
 }
-
-extension StudyConfig.OpenAIEndpointConfig: ExpressibleByArgument {}

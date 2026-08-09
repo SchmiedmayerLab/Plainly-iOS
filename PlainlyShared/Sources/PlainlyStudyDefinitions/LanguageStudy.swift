@@ -6,11 +6,9 @@
 // SPDX-License-Identifier: MIT
 //
 
-// swiftlint:disable all
-
 import Foundation
-public import PlainlyShared
 @preconcurrency import struct ModelsR4.Questionnaire
+public import PlainlyShared
 import SpeziFoundation
 
 
@@ -21,6 +19,8 @@ extension Study {
             id: "edu.stanford.plainly.languageStudy",
             title: "Language Study",
             explainer: "Welcome to the Plainly Language Study!",
+            llmModel: .gpt5_5,
+            ragEnabled: false,
             summarizeSingleResourcePrompt: nil,
             interpretMultipleResourcesPrompt: .languageStudySystemPrompt,
             chatTitleConfig: .studyTitle,

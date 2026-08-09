@@ -1,0 +1,28 @@
+//
+// This source file is part of the Plainly iOS project
+//
+// SPDX-FileCopyrightText: 2025 Stanford University
+//
+// SPDX-License-Identifier: MIT
+//
+
+import Foundation
+import SwiftUI
+
+
+// periphery:ignore - only reachable from the simulator-only toolbar item in `StudyHomeView`
+struct SettingsButton: View {
+    @State private var isPresentingSheet = false
+    
+    var body: some View {
+        Button {
+            isPresentingSheet = true
+        } label: {
+            Image(systemName: "gearshape")
+                .accessibilityLabel(Text("SETTINGS"))
+        }
+        .sheet(isPresented: $isPresentingSheet) {
+            SettingsView()
+        }
+    }
+}

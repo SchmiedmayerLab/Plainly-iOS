@@ -6,7 +6,7 @@
 // SPDX-License-Identifier: MIT
 //
 
-// swiftlint:disable all
+// swiftlint:disable line_length trailing_whitespace
 
 public import PlainlyShared
 
@@ -23,6 +23,8 @@ extension Study {
             id: "edu.stanford.plainly.gynStudy",
             title: "Plainly REI study",
             explainer: "Welcome and thank you for participating in our study assessing the health literacy in REI patients",
+            llmModel: .gpt4o,
+            ragEnabled: false,
             summarizeSingleResourcePrompt: nil,
             interpretMultipleResourcesPrompt: .gynStudySystemPrompt,
             chatTitleConfig: .studyTitle,

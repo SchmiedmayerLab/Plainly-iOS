@@ -16,7 +16,6 @@ import SpeziLLMOpenAI
 struct SimulatedSessionConfig: Sendable {
     let numberOfRuns: Int
     let model: LLMOpenAIParameters.ModelType
-    let temperature: Double
     
     /// The study that should be simulated.
     ///
@@ -91,7 +90,6 @@ extension SimulatedSessionConfig: DecodableWithConfiguration {
         case customResourcePrompt
         case userQuestions
         case model
-        case temperature
     }
     
     init(from decoder: any Decoder, configuration: DecodingConfiguration) throws {
@@ -100,7 +98,6 @@ extension SimulatedSessionConfig: DecodableWithConfiguration {
         self.name = try container.decodeIfPresent(String.self, forKey: .name)
         self.comment = try container.decodeIfPresent(String.self, forKey: .comment)
         self.model = try container.decode(LLMOpenAIParameters.ModelType.self, forKey: .model)
-        self.temperature = try container.decode(Double.self, forKey: .temperature)
         self.service = try Self.inferService(from: container)
 
         let studyId = try container.decode(Study.ID.self, forKey: .studyId)

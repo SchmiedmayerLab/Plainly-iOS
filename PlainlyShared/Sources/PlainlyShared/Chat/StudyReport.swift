@@ -44,10 +44,8 @@ extension StudyReport {
     public struct Metadata: Encodable, Sendable {
         public struct LLMConfig: Codable, Sendable {
             public let model: LLMOpenAIParameters.ModelType
-            public let temperature: Double
-            public init(model: LLMOpenAIParameters.ModelType, temperature: Double) {
+            public init(model: LLMOpenAIParameters.ModelType) {
                 self.model = model
-                self.temperature = temperature
             }
         }
         

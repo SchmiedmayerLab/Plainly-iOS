@@ -20,20 +20,9 @@ class OnboardingTests: XCTestCase, Sendable {
     }
     
     
+    /// Onboarding goes straight from the disclaimer to health records: inference is configured by the
+    /// study and served by the Firebase function, so there is nothing for the participant to set up.
     func testOnboardingFlow() throws {
-        let app = XCUIApplication()
-        app.resetAuthorizationStatus(for: .health)
-        app.launchArguments = ["--showOnboarding", "--mode", "test"]
-        app.launch()
-        try app.navigateOnboardingFlowWelcome()
-        try app.navigateOnboardingFlowDisclaimers()
-        try app.navigateOnboardingFlowOpenAI()
-        try app.navigateOnboardingFlowHealthKitAccess()
-        handleHealthRecordsAuthorization(systemUnderTest: app, accounts: [.sampleA], requireSheetToAppear: true)
-        XCTAssertTrue(app.staticTexts["Health Records Access"].waitForNonExistence(timeout: 10))
-    }
-
-    func testStudyOnboardingSkipsRemoteConfiguration() throws {
         let app = XCUIApplication()
         app.resetAuthorizationStatus(for: .health)
         app.launchArguments = ["--showOnboarding", "--mode", "study"]
@@ -41,18 +30,11 @@ class OnboardingTests: XCTestCase, Sendable {
         try app.navigateOnboardingFlowWelcome()
         try app.navigateOnboardingFlowDisclaimers()
 
-        XCTAssertFalse(app.textFields["API Key…"].exists)
+        XCTAssertFalse(app.textFields["API Token…"].exists)
         XCTAssertFalse(app.buttons["Save Model Selection"].exists)
+
         try app.navigateOnboardingFlowHealthKitAccess()
         handleHealthRecordsAuthorization(systemUnderTest: app, accounts: [.sampleA], requireSheetToAppear: true)
-        XCTAssertTrue(app.staticTexts["Health Records Access"].waitForNonExistence(timeout: 10))
-
-        app.terminate()
-        app.launch()
-        try app.navigateOnboardingFlowWelcome()
-        try app.navigateOnboardingFlowDisclaimers()
-        try app.navigateOnboardingFlowHealthKitAccess()
-        handleHealthRecordsAuthorization(systemUnderTest: app, timeout: 2)
         XCTAssertTrue(app.staticTexts["Health Records Access"].waitForNonExistence(timeout: 10))
     }
 
@@ -170,19 +152,6 @@ extension XCUIApplication {
         }
         XCTAssertTrue(buttons["I Agree"].waitForExistence(timeout: 2))
         buttons["I Agree"].tap()
-    }
-    
-    
-    fileprivate func navigateOnboardingFlowOpenAI() throws {
-        try textFields["API Key…"].clear()
-        XCTAssertEqual(textFields["API Key…"].textFieldValue, "")
-        try textFields["API Key…"].enter(value: "sk-123456789")
-        
-        XCTAssertTrue(buttons["Continue"].waitForExistence(timeout: 2))
-        buttons["Continue"].tap()
-        
-        XCTAssertTrue(buttons["Save Model Selection"].waitForExistence(timeout: 2))
-        buttons["Save Model Selection"].tap()
     }
     
     
