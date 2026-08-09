@@ -46,10 +46,8 @@ struct StudyChatView: View {
                         taskInstructionSheet()
                     case .survey:
                         SurveySheet(model: model)
-                    case .uploadingReport:
-                        uploadSheet()
-                    case .studyCompleted:
-                        StudyCompletedSheet(studyTitle: model.study.title, didUpload: model.didUploadReport) {
+                    case .completion:
+                        StudyCompletedSheet(studyTitle: model.study.title, state: model.completionState) {
                             model.finishCompletedStudy()
                             dismiss()
                         }
@@ -138,21 +136,6 @@ struct StudyChatView: View {
                 model.presentedSheet = nil
             }
         }
-    }
-    
-    @ViewBuilder
-    private func uploadSheet() -> some View {
-        BottomSheet {
-            VStack {
-                Spacer()
-                ProgressView("Submitting Results…")
-                    .progressViewStyle(.circular)
-                    .padding()
-                    .interactiveDismissDisabled()
-                Spacer()
-            }
-        }
-        .scrollBounceBehavior(.basedOnSize)
     }
 }
 

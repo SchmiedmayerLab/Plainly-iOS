@@ -76,11 +76,20 @@ final class StudyChatViewModel: Sendable {
         }
     }
     
+    /// The stages the completion sheet moves through once the session ends.
+    enum CompletionState: Hashable, Sendable {
+        /// The report is being uploaded.
+        case submitting
+        /// The report reached Firebase Storage.
+        case submitted
+        /// The upload failed and the report was kept for a later attempt.
+        case retained
+    }
+
     enum PresentedSheet: Hashable, Identifiable {
         case instructions
         case survey
-        case uploadingReport
-        case studyCompleted
+        case completion
         
         var id: some Hashable {
             self
@@ -112,8 +121,8 @@ final class StudyChatViewModel: Sendable {
     /// This alert is presented when the user taps the continue button while in a study that contains no tasks.
     var isShowingConfirmEndChatAlert = false
     
-    /// Whether the session's report reached Firebase Storage, as opposed to being kept for a later retry.
-    private(set) var didUploadReport = false
+    /// How far the session's report has got, which the completion sheet animates between.
+    private(set) var completionState: CompletionState = .submitting
 
     /// Controls the visibility of the dismiss confirmation dialog
     var isDismissDialogPresented = false
@@ -221,9 +230,9 @@ final class StudyChatViewModel: Sendable {
     func endStudy() {
         navigationState = .completed
         Task {
-            presentedSheet = .uploadingReport
-            didUploadReport = await uploadReport()
-            presentedSheet = .studyCompleted
+            completionState = .submitting
+            presentedSheet = .completion
+            completionState = await uploadReport() ? .submitted : .retained
         }
     }
 
