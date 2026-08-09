@@ -39,6 +39,12 @@ enum FeatureFlags {
     static let useSlowFirebaseAuth =
         useFirebaseEmulator && CommandLine.arguments.contains("--useSlowFirebaseAuth")
 
+    /// Discards retained study reports at launch so each end-to-end test starts without earlier sessions.
+    ///
+    /// Gated on the emulator because retained reports hold the only copy of a participant's answers.
+    static let resetRetainedReports =
+        useFirebaseEmulator && CommandLine.arguments.contains("--resetRetainedReports")
+
     /// Disables clinical health record access for tests that do not exercise Health Records.
     static let disableHealthRecords = CommandLine.arguments.contains("--disableHealthRecords")
 

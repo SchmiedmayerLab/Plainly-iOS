@@ -103,12 +103,13 @@ struct IntakeQuestionnaireSheet: View {
         let correlationID = AppDiagnostics.correlationID()
         viewState = .processing
         do {
-            let fhirResponse = try ModelsR4.QuestionnaireResponse(speziResponses)
+            // Kept before the summary is requested: a failing summary must not discard answers the
+            // participant already gave, which the report carries even when the summary is missing.
+            fhirResponse = try ModelsR4.QuestionnaireResponse(speziResponses)
             inProgressStudy.questionnaireSummary = try await speziResponses.summarize(
                 using: llmRunner,
                 model: study.llmModel
             )
-            self.fhirResponse = fhirResponse
             dismiss()
         } catch {
             AppDiagnostics.questionnaire.logError(

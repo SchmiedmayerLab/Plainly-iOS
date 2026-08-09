@@ -37,6 +37,9 @@ final class PendingReportStore: Module, EnvironmentAccessible, Sendable {
     @ObservationIgnored private var uploadTask: Task<Void, Never>?
 
     func configure() {
+        if FeatureFlags.resetRetainedReports {
+            try? FileManager.default.removeItem(at: directory)
+        }
         pendingCount = pendingReports().count
         retryPendingUploads()
     }
@@ -73,17 +76,15 @@ final class PendingReportStore: Module, EnvironmentAccessible, Sendable {
     ///
     /// Reports are stored under a fresh identifier: sessions of the same study share a file name, so
     /// reusing it would let a second failed session overwrite the first.
-    func retainForRetry(reportAt url: URL, for study: Study) {
+    ///
+    /// - Throws: if the report could not be moved, leaving the source file to its caller.
+    func retainForRetry(reportAt url: URL, for study: Study) throws {
         let destination = directory
             .appending(path: study.id, directoryHint: .isDirectory)
             .appending(path: "\(UUID().uuidString).json", directoryHint: .notDirectory)
-        do {
-            try FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
-            try FileManager.default.moveItem(at: url, to: destination)
-            pendingCount = pendingReports().count
-        } catch {
-            AppDiagnostics.report.logError(error, context: "Retaining study report for a later upload")
-        }
+        try FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try FileManager.default.moveItem(at: url, to: destination)
+        pendingCount = pendingReports().count
     }
 
     /// Uploads every retained report, keeping the ones that still fail.
@@ -94,9 +95,16 @@ final class PendingReportStore: Module, EnvironmentAccessible, Sendable {
             }
             do {
                 try await uploader.uploadReport(at: report.url, for: report.study)
-                try FileManager.default.removeItem(at: report.url)
             } catch {
                 AppDiagnostics.report.logError(error, context: "Retrying a retained study report")
+                continue
+            }
+            do {
+                // The report reached Firebase, so its local copy has to go even though the upload
+                // itself succeeded; keeping it would submit the same session again on a later launch.
+                try FileManager.default.removeItem(at: report.url)
+            } catch {
+                AppDiagnostics.report.logError(error, context: "Removing an uploaded study report")
             }
         }
     }

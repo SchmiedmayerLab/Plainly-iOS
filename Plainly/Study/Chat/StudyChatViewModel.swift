@@ -511,16 +511,19 @@ extension StudyChatViewModel {
                 AppDiagnostics.report.error("Study report generation returned no file")
                 return false
             }
-            // Retaining the report moves the file, so this only cleans up after a successful upload.
-            defer {
-                try? FileManager.default.removeItem(at: reportFile)
-            }
             do {
                 try await uploader.uploadReport(at: reportFile, for: study)
+                try? FileManager.default.removeItem(at: reportFile)
                 return true
             } catch {
                 AppDiagnostics.report.logError(error, context: "Study report upload")
-                pendingReports?.retainForRetry(reportAt: reportFile, for: study)
+                do {
+                    // Retaining moves the file. If that fails the report stays where it is rather than
+                    // being deleted, because it holds the only copy of the session's answers.
+                    try pendingReports?.retainForRetry(reportAt: reportFile, for: study)
+                } catch {
+                    AppDiagnostics.report.logError(error, context: "Retaining study report for a later upload")
+                }
                 return false
             }
         } catch {

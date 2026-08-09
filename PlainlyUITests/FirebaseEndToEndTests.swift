@@ -129,7 +129,7 @@ final class FirebaseEndToEndTests: XCTestCase, Sendable {
 
         // Relaunching without the failure injected should drain the retained report.
         app.terminate()
-        let retryApp = launchApp()
+        let retryApp = launchApp(keepRetainedReports: true)
         XCTAssertTrue(
             retryApp.staticTexts["Language Study"].waitForExistence(timeout: 10),
             "The study home screen did not appear after relaunching."
@@ -160,7 +160,7 @@ final class FirebaseEndToEndTests: XCTestCase, Sendable {
         )
 
         app.terminate()
-        let retryApp = launchApp(slowAuthentication: true)
+        let retryApp = launchApp(slowAuthentication: true, keepRetainedReports: true)
         XCTAssertTrue(
             retryApp.staticTexts["Language Study"].waitForExistence(timeout: 10),
             "The study home screen did not appear after relaunching."
@@ -173,11 +173,15 @@ final class FirebaseEndToEndTests: XCTestCase, Sendable {
         )
     }
 
+    /// - Parameter keepRetainedReports: pass `true` for a relaunch that has to find the report the
+    ///   preceding launch retained. Every test otherwise starts without reports an earlier one left behind,
+    ///   so the notice it waits for can only come from its own session.
     private func launchApp(
         mockChatError: Bool = false,
         mockChatErrorAfterChunk: Bool = false,
         mockUploadError: Bool = false,
-        slowAuthentication: Bool = false
+        slowAuthentication: Bool = false,
+        keepRetainedReports: Bool = false
     ) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = [
@@ -187,6 +191,9 @@ final class FirebaseEndToEndTests: XCTestCase, Sendable {
             "--useFirebaseEmulator",
             "--disableHealthRecords"
         ]
+        if !keepRetainedReports {
+            app.launchArguments.append("--resetRetainedReports")
+        }
         if mockChatError {
             app.launchArguments.append("--useFirebaseMockChatError")
         }
@@ -219,13 +226,16 @@ final class FirebaseEndToEndTests: XCTestCase, Sendable {
         app.alerts["End Chat?"].buttons["End Chat"].tap()
     }
 
-    /// Matches the notice for any number of retained sessions, so a leftover report cannot skew it.
+    /// Matches the notice whichever plural variation it uses, rather than pinning the test to its wording.
     private func pendingNotice(in app: XCUIApplication) -> XCUIElement {
         app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "waiting to be sent")).firstMatch
     }
 
     private func startSession(in app: XCUIApplication) -> XCUIElement {
         XCTAssertTrue(app.staticTexts["Language Study"].waitForExistence(timeout: 10))
+        // Reports an earlier test left behind are discarded at launch, so a notice this test goes on to
+        // observe can only describe its own session.
+        XCTAssertFalse(pendingNotice(in: app).exists, "The launch did not start without retained reports.")
         let startSession = app.buttons["Start Session"]
         XCTAssertTrue(startSession.waitForExistence(timeout: 10))
         startSession.tap()
