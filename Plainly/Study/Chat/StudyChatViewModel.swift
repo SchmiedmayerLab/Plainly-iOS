@@ -13,6 +13,7 @@ import PlainlyShared
 import SpeziChat
 import SpeziLLM
 import SpeziLLMOpenAI
+import SpeziQuestionnaire
 import SwiftUI
 
 
@@ -49,13 +50,18 @@ final class StudyChatViewModel: Sendable {
             let subtitle: String?
         }
         
+        /// The participant-facing position of a task, e.g. `Task 2 of 5`.
+        static func taskTitle(taskIdx: Int, numTotalTasks: Int) -> String {
+            "Task \(taskIdx + 1) of \(numTotalTasks)"
+        }
+
         func titleConfig(in study: Study) -> TitleConfig {
             let regularConfig = switch self {
             case .introduction:
                 TitleConfig(title: "Introduction", subtitle: study.title)
             case let .task(task, taskIdx, numTotalTasks, taskState: _):
                 TitleConfig(
-                    title: "Task \(taskIdx + 1) of \(numTotalTasks)",
+                    title: Self.taskTitle(taskIdx: taskIdx, numTotalTasks: numTotalTasks),
                     subtitle: { () -> String in
                         if let taskTitle = task.title {
                             "\(study.title) — \(taskTitle)"
@@ -179,17 +185,14 @@ final class StudyChatViewModel: Sendable {
     ///
     /// This method processes the user's answers. If `task` is the current task, it also advances to the next task in the survey sequence.
     ///
-    /// - parameter answers: Array of answers provided by the user
-    /// - parameter task: The ``SurveyTask`` to which the answers belong.
-    /// - throws: An error if the submission fails
-    func submitSurveyAnswers(_ answers: [Study.Task.Question.Answer], for task: Study.Task) throws {
+    /// - parameter responses: The responses the participant gave to the task's questionnaire.
+    /// - parameter task: The ``SurveyTask`` to which the responses belong.
+    func submitSurveyResponses(_ responses: QuestionnaireResponses, for task: Study.Task) {
         let isCurrentTask = task == currentTask
         if isCurrentTask {
             taskEndTimes[task.id] = .now
         }
-        for (index, answer) in answers.enumerated() {
-            try study.submitAnswer(answer, forTaskId: task.id, questionIndex: index)
-        }
+        inProgressStudy.responses[task.id] = responses
         if isCurrentTask {
             advanceToNextTask()
         }
@@ -200,7 +203,7 @@ final class StudyChatViewModel: Sendable {
     /// This method clears all survey answers and resets the navigation state,
     /// bringing the study back to its starting point.
     func resetStudy() {
-        study.resetAllAnswers()
+        inProgressStudy.responses.removeAll()
         taskStartTimes.removeAll()
         taskEndTimes.removeAll()
         navigationState = .introduction
@@ -341,13 +344,33 @@ extension StudyChatViewModel {
     var userDisplayableCurrentTaskIdx: Int? {
         currentTaskIdx.map { $0 + 1 }
     }
+
+    /// The position of the current task, titling its questions the same way the chat titles the task.
+    var currentTaskTitle: String? {
+        currentTaskIdx.map { NavigationState.taskTitle(taskIdx: $0, numTotalTasks: study.tasks.count) }
+    }
 }
 
 
 extension StudyChatViewModel {
     /// Determines whether to display a typing indicator in the chat interface.
+    ///
+    /// Only shown while waiting for the response; once it starts streaming in, the message itself
+    /// already shows that something is happening.
     var showTypingIndicator: Bool {
-        processingState.isProcessing
+        processingState.isProcessing && !isResponseStreamingIn
+    }
+
+    /// Whether the assistant has started streaming visible content for its current response.
+    ///
+    /// A message carrying tool calls has no content of its own yet, so it still counts as waiting.
+    private var isResponseStreamingIn: Bool {
+        guard let lastMessage = llmSession.context.last,
+              case let .assistant(toolCalls) = lastMessage.role,
+              toolCalls.isEmpty else {
+            return false
+        }
+        return !lastMessage.content.isEmpty
     }
     
     // Whether the chat input should currently be enabled, i.e. whether the user should currently be able to write (and submit) chat messages
@@ -587,16 +610,23 @@ extension StudyChatViewModel {
                 startedAt: taskStartTime,
                 completedAt: taskEndTime,
                 duration: taskEndTime.timeIntervalSince(taskStartTime),
-                questions: task.questions.map { question in
-                    StudyReport.TimelineEvent.SurveyQuestion(
-                        questionText: question.text,
-                        answer: question.answer.rawValue,
-                        isOptional: question.isOptional
-                    )
-                }
+                questions: surveyQuestions(for: task)
             ))
         })
         return timeline.sorted()
+    }
+
+    /// The task's answers in the flat report shape.
+    private func surveyQuestions(for task: Study.Task) -> [StudyReport.TimelineEvent.SurveyQuestion] {
+        let responses = inProgressStudy.responses[task.id]
+        return task.questions.enumerated().map { index, question in
+            let value = responses?.responses[Study.Task.questionId(at: index) as Questionnaire.Task.ID].value
+            return StudyReport.TimelineEvent.SurveyQuestion(
+                questionText: question.title,
+                answer: value.map { question.legacyAnswer(from: $0) } ?? Questionnaire.Task.legacyUnansweredValue,
+                isOptional: question.isOptional
+            )
+        }
     }
 
     private func getFHIRResources() async -> StudyReport.FHIRResources {

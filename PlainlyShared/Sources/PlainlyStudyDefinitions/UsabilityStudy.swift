@@ -31,10 +31,7 @@ extension Study {
                     instructions: "Plainly will have a health summary automatically generated on the home screen. Please review this before answering any questions.",
                     assistantMessagesLimit: 1...5,
                     questions: [
-                        Study.Task.Question(
-                            text: "How clear and understandable was the summary provided by the app?",
-                            type: .scale(responseOptions: .clarityScale)
-                        )
+                        .scale("How clear and understandable was the summary provided by the app?", options: .clarityScale)
                     ]
                 ),
                 Task(
@@ -43,10 +40,7 @@ extension Study {
                     instructions: "Ask a clarifying question about the most recent diagnosis from your last medical visit.",
                     assistantMessagesLimit: 1...5,
                     questions: [
-                        Study.Task.Question(
-                            text: "How effective is this feature for interpreting and evaluating your medical information?",
-                            type: .scale(responseOptions: .effectivenessScale)
-                        )
+                        .scale("How effective is this feature for interpreting and evaluating your medical information?", options: .effectivenessScale)
                     ]
                 ),
                 Task(
@@ -55,10 +49,7 @@ extension Study {
                     instructions: "Ask the app for a personalized health recommendation. Feel free to ask about any health concerns.",
                     assistantMessagesLimit: 1...5,
                     questions: [
-                        Study.Task.Question(
-                            text: "How effective are these recommendations in helping you make decisions about your health?",
-                            type: .scale(responseOptions: .effectivenessScale)
-                        )
+                        .scale("How effective are these recommendations in helping you make decisions about your health?", options: .effectivenessScale)
                     ]
                 ),
                 Task(
@@ -67,16 +58,8 @@ extension Study {
                     instructions: "Before we end our session, feel free to ask the app any medical questions you might have related to your health.",
                     assistantMessagesLimit: 1...5,
                     questions: [
-                        Study.Task.Question(
-                            text: "How effective was the LLM in helping to answer your health question?",
-                            type: .scale(responseOptions: .effectivenessScale),
-                            isOptional: true
-                        ),
-                        Study.Task.Question(
-                            text: "What surprised you about the LLM's answer, either positively or negatively?",
-                            type: .freeText,
-                            isOptional: true
-                        )
+                        .scale("How effective was the LLM in helping to answer your health question?", options: .effectivenessScale, isOptional: true),
+                        .freeText("What surprised you about the LLM's answer, either positively or negatively?", isOptional: true)
                     ]
                 ),
                 Task(
@@ -85,26 +68,10 @@ extension Study {
                     instructions: "Please feel free to ask any other questions you have. When you're done, please complete the next task.",
                     assistantMessagesLimit: nil,
                     questions: [
-                        Study.Task.Question(
-                            text: "Compared to other sources of health information (e.g., websites, doctors), how do you rate the LLM's responses?",
-                            type: .scale(responseOptions: .comparisonScale),
-                            isOptional: false
-                        ),
-                        Study.Task.Question(
-                            text: "What were the most and least useful features of the LLM? Do you have any suggestions to share?",
-                            type: .freeText,
-                            isOptional: true
-                        ),
-                        Study.Task.Question(
-                            text: "How has the LLM impacted your ability to manage your health?",
-                            type: .freeText,
-                            isOptional: true
-                        ),
-                        Study.Task.Question(
-                            text: "On a scale of 0-10, how likely are you to recommend this tool to a friend or colleague?",
-                            type: .netPromoterScore(range: 0...10),
-                            isOptional: false
-                        )
+                        .scale("Compared to other sources of health information (e.g., websites, doctors), how do you rate the LLM's responses?", options: .comparisonScale),
+                        .freeText("What were the most and least useful features of the LLM? Do you have any suggestions to share?", isOptional: true),
+                        .freeText("How has the LLM impacted your ability to manage your health?", isOptional: true),
+                        .netPromoterScore("On a scale of 0-10, how likely are you to recommend this tool to a friend or colleague?", range: 0...10)
                     ]
                 ),
                 Task(
@@ -113,26 +80,10 @@ extension Study {
                     instructions: "Please hit the arrow at the top of your screen to complete the final task.",
                     assistantMessagesLimit: nil,
                     questions: [
-                        Study.Task.Question(
-                            text: "How easy would it be to access or obtain information about your medical condition?",
-                            type: .scale(responseOptions: .balancedEaseScale),
-                            isOptional: false
-                        ),
-                        Study.Task.Question(
-                            text: "How frequently do you anticipate having problems learning about your medical condition because of difficulty understanding written information?",
-                            type: .scale(responseOptions: .frequencyOptions),
-                            isOptional: false
-                        ),
-                        Study.Task.Question(
-                            text: "How confident would you be in filling out medical forms by yourself?",
-                            type: .scale(responseOptions: .confidentnessScale),
-                            isOptional: false
-                        ),
-                        Study.Task.Question(
-                            text: "How often do you think you would have someone help you read hospital materials?",
-                            type: .scale(responseOptions: .frequencyOptions),
-                            isOptional: false
-                        )
+                        .scale("How easy would it be to access or obtain information about your medical condition?", options: .balancedEaseScale),
+                        .scale("How frequently do you anticipate having problems learning about your medical condition because of difficulty understanding written information?", options: .frequencyOptions),
+                        .scale("How confident would you be in filling out medical forms by yourself?", options: .confidentnessScale),
+                        .scale("How often do you think you would have someone help you read hospital materials?", options: .frequencyOptions)
                     ]
                 )
             ]

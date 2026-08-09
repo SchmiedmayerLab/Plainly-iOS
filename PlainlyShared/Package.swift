@@ -40,6 +40,7 @@ let package = Package(
                 .product(name: "SpeziLLM", package: "Spezi"),
                 .product(name: "SpeziLLMOpenAI", package: "Spezi"),
                 .product(name: "SpeziLocalStorage", package: "Spezi"),
+                .product(name: "SpeziQuestionnaire", package: "Spezi"),
                 .product(name: "SpeziFHIR", package: "Spezi")
             ],
             resources: [

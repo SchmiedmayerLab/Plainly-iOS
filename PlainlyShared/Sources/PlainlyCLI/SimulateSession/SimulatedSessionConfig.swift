@@ -22,7 +22,7 @@ struct SimulatedSessionConfig: Sendable {
     /// Only the study's prompts are actually used for the simulation; any additional components (eg an initial questionnaire, or instructions/tasks) are ignored.
     ///
     /// - Note: Isn't allowed to be mutated
-    nonisolated(unsafe) let study: Study
+    let study: Study
     
     /// The raw input based on which the ``bundle`` was loaded, as specified in the config file.
     let bundleInputName: String

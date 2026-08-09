@@ -22,6 +22,10 @@ import SpeziLLMOpenAI
 
 
 final class PlainlyDelegate: SpeziAppDelegate {
+    /// The Firebase emulators bind to IPv4, while `localhost` resolves to `::1` first in the simulator,
+    /// so the emulator hosts have to be addressed by their IPv4 address.
+    private static let emulatorHost = "127.0.0.1"
+
     override var configuration: Configuration {
         Configuration(standard: PlainlyStandard()) {
             if !FeatureFlags.disableFirebase, let config = firebaseConfig {
@@ -69,7 +73,7 @@ final class PlainlyDelegate: SpeziAppDelegate {
     
     private var accountEmulatorSettings: (host: String, port: Int)? {
         if FeatureFlags.useFirebaseEmulator {
-            (host: "localhost", port: 9099)
+            (host: Self.emulatorHost, port: 9099)
         } else {
             nil
         }
@@ -88,8 +92,8 @@ final class PlainlyDelegate: SpeziAppDelegate {
             configuration: []
         )
         if FeatureFlags.useFirebaseEmulator {
-            FirebaseStorageConfiguration(emulatorSettings: (host: "localhost", port: 9199))
-            FirebaseFunctions(emulatorHost: "localhost", port: 5001)
+            FirebaseStorageConfiguration(emulatorSettings: (host: Self.emulatorHost, port: 9199))
+            FirebaseFunctions(emulatorHost: Self.emulatorHost, port: 5001)
         } else {
             FirebaseStorageConfiguration()
             FirebaseFunctions()

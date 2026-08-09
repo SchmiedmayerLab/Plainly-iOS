@@ -9,16 +9,13 @@
 // swiftlint:disable line_length trailing_whitespace
 
 public import PlainlyShared
+import SpeziQuestionnaire
 
 
 extension Study {
     /// Plainly's gyn study
     public static var gynStudy: Study {
-        let effectivenessQuestion = Study.Task.Question(
-            text: "How effective was the LLM in helping to answer your health question?",
-            type: .scale(responseOptions: .effectivenessScale),
-            isOptional: false
-        )
+        let effectivenessQuestion: Questionnaire.Task = .scale("How effective was the LLM in helping to answer your health question?", options: .effectivenessScale)
         return Study(
             id: "edu.stanford.plainly.gynStudy",
             title: "Plainly REI study",
@@ -82,31 +79,11 @@ extension Study {
                     assistantMessagesLimit: 1...10,
                     questions: [
                         effectivenessQuestion,
-                        Study.Task.Question(
-                            text: "What surprised you about the LLM’s answer, either positively or negatively",
-                            type: .freeText,
-                            isOptional: false
-                        ),
-                        Study.Task.Question(
-                            text: "Compared to other sources of health information (e.g. websites, informational leaflets, doctors) how do you rate the LLM’s responses?",
-                            type: .scale(responseOptions: .comparisonScale),
-                            isOptional: false
-                        ),
-                        Study.Task.Question(
-                            text: "What were the most and least useful features of the LLM? Do you have any suggestions to share",
-                            type: .freeText,
-                            isOptional: false
-                        ),
-                        Study.Task.Question(
-                            text: "How has the LLM impacted your ability to manage your health?",
-                            type: .freeText,
-                            isOptional: false
-                        ),
-                        Study.Task.Question(
-                            text: "On a scale of 0-10 how likely are you to recommend this tool to a friend or colleague?",
-                            type: .netPromoterScore(range: 1...10),
-                            isOptional: false
-                        )
+                        .freeText("What surprised you about the LLM’s answer, either positively or negatively"),
+                        .scale("Compared to other sources of health information (e.g. websites, informational leaflets, doctors) how do you rate the LLM’s responses?", options: .comparisonScale),
+                        .freeText("What were the most and least useful features of the LLM? Do you have any suggestions to share"),
+                        .freeText("How has the LLM impacted your ability to manage your health?"),
+                        .netPromoterScore("On a scale of 0-10 how likely are you to recommend this tool to a friend or colleague?", range: 1...10)
                     ]
                 ),
                 Task(
@@ -123,55 +100,27 @@ extension Study {
                     assistantMessagesLimit: nil,
                     questions: postInterventionQuestions
                 )
-            ]
+            ],
+            reportFormat: .surveyAnswers
         )
     }
 }
 
 
-private let finalTaskQuestions = [
-    Study.Task.Question(text: "In the future if you had a chatbot like Plainly available…", type: .instructional),
-    Study.Task.Question(
-        text: "How easy would it be to access or obtain information about your medical condition?",
-        type: .scale(responseOptions: .balancedEaseScale),
-        isOptional: false
-    ),
-    Study.Task.Question(
-        text: "How frequently do you anticipate having problems learning about your medical condition because of difficulty understanding written information?",
-        type: .scale(responseOptions: .frequencyOptions),
-        isOptional: false
-    ),
-    Study.Task.Question(
-        text: "How confident would you be in filling out medical forms by yourself?",
-        type: .scale(responseOptions: .confidentnessScale),
-        isOptional: false
-    ),
-    Study.Task.Question(
-        text: "How often do you think you would have someone help you read hospital materials?",
-        type: .scale(responseOptions: .frequencyOptions),
-        isOptional: false
-    ),
-    Study.Task.Question(
-        text: "How often would you turn to Plainly with questions before reaching out to a healthcare professional through myHealth?",
-        type: .scale(responseOptions: .frequencyOptions),
-        isOptional: false
-    ),
-    Study.Task.Question(
-        text: "What questions would you feel confident consulting a chatbot like Plainly with access to your personal health record for?",
-        type: .freeText,
-        isOptional: false
-    ),
-    Study.Task.Question(
-        text: "What questions would you NOT feel confident consulting a chatbot like Plainly with access to your electronic health record for?",
-        type: .freeText,
-        isOptional: false
-    )
+private let finalTaskQuestions: [Questionnaire.Task] = [
+    .instructional("In the future if you had a chatbot like Plainly available…"),
+    .scale("How easy would it be to access or obtain information about your medical condition?", options: .balancedEaseScale),
+    .scale("How frequently do you anticipate having problems learning about your medical condition because of difficulty understanding written information?", options: .frequencyOptions),
+    .scale("How confident would you be in filling out medical forms by yourself?", options: .confidentnessScale),
+    .scale("How often do you think you would have someone help you read hospital materials?", options: .frequencyOptions),
+    .scale("How often would you turn to Plainly with questions before reaching out to a healthcare professional through myHealth?", options: .frequencyOptions),
+    .freeText("What questions would you feel confident consulting a chatbot like Plainly with access to your personal health record for?"),
+    .freeText("What questions would you NOT feel confident consulting a chatbot like Plainly with access to your electronic health record for?")
 ]
 
 
-private let postInterventionQuestions = [
-    Study.Task.Question(
-        text: """
+private let postInterventionQuestions: [Questionnaire.Task] = [
+    .instructional("""
             Please complete the survey below.
             Thank you!
             
@@ -180,99 +129,25 @@ private let postInterventionQuestions = [
             If the statement does not apply to you, select N/A. (All questions are assessed with Always, Often, Sometimes, Never)
             
             Please answer these questions based on how you feel **with access to an application** like Plainly.
-            """,
-        type: .instructional
-    ),
-    Study.Task.Question(
-        text: "When all is said and done, ultimately, I am responsible for managing my reproductive journey",
-        type: .scale(responseOptions: .frequencyOptions),
-        isOptional: false
-    ),
-    Study.Task.Question(
-        text: "I know what my next steps at the REI clinic are",
-        type: .scale(responseOptions: .frequencyOptions),
-        isOptional: false
-    ),
-    Study.Task.Question(
-        text: "Taking an active role in my health care is the most important thing that affects my reproductive health and ability to function",
-        type: .scale(responseOptions: .frequencyOptions),
-        isOptional: false
-    ),
-    Study.Task.Question(
-        text: "I know/ knew what the clinic needs from my partner in order to proceed",
-        type: .scale(responseOptions: .frequencyOptions),
-        isOptional: false
-    ),
-    Study.Task.Question(
-        text: "I know what each of my prescribed medications do and how to take them",
-        type: .scale(responseOptions: .frequencyOptions),
-        isOptional: false
-    ),
-    Study.Task.Question(
-        text: "I know which supplements and vitamins I need to take",
-        type: .scale(responseOptions: .frequencyOptions),
-        isOptional: false
-    ),
-    Study.Task.Question(
-        text: "I know what my hormone levels (e.g. AMH) signify",
-        type: .scale(responseOptions: .frequencyOptions),
-        isOptional: false
-    ),
-    Study.Task.Question(
-        text: "I am confident that I can tell my health care provider/ doctor concerns I have even when he or she does not ask",
-        type: .scale(responseOptions: .frequencyOptions),
-        isOptional: false
-    ),
-    Study.Task.Question(
-        text: "I am confident that I can tell whether I need to go get medical care or go to the doctor after my medical procedure",
-        type: .scale(responseOptions: .frequencyOptions),
-        isOptional: false
-    ),
-    Study.Task.Question(
-        text: "I understand the description of my ultrasound",
-        type: .scale(responseOptions: .frequencyOptions),
-        isOptional: false
-    ),
-    Study.Task.Question(
-        text: "I am confident that I know how to interpret bleedings after procedures or during my cycle and when to go see a doctor",
-        type: .scale(responseOptions: .frequencyOptions),
-        isOptional: false
-    ),
-    Study.Task.Question(
-        text: "I know the lifestyle changes like diet and exercise that are recommended",
-        type: .scale(responseOptions: .frequencyOptions),
-        isOptional: false
-    ),
-    Study.Task.Question(
-        text: "I am confident that I can follow through on medical treatments I may need to do at home",
-        type: .scale(responseOptions: .frequencyOptions),
-        isOptional: false
-    ),
-    Study.Task.Question(
-        text: "I am confident that I can follow through on recommendations my health care provider makes, such as changing my diet or doing regular exercise",
-        type: .scale(responseOptions: .frequencyOptions),
-        isOptional: false
-    ),
-    Study.Task.Question(
-        text: "I have been able to maintain (keep up with) lifestyle changes that I have made for my health, like eating right or exercising",
-        type: .scale(responseOptions: .frequencyOptions),
-        isOptional: false
-    ),
-    Study.Task.Question(
-        text: "I understand the nature and causes of my health condition(s)",
-        type: .scale(responseOptions: .frequencyOptions),
-        isOptional: false
-    ),
-    Study.Task.Question(
-        text: "I am aware of the treatment options available throughout my reproductive journey",
-        type: .scale(responseOptions: .frequencyOptions),
-        isOptional: false
-    ),
-    Study.Task.Question(
-        text: "I know how to prevent further problems with my reproductive health",
-        type: .scale(responseOptions: .frequencyOptions),
-        isOptional: false
-    )
+            """),
+    .scale("When all is said and done, ultimately, I am responsible for managing my reproductive journey", options: .frequencyOptions),
+    .scale("I know what my next steps at the REI clinic are", options: .frequencyOptions),
+    .scale("Taking an active role in my health care is the most important thing that affects my reproductive health and ability to function", options: .frequencyOptions),
+    .scale("I know/ knew what the clinic needs from my partner in order to proceed", options: .frequencyOptions),
+    .scale("I know what each of my prescribed medications do and how to take them", options: .frequencyOptions),
+    .scale("I know which supplements and vitamins I need to take", options: .frequencyOptions),
+    .scale("I know what my hormone levels (e.g. AMH) signify", options: .frequencyOptions),
+    .scale("I am confident that I can tell my health care provider/ doctor concerns I have even when he or she does not ask", options: .frequencyOptions),
+    .scale("I am confident that I can tell whether I need to go get medical care or go to the doctor after my medical procedure", options: .frequencyOptions),
+    .scale("I understand the description of my ultrasound", options: .frequencyOptions),
+    .scale("I am confident that I know how to interpret bleedings after procedures or during my cycle and when to go see a doctor", options: .frequencyOptions),
+    .scale("I know the lifestyle changes like diet and exercise that are recommended", options: .frequencyOptions),
+    .scale("I am confident that I can follow through on medical treatments I may need to do at home", options: .frequencyOptions),
+    .scale("I am confident that I can follow through on recommendations my health care provider makes, such as changing my diet or doing regular exercise", options: .frequencyOptions),
+    .scale("I have been able to maintain (keep up with) lifestyle changes that I have made for my health, like eating right or exercising", options: .frequencyOptions),
+    .scale("I understand the nature and causes of my health condition(s)", options: .frequencyOptions),
+    .scale("I am aware of the treatment options available throughout my reproductive journey", options: .frequencyOptions),
+    .scale("I know how to prevent further problems with my reproductive health", options: .frequencyOptions)
 ]
 
 
