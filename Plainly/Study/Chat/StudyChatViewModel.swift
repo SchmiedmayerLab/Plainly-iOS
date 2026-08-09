@@ -193,9 +193,11 @@ final class StudyChatViewModel: Sendable {
             taskEndTimes[task.id] = .now
         }
         inProgressStudy.responses[task.id] = responses
-        if isCurrentTask {
-            advanceToNextTask()
+        guard isCurrentTask else {
+            presentedSheet = nil
+            return
         }
+        advanceToNextTask()
     }
     
     /// Resets the study to its initial state
@@ -218,14 +220,7 @@ final class StudyChatViewModel: Sendable {
         guard let task = study.tasks.first else {
             return false
         }
-        navigationState = .task(
-            task: task,
-            taskIdx: 0,
-            numTotalTasks: study.tasks.count,
-            taskState: .chatting
-        )
-        taskStartTimes[task.id] = .now
-        presentedSheet = .instructions
+        begin(task, at: 0)
         return true
     }
     
@@ -249,34 +244,34 @@ final class StudyChatViewModel: Sendable {
             return
         }
         let nextTaskIdx = study.tasks.index(after: currentTaskIdx)
-        if let nextTask = study.tasks[safe: nextTaskIdx] {
-            let newTaskState = { () -> NavigationState.TaskState in
-                if (nextTask.instructions ?? "").isEmpty,
-                   nextTask.assistantMessagesLimit == nil || nextTask.assistantMessagesLimit == 0...0,
-                   !nextTask.questions.isEmpty {
-                    // if the next task has no instructions and no/empty messaging limits, but does have questions, we directly go to the survey
-                    .answeringSurvey
-                } else {
-                    // otherwise, we simply show the instructions sheet
-                    .chatting
-                }
-            }()
-            navigationState = .task(
-                task: nextTask,
-                taskIdx: nextTaskIdx,
-                numTotalTasks: study.tasks.count,
-                taskState: newTaskState
-            )
-            taskStartTimes[nextTask.id] = .now
-            switch newTaskState {
-            case .chatting:
-                presentedSheet = .instructions
-            case .answeringSurvey:
-                presentedSheet = .survey
-            }
-        } else {
+        guard let nextTask = study.tasks[safe: nextTaskIdx] else {
             // no next task.
             endStudy()
+            return
+        }
+        begin(nextTask, at: nextTaskIdx)
+    }
+
+    /// Starts `task`, presenting whichever step it begins with.
+    ///
+    /// A task without a chat has nothing to introduce, so its questions are presented right away. When
+    /// it follows another task's questions the sheet simply carries on, without returning to the chat.
+    private func begin(_ task: Study.Task, at taskIdx: Int) {
+        let taskState: NavigationState.TaskState = task.hasChat || task.questions.isEmpty
+            ? .chatting
+            : .answeringSurvey
+        navigationState = .task(
+            task: task,
+            taskIdx: taskIdx,
+            numTotalTasks: study.tasks.count,
+            taskState: taskState
+        )
+        taskStartTimes[task.id] = .now
+        switch taskState {
+        case .chatting:
+            presentedSheet = .instructions
+        case .answeringSurvey:
+            presentedSheet = .survey
         }
     }
     

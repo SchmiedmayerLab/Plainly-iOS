@@ -21,10 +21,18 @@ extension Study {
         public let instructions: String?
         
         public let assistantMessagesLimit: ClosedRange<Int>?
-        
+
         /// The questions contained in this task
         public let questions: [Questionnaire.Task]
-        
+
+        /// Whether the participant uses the chat before answering the task's questions.
+        ///
+        /// A task that neither instructs the participant nor allows any assistant messages has nothing
+        /// for them to do in the chat, so its questions are presented as soon as the task starts.
+        public var hasChat: Bool {
+            !(instructions ?? "").isEmpty || (assistantMessagesLimit.map { $0 != 0...0 } ?? false)
+        }
+
         public init(
             id: String,
             title: String? = nil,

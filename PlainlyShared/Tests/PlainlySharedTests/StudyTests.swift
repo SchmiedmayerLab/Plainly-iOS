@@ -9,6 +9,7 @@
 import PlainlyShared
 import PlainlyStudyDefinitions
 import SpeziLLMOpenAI
+import SpeziQuestionnaire
 import Testing
 
 
@@ -53,5 +54,50 @@ struct StudyTests {
 
         #expect(study == Study.gynStudy)
         #expect(Set(Study.allStudies + Study.allStudies).count == Study.allStudies.count)
+    }
+
+    /// The closing questionnaires have no chat, so the app presents them without returning to it.
+    @Test
+    func gynStudyClosesWithoutChat() {
+        let tasks = Study.gynStudy.tasks
+        let chatlessTasks = tasks.filter { !$0.hasChat }
+        let chatlessWithoutQuestions = chatlessTasks.filter(\.questions.isEmpty)
+
+        #expect(chatlessTasks.map(\.id) == ["6", "7"])
+        // A chatless task with no questions would leave the participant on an empty chat.
+        #expect(chatlessWithoutQuestions.isEmpty)
+        #expect(tasks.filter(\.hasChat).map(\.id) == ["0", "1", "2", "3", "4", "5"])
+    }
+
+    /// A task that limits the chat to no messages is not a chat task either.
+    @Test
+    func aTaskWithoutMessagesHasNoChat() {
+        let questions: [Questionnaire.Task] = [.freeText("Why?")]
+        let chatless = [
+            Study.Task(id: "a", instructions: nil, questions: questions),
+            Study.Task(id: "b", instructions: "", assistantMessagesLimit: 0...0, questions: questions)
+        ]
+        let chatting = [
+            Study.Task(id: "c", instructions: "Ask about your labs", questions: questions),
+            Study.Task(id: "d", instructions: nil, assistantMessagesLimit: 1...5, questions: questions)
+        ]
+
+        #expect(chatless.map(\.hasChat) == [false, false])
+        #expect(chatting.map(\.hasChat) == [true, true])
+    }
+
+    /// The recommendation question reports the number picked, so its range stays comparable.
+    @Test
+    func recommendationQuestionReportsTheScore() throws {
+        let questions = Study.gynStudy.tasks.flatMap(\.questions)
+        let question = try #require(questions.first { $0.title.hasPrefix("On a scale of 0-10") })
+
+        guard case let .choice(config) = question.kind.variant else {
+            Issue.record("The recommendation question is no longer a choice question.")
+            return
+        }
+        #expect(config.options.map(\.id) == (0...10).map { "\($0)" })
+        #expect(config.options.first?.title == "0 (Would not recommend)")
+        #expect(config.options.last?.title == "10 (Would recommend)")
     }
 }
