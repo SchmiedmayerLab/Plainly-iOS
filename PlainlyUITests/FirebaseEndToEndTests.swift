@@ -12,7 +12,6 @@ import XCTest
 final class FirebaseEndToEndTests: XCTestCase, Sendable {
     private static let defaultResponse = "Plainly Firebase end-to-end response."
     private static let userMessage = "Tell me more about my health records."
-
     private var expectedResponse: String {
         ProcessInfo.processInfo.environment["PLAINLY_MOCK_CHAT_RESPONSE"] ?? Self.defaultResponse
     }
@@ -116,30 +115,15 @@ final class FirebaseEndToEndTests: XCTestCase, Sendable {
     func testFailedReportUploadIsRetainedAndRetried() throws {
         let app = launchApp(mockUploadError: true)
         _ = startSession(in: app)
-
-        XCTAssertTrue(
-            app.descendants(matching: .any)
-                .matching(NSPredicate(format: "label == %@", expectedResponse))
-                .firstMatch
-                .waitForExistence(timeout: 30),
-            "The Firebase-backed streaming chat response did not appear."
-        )
-
-        let nextTask = app.buttons["Proceed to the next task"]
-        XCTAssertTrue(nextTask.waitForExistence(timeout: 5))
-        nextTask.tap()
-        XCTAssertTrue(app.alerts["End Chat?"].waitForExistence(timeout: 5))
-        app.alerts["End Chat?"].buttons["End Chat"].tap()
+        endSessionAfterFirstResponse(in: app)
 
         XCTAssertTrue(
             app.staticTexts["You're All Set"].waitForExistence(timeout: 30),
             "The completion confirmation was not shown after a failed upload."
         )
         app.buttons["Done"].tap()
-
-        let pendingNotice = app.staticTexts["A session is saved and waiting to be sent."]
         XCTAssertTrue(
-            pendingNotice.waitForExistence(timeout: 15),
+            pendingNotice(in: app).waitForExistence(timeout: 15),
             "The home screen did not report the session that is waiting to be sent."
         )
 
@@ -151,15 +135,49 @@ final class FirebaseEndToEndTests: XCTestCase, Sendable {
             "The study home screen did not appear after relaunching."
         )
         XCTAssertTrue(
-            retryApp.staticTexts["A session is saved and waiting to be sent."].waitForNonExistence(timeout: 30),
+            pendingNotice(in: retryApp).waitForNonExistence(timeout: 30),
             "The retained report was not uploaded on the next launch."
+        )
+    }
+
+    /// The retry on launch runs before the anonymous sign-in completes, so the upload has to wait for it.
+    ///
+    /// Without that wait the retained report fails with a missing user and stays on the device, which is
+    /// what `--useSlowFirebaseAuth` makes deterministic: it holds the sign-in back past the retry.
+    func testRetainedReportUploadsWhenAuthenticationIsSlow() throws {
+        let app = launchApp(mockUploadError: true)
+        _ = startSession(in: app)
+        endSessionAfterFirstResponse(in: app)
+
+        XCTAssertTrue(
+            app.staticTexts["You're All Set"].waitForExistence(timeout: 30),
+            "The completion confirmation was not shown after a failed upload."
+        )
+        app.buttons["Done"].tap()
+        XCTAssertTrue(
+            pendingNotice(in: app).waitForExistence(timeout: 15),
+            "The home screen did not report the session that is waiting to be sent."
+        )
+
+        app.terminate()
+        let retryApp = launchApp(slowAuthentication: true)
+        XCTAssertTrue(
+            retryApp.staticTexts["Language Study"].waitForExistence(timeout: 10),
+            "The study home screen did not appear after relaunching."
+        )
+        // Nothing else triggers a retry here, so the report only clears if the upload waited for the
+        // sign-in that the launch retry raced.
+        XCTAssertTrue(
+            pendingNotice(in: retryApp).waitForNonExistence(timeout: 60),
+            "The retained report was not uploaded once the delayed authentication completed."
         )
     }
 
     private func launchApp(
         mockChatError: Bool = false,
         mockChatErrorAfterChunk: Bool = false,
-        mockUploadError: Bool = false
+        mockUploadError: Bool = false,
+        slowAuthentication: Bool = false
     ) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = [
@@ -178,8 +196,32 @@ final class FirebaseEndToEndTests: XCTestCase, Sendable {
         if mockUploadError {
             app.launchArguments.append("--useFirebaseMockUploadError")
         }
+        if slowAuthentication {
+            app.launchArguments.append("--useSlowFirebaseAuth")
+        }
         app.launch()
         return app
+    }
+
+    /// Waits for the first streamed response, then ends the session from the task toolbar.
+    private func endSessionAfterFirstResponse(in app: XCUIApplication) {
+        XCTAssertTrue(
+            app.descendants(matching: .any)
+                .matching(NSPredicate(format: "label == %@", expectedResponse))
+                .firstMatch
+                .waitForExistence(timeout: 30),
+            "The Firebase-backed streaming chat response did not appear."
+        )
+        let nextTask = app.buttons["Proceed to the next task"]
+        XCTAssertTrue(nextTask.waitForExistence(timeout: 5))
+        nextTask.tap()
+        XCTAssertTrue(app.alerts["End Chat?"].waitForExistence(timeout: 5))
+        app.alerts["End Chat?"].buttons["End Chat"].tap()
+    }
+
+    /// Matches the notice for any number of retained sessions, so a leftover report cannot skew it.
+    private func pendingNotice(in app: XCUIApplication) -> XCUIElement {
+        app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "waiting to be sent")).firstMatch
     }
 
     private func startSession(in app: XCUIApplication) -> XCUIElement {

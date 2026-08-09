@@ -20,36 +20,40 @@ struct StudyCompletedSheet: View {
     }
 
     var body: some View {
-        BottomSheet {
-            VStack(spacing: 24) {
-                Image(systemName: didUpload ? "checkmark.circle.fill" : "clock.badge.checkmark.fill")
-                    .font(.system(size: 64))
-                    .foregroundStyle(.tint)
-                    .accessibilityHidden(true)
-                VStack(spacing: 8) {
-                    Text("STUDY_COMPLETED_TITLE")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .multilineTextAlignment(.center)
-                    Text(message)
-                        .font(.body)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                PrimaryActionButton("STUDY_COMPLETED_DONE_ACTION", action: onDone)
-                    .transforming { button in
-                        if #available(iOS 26, *) {
-                            button.buttonStyle(.glassProminent)
-                        } else {
-                            button.buttonStyle(.borderedProminent)
-                        }
-                    }
+        VStack(spacing: 0) {
+            // The spacers share whatever height the detent leaves over, which keeps the icon, the
+            // message, and the action spread across the sheet rather than bunched under its grabber.
+            Spacer(minLength: 16)
+            Image(systemName: didUpload ? "checkmark.circle.fill" : "clock.badge.checkmark.fill")
+                .font(.system(size: 64))
+                .foregroundStyle(.tint)
+                .accessibilityHidden(true)
+            Spacer(minLength: 24)
+            VStack(spacing: 12) {
+                Text("STUDY_COMPLETED_TITLE")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                Text(message)
+                    .font(.body)
+                    .foregroundStyle(.secondary)
             }
-            .padding(.horizontal, 32)
-            .padding(.vertical, 32)
+            .multilineTextAlignment(.center)
+            Spacer(minLength: 24)
+            PrimaryActionButton("STUDY_COMPLETED_DONE_ACTION", action: onDone)
+                .transforming { button in
+                    if #available(iOS 26, *) {
+                        button.buttonStyle(.glassProminent)
+                    } else {
+                        button.buttonStyle(.borderedProminent)
+                    }
+                }
         }
+        .padding(.horizontal, 32)
+        .padding(.top, 32)
+        .padding(.bottom, 24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .presentationDetents([.medium, .large])
         .interactiveDismissDisabled()
-        .scrollBounceBehavior(.basedOnSize)
     }
 }
 

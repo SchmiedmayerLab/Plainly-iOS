@@ -35,6 +35,10 @@ enum FeatureFlags {
     static let useFirebaseMockUploadError =
         useFirebaseEmulator && CommandLine.arguments.contains("--useFirebaseMockUploadError")
 
+    /// Delays the anonymous sign-in so tests can prove uploads wait for it rather than racing it.
+    static let useSlowFirebaseAuth =
+        useFirebaseEmulator && CommandLine.arguments.contains("--useSlowFirebaseAuth")
+
     /// Disables clinical health record access for tests that do not exercise Health Records.
     static let disableHealthRecords = CommandLine.arguments.contains("--disableHealthRecords")
 
