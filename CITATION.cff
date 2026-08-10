@@ -1,5 +1,5 @@
 #
-# This source file is part of the Plainly iOS project
+# This source file is part of the Plainly iOS open-source project
 #
 # SPDX-FileCopyrightText: 2023 Stanford University
 #
@@ -8,6 +8,7 @@
 
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
+type: software
 authors:
 - family-names: "Schmiedmayer"
   given-names: "Paul"
@@ -19,4 +20,6 @@ authors:
   given-names: "Paul Johannes"
   orcid: "https://orcid.org/0000-0001-8157-8151"
 title: "Plainly"
+license: MIT
 url: "https://github.com/SchmiedmayerLab/Plainly-iOS"
+repository-code: "https://github.com/SchmiedmayerLab/Plainly-iOS"
