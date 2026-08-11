@@ -25,7 +25,7 @@ let package = Package(
     dependencies: [
         .package(
             url: "https://github.com/SchmiedmayerLab/Spezi.git",
-            revision: "0bad0628825cc9ff3eb93f299be4313b5e4b5927",
+            .upToNextMinor(from: "0.2.0"),
             traits: [.trait(name: "Textual")]
         ),
         .package(url: "https://github.com/apple/FHIRModels.git", .upToNextMinor(from: "0.9.0")),
