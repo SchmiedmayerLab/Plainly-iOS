@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 [![Deployment](https://github.com/SchmiedmayerLab/Plainly-iOS/actions/workflows/deployment.yml/badge.svg)](https://github.com/SchmiedmayerLab/Plainly-iOS/actions/workflows/deployment.yml)
 [![Codecov](https://codecov.io/gh/SchmiedmayerLab/Plainly-iOS/branch/main/graph/badge.svg?token=9fvSAiFJUY)](https://codecov.io/gh/SchmiedmayerLab/Plainly-iOS)
 [![REUSE status](https://api.reuse.software/badge/github.com/SchmiedmayerLab/Plainly-iOS)](https://api.reuse.software/info/github.com/SchmiedmayerLab/Plainly-iOS)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/SchmiedmayerLab/Plainly-iOS/blob/main/LICENSE.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE.md)
 
 ## Study Overview
 
