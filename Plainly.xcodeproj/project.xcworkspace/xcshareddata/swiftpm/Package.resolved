@@ -1,5 +1,5 @@
 {
-  "originHash" : "9e8f0b252116de610a9a6f717708dc3ebc682b76d359e15a8ea36d134d62116a",
+  "originHash" : "6f4e290628fcbea7142f37517b87dede2beeb94c87df277998ec47aa6121ddce",
   "pins" : [
     {
       "identity" : "abseil-cpp-binary",
@@ -33,8 +33,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/FHIRModels.git",
       "state" : {
-        "revision" : "9e2e1f2a79db3d6ec8bbebac93b13bf847982754",
-        "version" : "0.9.1"
+        "revision" : "3fdead0f6459d7d3480d12c514ae27da31974a41",
+        "version" : "0.9.3"
       }
     },
     {
@@ -166,9 +166,10 @@
     {
       "identity" : "spezi",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/SchmiedmayerLab/Spezi",
+      "location" : "https://github.com/SchmiedmayerLab/Spezi.git",
       "state" : {
-        "revision" : "0bad0628825cc9ff3eb93f299be4313b5e4b5927"
+        "revision" : "bf642cea187249cbcac3f7c3897cdbbf1156287b",
+        "version" : "0.2.0"
       }
     },
     {

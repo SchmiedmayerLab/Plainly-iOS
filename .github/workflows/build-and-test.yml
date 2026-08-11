@@ -1,5 +1,5 @@
 #
-# This source file is part of the Plainly iOS project
+# This source file is part of the Plainly iOS open-source project
 #
 # SPDX-FileCopyrightText: 2023 Stanford University
 #
@@ -20,7 +20,7 @@ concurrency:
 jobs:
   app_tests:
     name: Build and Test (App)
-    uses: SchmiedmayerLab/.github/.github/workflows/xcodebuild.yml@v0.2
+    uses: SchmiedmayerLab/.github/.github/workflows/xcodebuild.yml@v0.5
     permissions:
       contents: read
     with:
@@ -28,7 +28,7 @@ jobs:
       scheme: Plainly
   shared_spm_pkg_tests:
     name: Build and Test (Shared)
-    uses: SchmiedmayerLab/.github/.github/workflows/xcodebuild.yml@v0.2
+    uses: SchmiedmayerLab/.github/.github/workflows/xcodebuild.yml@v0.5
     permissions:
       contents: read
     with:
@@ -36,7 +36,7 @@ jobs:
       runsonlabels: '["macOS", "self-hosted"]'
   firebase_e2e_tests:
     name: Firebase End-to-End UI Test
-    uses: SchmiedmayerLab/.github/.github/workflows/xcodebuild-or-fastlane.yml@v0.2
+    uses: SchmiedmayerLab/.github/.github/workflows/xcodebuild-or-fastlane.yml@v0.5
     permissions:
       contents: read
     with:
@@ -48,7 +48,7 @@ jobs:
   uploadcoveragereport:
     name: Upload Coverage Report
     needs: [app_tests, shared_spm_pkg_tests]
-    uses: SchmiedmayerLab/.github/.github/workflows/coverage.yml@v0.2
+    uses: SchmiedmayerLab/.github/.github/workflows/coverage.yml@v0.5
     permissions:
       actions: read
       contents: read

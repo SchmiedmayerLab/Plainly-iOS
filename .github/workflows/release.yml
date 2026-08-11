@@ -1,5 +1,5 @@
 #
-# This source file is part of the Plainly iOS project
+# This source file is part of the Plainly iOS open-source project
 #
 # SPDX-FileCopyrightText: 2024 Stanford University
 #
@@ -19,7 +19,7 @@ concurrency:
 jobs:
   formatreleasenotes:
     name: Format Release Notes
-    uses: SchmiedmayerLab/.github/.github/workflows/format-release-notes.yml@v0.2
+    uses: SchmiedmayerLab/.github/.github/workflows/format-release-notes.yml@v0.5
     with:
       release-tag: ${{ github.event.release.tag_name }}
       repository: ${{ github.repository }}

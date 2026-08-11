@@ -1,5 +1,5 @@
 //
-// This source file is part of the Plainly iOS project
+// This source file is part of the Plainly iOS open-source project
 //
 // SPDX-FileCopyrightText: 2026 Stanford University
 //

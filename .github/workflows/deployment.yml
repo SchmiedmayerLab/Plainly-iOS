@@ -1,5 +1,5 @@
 #
-# This source file is part of the Plainly iOS project
+# This source file is part of the Plainly iOS open-source project
 #
 # SPDX-FileCopyrightText: 2023 Stanford University
 #
@@ -133,7 +133,7 @@ jobs:
   iosapptestflightdeployment:
     name: iOS App TestFlight Deployment
     needs: [determineenvironment, vars, buildandtest]
-    uses: SchmiedmayerLab/.github/.github/workflows/xcode-deploy.yml@v0.2
+    uses: SchmiedmayerLab/.github/.github/workflows/xcode-deploy.yml@v0.5
     permissions:
       contents: read
     with:

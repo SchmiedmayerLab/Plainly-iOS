@@ -574,8 +574,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/SchmiedmayerLab/Spezi";
 			requirement = {
-				kind = revision;
-				revision = 0bad0628825cc9ff3eb93f299be4313b5e4b5927;
+				kind = upToNextMinorVersion;
+				minimumVersion = 0.2.0;
 			};
 			traits = (
 				Textual,
