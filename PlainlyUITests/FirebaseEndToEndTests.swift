@@ -39,7 +39,7 @@ final class FirebaseEndToEndTests: XCTestCase, Sendable {
 
         let messageField = app.textFields["Message Input Textfield"]
         XCTAssertTrue(messageField.waitForExistence(timeout: 5))
-        messageField.tap()
+        tapAndWaitForFocus(messageField)
         messageField.typeText(Self.userMessage)
 
         let sendMessage = app.buttons["Send Message"]
@@ -240,5 +240,22 @@ final class FirebaseEndToEndTests: XCTestCase, Sendable {
         XCTAssertTrue(startSession.waitForExistence(timeout: 10))
         startSession.tap()
         return startSession
+    }
+
+    /// Taps a text field and waits for it to become first responder.
+    ///
+    /// The tap returns as soon as it is dispatched, and typing into a field that does not yet hold
+    /// keyboard focus fails outright rather than waiting for it.
+    private func tapAndWaitForFocus(_ textField: XCUIElement) {
+        textField.tap()
+        let focused = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "hasKeyboardFocus == true"),
+            object: textField
+        )
+        XCTAssertEqual(
+            XCTWaiter.wait(for: [focused], timeout: 5),
+            .completed,
+            "\(textField.identifier) did not take keyboard focus."
+        )
     }
 }
