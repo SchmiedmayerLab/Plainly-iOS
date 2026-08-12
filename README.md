@@ -53,7 +53,7 @@ When running Plainly via Xcode, you can use the `--mode` CLI flag to control the
 
 ### Firebase End-to-End Test
 
-The Firebase emulator UI test exercises anonymous authentication, streaming chat through the callable function, and study-report upload to Storage without a real OpenAI token:
+The Firebase emulator UI test exercises anonymous authentication, streaming chat through the callable function, and study-report upload to Storage without any real inference credentials:
 
 ```bash
 scripts/run-firebase-e2e.sh
@@ -90,11 +90,12 @@ For each simulated session, a report file is generated with the same structure a
 swift run PlainlyCLI simulate-session config.json output/
 ```
 
-Session simulation is controlled via a JSON config file. **API credentials are never stored in the config file** — they are read from environment variables at runtime:
+Simulated sessions reach the model the same way the app does, through the Firebase `chat` function, so the simulator never holds an inference credential. Point it either at a deployed backend or at a local emulator — [the Plainly-Firebase development guide](https://github.com/SchmiedmayerLab/Plainly-Firebase#development) covers configuring the local secrets and starting the emulators.
+
+Session simulation is controlled via a JSON config file. **Credentials are never stored in the config file** — they are read from environment variables at runtime:
 
 | Service | Required env var |
 |---------|-----------------|
-| `OpenAI` | `OPENAI_API_KEY` |
 | `Firebase` | `GOOGLE_CREDENTIALS_PLIST` (path to `GoogleService-Info.plist`) |
 | `Firebase-Emulator` | *(none — connects to the local emulator suite)* |
 
@@ -113,24 +114,15 @@ Each entry in the JSON config defines the parameters of one simulation:
 - `bundleName` — name of an embedded synthetic patient, or a path to a FHIR bundle JSON file (resolved relative to the config file)
 - `model` — the model identifier to request
 - `userQuestions` — the questions the simulated patient asks
-- `service` *(optional)* — `"OpenAI"`, `"Firebase"`, or `"Firebase-Emulator"`; if omitted, inferred from the environment (`OPENAI_API_KEY` → OpenAI, `GOOGLE_CREDENTIALS_PLIST` → Firebase, otherwise Firebase-Emulator)
+- `service` *(optional)* — `"Firebase"` or `"Firebase-Emulator"`; if omitted, inferred from the environment (`GOOGLE_CREDENTIALS_PLIST` → Firebase, otherwise Firebase-Emulator)
 - `name` *(optional)* — human-readable label used as the output filename prefix
+- `comment` *(optional)* — free-form note describing the config, carried through to the report
 - `customSystemPrompt` *(optional)* — custom system prompt, replaces the study's default system prompt
+- `customResourcePrompt` *(optional)* — custom prompt controlling how individual FHIR resources are summarized
 
-The example config below performs six simulated runs of the `edu.stanford.plainly.gynStudy` study, three each using GPT-4o and GPT-4o-mini, against two different backends:
+The example config below performs six simulated runs of the `edu.stanford.plainly.gynStudy` study with GPT-4o, three against a deployed backend and three against the local emulator:
 ```json
 [{
-    "numberOfRuns": 3,
-    "name": "gyn-gpt4o-openai",
-    "studyId": "edu.stanford.plainly.gynStudy",
-    "bundleName": "Elena Kim",
-    "model": "gpt-4o",
-    "service": "OpenAI",
-    "userQuestions": [
-        "Tell me about my recent diagnoses and how they affect my fertility.",
-        "How are my hormonal levels?"
-    ]
-}, {
     "numberOfRuns": 3,
     "name": "gyn-gpt4o-firebase",
     "studyId": "edu.stanford.plainly.gynStudy",
@@ -141,30 +133,35 @@ The example config below performs six simulated runs of the `edu.stanford.plainl
         "Tell me about my recent diagnoses and how they affect my fertility.",
         "How are my hormonal levels?"
     ]
+}, {
+    "numberOfRuns": 3,
+    "name": "gyn-gpt4o-emulator",
+    "studyId": "edu.stanford.plainly.gynStudy",
+    "bundleName": "Elena Kim",
+    "model": "gpt-4o",
+    "service": "Firebase-Emulator",
+    "userQuestions": [
+        "Tell me about my recent diagnoses and how they affect my fertility.",
+        "How are my hormonal levels?"
+    ]
 }]
 ```
 
-Run with the appropriate credentials:
+Run against a deployed backend:
 
 ```bash
-# OpenAI
-OPENAI_API_KEY=sk-proj-...
-swift run PlainlyCLI simulate-session config.json output/
-```
-
-```bash
-# Firebase (production)
 GOOGLE_CREDENTIALS_PLIST=~/GoogleService-Info.plist
 swift run PlainlyCLI simulate-session config.json output/
 ```
 
+Or against the emulator suite, once it is running:
+
 ```bash
-# Firebase emulator (no credentials needed)
 FIREBASE_PROJECT_ID=...
 swift run PlainlyCLI simulate-session config.json output/
 ```
 
-Reports are saved to a timestamped subdirectory inside the output directory, named `<index>-<name>-<run>.json` (e.g. `00-gyn-gpt4o-openai-1.json`).
+Reports are saved to a timestamped subdirectory inside the output directory, named `<index>-<name>-<run>.json` (e.g. `00-gyn-gpt4o-firebase-1.json`).
 
 ## Contributing
 

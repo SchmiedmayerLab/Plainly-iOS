@@ -131,14 +131,8 @@ extension SessionSimulator {
     
     @MainActor
     private static func speziConfig(for config: SimulatedSessionConfig) throws -> SpeziConfiguration {
-        let openAIKey = ProcessInfo.processInfo.environment["OPENAI_API_KEY"] ?? ""
         let middlewares: [any ClientMiddleware]
         switch config.service {
-        case .openAI:
-            guard !openAIKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                throw ValidationError("OPENAI_API_KEY environment variable must be set when using the 'OpenAI' service.")
-            }
-            middlewares = []
         case .firebase:
             guard let firebaseConfig = firebaseConfigFromEnvironment() else {
                 throw ValidationError("GOOGLE_CREDENTIALS_PLIST environment variable must be set when using the 'Firebase' service.")
@@ -163,8 +157,10 @@ extension SessionSimulator {
                 systemPrompt: config.systemPrompt
             ))
             LLMRunner {
+                // The interceptor reroutes every request to the Firebase chat function, which holds
+                // the inference credentials, so the platform itself never authenticates.
                 LLMOpenAIPlatform(configuration: .init(
-                    authToken: .constant(openAIKey),
+                    authToken: .none,
                     concurrentStreams: 100,
                     retryPolicy: .attempts(3),
                     middlewares: middlewares

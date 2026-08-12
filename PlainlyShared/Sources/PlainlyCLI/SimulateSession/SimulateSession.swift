@@ -21,26 +21,25 @@ struct SimulateSession: AsyncParsableCommand {
               studyId             (required) Study identifier.
               bundleName          (required) Embedded patient name, or path to a FHIR bundle JSON
                                              file (resolved relative to the config file).
-              model               (required) OpenAI model name (e.g. "gpt-4o").
+              model               (required) Model identifier the chat function resolves (e.g. "gpt-4o").
               userQuestions       (required) List of questions the simulated patient asks.
-              service             (optional) Backend: "OpenAI", "Firebase", or "Firebase-Emulator".
+              service             (optional) Backend: "Firebase" or "Firebase-Emulator".
                                              Inferred from the environment when omitted (see below).
               name                (optional) Human-readable label used as the output filename prefix.
               comment             (optional) Free-form note propagated to the output report's metadata.
               customSystemPrompt  (optional) Custom system prompt text.
               customResourcePrompt (optional) Custom prompt for summarizing individual FHIR resources.
 
-            API credentials are never stored in the config file. They are read from the environment:
+            Inference runs through the Firebase chat function, which holds the credentials, so no
+            inference API key is ever read here. Firebase credentials come from the environment:
 
-              OPENAI_API_KEY              Required for the "OpenAI" service.
               GOOGLE_CREDENTIALS_PLIST    Path to GoogleService-Info.plist; required for "Firebase",
                                           optional for "Firebase-Emulator" (uses placeholder
                                           credentials when unset).
 
             Service inference (when "service" is omitted from a config entry):
-              1. OPENAI_API_KEY is set and non-empty        → "OpenAI"
-              2. GOOGLE_CREDENTIALS_PLIST is set and valid  → "Firebase"
-              3. Neither is available                       → "Firebase-Emulator"
+              1. GOOGLE_CREDENTIALS_PLIST is set and valid  → "Firebase"
+              2. It is not available                        → "Firebase-Emulator"
 
             Optional Firebase environment variables:
 
@@ -138,13 +137,6 @@ struct SimulateSession: AsyncParsableCommand {
     }
 
     private func validateConfigurations(_ configs: [SimulatedSessionConfig]) throws {
-        if configs.contains(where: { $0.service == .openAI }),
-           ProcessInfo.processInfo.environment["OPENAI_API_KEY"]?
-               .trimmingCharacters(in: .whitespacesAndNewlines)
-               .isEmpty ?? true {
-            throw ValidationError("OPENAI_API_KEY environment variable is required when using the 'OpenAI' service.")
-        }
-
         if configs.contains(where: { $0.service == .firebase }),
            ProcessInfo.processInfo.environment["GOOGLE_CREDENTIALS_PLIST"]?.isEmpty ?? true {
             throw ValidationError("GOOGLE_CREDENTIALS_PLIST environment variable is required when using the 'Firebase' service.")
