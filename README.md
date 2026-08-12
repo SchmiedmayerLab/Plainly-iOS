@@ -115,9 +115,11 @@ Each entry in the JSON config defines the parameters of one simulation:
 - `userQuestions` — the questions the simulated patient asks
 - `service` *(optional)* — `"OpenAI"`, `"Firebase"`, or `"Firebase-Emulator"`; if omitted, inferred from the environment (`OPENAI_API_KEY` → OpenAI, `GOOGLE_CREDENTIALS_PLIST` → Firebase, otherwise Firebase-Emulator)
 - `name` *(optional)* — human-readable label used as the output filename prefix
+- `comment` *(optional)* — free-form note describing the config, carried through to the report
 - `customSystemPrompt` *(optional)* — custom system prompt, replaces the study's default system prompt
+- `customResourcePrompt` *(optional)* — custom prompt controlling how individual FHIR resources are summarized
 
-The example config below performs six simulated runs of the `edu.stanford.plainly.gynStudy` study, three each using GPT-4o and GPT-4o-mini, against two different backends:
+The example config below performs six simulated runs of the `edu.stanford.plainly.gynStudy` study with GPT-4o, three against OpenAI directly and three through Firebase:
 ```json
 [{
     "numberOfRuns": 3,

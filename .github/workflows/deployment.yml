@@ -66,7 +66,9 @@ on:
         default: Bug fixes and performance improvements.
 
 concurrency:
-  group: ${{ github.workflow }}
+  # A literal, because `github.workflow` is the *calling* workflow when this runs through
+  # `workflow_call`, which put the release and the deployment it waits on in one group.
+  group: Deployment
   cancel-in-progress: false
 
 jobs:
