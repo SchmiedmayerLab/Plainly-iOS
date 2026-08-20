@@ -23,7 +23,10 @@ let package = Package(
         .executable(name: "PlainlyCLI", targets: ["PlainlyCLI"])
     ],
     dependencies: [
-        .package(url: "https://github.com/SchmiedmayerLab/Grove.git", revision: "57529867a66f7d7748a80d80204d4f63fbfe1238"),
+        // No traits: Grove's default `Textual` renders no text at all in the study chat, so messages are
+        // laid out with the height they need and nothing drawn. Markdown goes through `AttributedString`
+        // instead, which also keeps a message readable to VoiceOver.
+        .package(url: "https://github.com/SchmiedmayerLab/Grove.git", revision: "665d619d01d98c86e15d9c84661ee55cf265c58e", traits: []),
         .package(url: "https://github.com/SchmiedmayerLab/FHIRModels.git", .upToNextMinor(from: "0.9.3")),
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.7.0")
     ],

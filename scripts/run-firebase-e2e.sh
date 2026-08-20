@@ -13,6 +13,11 @@ if [[ -z "${DEVELOPER_DIR:-}" && -d /Applications/Xcode.app/Contents/Developer ]
   export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
 fi
 
+# fastlane decodes xcodebuild's output as the locale's encoding, and raises on the first byte that is not
+# valid in it, so a shell without a UTF-8 locale fails the run before any test starts.
+export LANG="${LANG:-en_US.UTF-8}"
+export LC_ALL="${LC_ALL:-en_US.UTF-8}"
+
 repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 firebase_root="$repository_root/Plainly-Firebase"
 secret_file="$firebase_root/functions/.secret.local"

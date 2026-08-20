@@ -567,8 +567,10 @@
 			repositoryURL = "https://github.com/SchmiedmayerLab/Grove.git";
 			requirement = {
 				kind = revision;
-				revision = 57529867a66f7d7748a80d80204d4f63fbfe1238;
+				revision = 665d619d01d98c86e15d9c84661ee55cf265c58e;
 			};
+			traits = (
+			);
 		};
 		2FD8E8282A1AADDA00357F4E /* XCRemoteSwiftPackageReference "FHIRModels" */ = {
 			isa = XCRemoteSwiftPackageReference;
