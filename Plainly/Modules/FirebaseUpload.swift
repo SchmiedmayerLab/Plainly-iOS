@@ -9,9 +9,9 @@
 @preconcurrency import FirebaseAuth
 import FirebaseStorage
 import Foundation
+import Grove
+import GroveFirebaseAccount
 import PlainlyShared
-import Spezi
-import SpeziFirebaseAccount
 
 
 @MainActor

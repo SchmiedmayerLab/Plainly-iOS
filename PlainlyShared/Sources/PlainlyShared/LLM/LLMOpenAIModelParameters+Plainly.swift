@@ -6,7 +6,7 @@
 // SPDX-License-Identifier: MIT
 //
 
-public import SpeziLLMOpenAI
+public import GroveLLMOpenAI
 
 
 extension LLMOpenAIModelParameters {

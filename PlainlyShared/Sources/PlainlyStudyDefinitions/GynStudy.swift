@@ -6,10 +6,11 @@
 // SPDX-License-Identifier: MIT
 //
 
-// swiftlint:disable line_length trailing_whitespace
 
+import GroveQuestionnaire
 public import PlainlyShared
-import SpeziQuestionnaire
+
+// swiftlint:disable line_length trailing_whitespace
 
 
 extension Study {

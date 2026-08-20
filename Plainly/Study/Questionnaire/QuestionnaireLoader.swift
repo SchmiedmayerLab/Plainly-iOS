@@ -7,17 +7,17 @@
 //
 
 import Foundation
+import GroveQuestionnaire
+import GroveQuestionnaireFHIR
 import struct ModelsR4.Questionnaire
-import SpeziQuestionnaire
-import SpeziQuestionnaireFHIR
 
 
 actor QuestionnaireLoader {
     static let shared = QuestionnaireLoader()
 
-    private var cache: [URL: SpeziQuestionnaire.Questionnaire] = [:]
+    private var cache: [URL: GroveQuestionnaire.Questionnaire] = [:]
 
-    func questionnaire(from url: URL) throws -> SpeziQuestionnaire.Questionnaire {
+    func questionnaire(from url: URL) throws -> GroveQuestionnaire.Questionnaire {
         if let questionnaire = cache[url] {
             return questionnaire
         }
@@ -27,7 +27,7 @@ actor QuestionnaireLoader {
             let data = try Data(contentsOf: url)
             let fhirQuestionnaire = try JSONDecoder().decode(ModelsR4.Questionnaire.self, from: data)
             try Task.checkCancellation()
-            let questionnaire = try SpeziQuestionnaire.Questionnaire(fhirQuestionnaire)
+            let questionnaire = try GroveQuestionnaire.Questionnaire(fhirQuestionnaire)
             cache[url] = questionnaire
             return questionnaire
         } catch let error as CancellationError {

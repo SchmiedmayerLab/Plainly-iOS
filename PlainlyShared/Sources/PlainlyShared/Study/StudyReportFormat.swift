@@ -6,12 +6,12 @@
 // SPDX-License-Identifier: MIT
 //
 
-public import SpeziQuestionnaire
+public import GroveQuestionnaire
 
 
 /// How a study's survey answers are represented in its report.
 public enum StudyReportFormat: Hashable, Sendable {
-    /// The flat question/answer list Plainly emitted before adopting `SpeziQuestionnaire`.
+    /// The flat question/answer list Plainly emitted before adopting `GroveQuestionnaire`.
     ///
     /// Kept for studies that are already collecting, so their downstream analysis is unaffected.
     case surveyAnswers
@@ -35,6 +35,8 @@ extension Questionnaire.Task {
         case .choice(let choice):
             choice.selectedOptions.first ?? Self.legacyUnansweredValue
         case .number(let number):
+            "\(Int(number))"
+        case .quantity(let number, unitCode: _):
             "\(Int(number))"
         case .bool(let flag):
             "\(flag)"

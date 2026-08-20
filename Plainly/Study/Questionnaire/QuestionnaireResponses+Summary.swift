@@ -7,10 +7,10 @@
 //
 
 import Foundation
+import GroveLLM
+import GroveLLMOpenAI
+import GroveQuestionnaire
 import PlainlyShared
-import SpeziLLM
-import SpeziLLMOpenAI
-import SpeziQuestionnaire
 import class UIKit.UIImage
 
 
@@ -78,6 +78,12 @@ extension QuestionnaireResponses.Response {
             }
         case .number(let value):
             return "\(value)"
+        case let .quantity(value, unitCode):
+            let config = task.kind.config(as: Questionnaire.Task.Kind.NumericTaskConfig.self)
+            let unit = config?.unitOptions.first(where: { $0.code == unitCode })?.display
+                ?? (config?.unitCode == unitCode ? config?.unit : nil)
+                ?? unitCode
+            return unit.isEmpty ? "\(value)" : "\(value) \(unit)"
         case .choice(let response):
             guard !response.selectedOptions.isEmpty || response.freeTextOtherResponse != nil else {
                 return nil
@@ -147,7 +153,7 @@ extension QuestionnaireResponses.ImageAnnotation {
                     
                     Output a concise clinical-style summary (3–6 sentences) describing the pain location and dermatomal correspondence. If the markings do not match a clear dermatome pattern, state that explicitly. Ignore markings outside of the body.
                     """),
-                LLMContextEntity(_role: .system, image: labeledImage, format: .jpeg(compressionFactor: jpegCompression)).unwrap(""),
+                LLMContextEntity(_role: .user, image: labeledImage, format: .jpeg(compressionFactor: jpegCompression)).unwrap(""),
                 LLMContextEntity(_role: .user, image: annotatedImage, format: .jpeg(compressionFactor: jpegCompression)).unwrap("")
             ])
         } else {

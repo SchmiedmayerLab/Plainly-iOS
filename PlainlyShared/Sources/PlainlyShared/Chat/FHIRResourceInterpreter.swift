@@ -7,9 +7,9 @@
 //
 
 public import Foundation
-public import SpeziFHIR
-public import SpeziLLM
-public import SpeziLocalStorage
+public import GroveFHIR
+public import GroveLLM
+public import GroveLocalStorage
 
 
 /// Responsible for interpreting a single FHIR resource (at a time).

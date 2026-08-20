@@ -25,7 +25,9 @@ cleanup() {
 }
 trap cleanup EXIT
 
-git -C "$repository_root" submodule update --init Plainly-Firebase
+if [[ ! -e "$firebase_root/.git" ]]; then
+  git -C "$repository_root" submodule update --init Plainly-Firebase
+fi
 npm --prefix "$firebase_root/functions" ci
 npm --prefix "$firebase_root/functions" run build
 
@@ -47,5 +49,5 @@ fi
 
 "${firebase_cli[@]}" emulators:exec \
   --project demo-plainly \
-  --only auth,functions,storage \
+  --only auth,functions,firestore,storage \
   "$test_command"

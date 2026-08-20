@@ -6,9 +6,9 @@
 // SPDX-License-Identifier: MIT
 //
 
+import Grove
+import GroveFoundation
 import PlainlyShared
-import Spezi
-import SpeziFoundation
 import SwiftUI
 
 
@@ -34,7 +34,7 @@ struct Plainly: App {
                     .overlay {
                         OnboardingSheet(didComplete: $didCompleteOnboarding)
                     }
-                    .spezi(appDelegate)
+                    .grove(appDelegate)
             }
         }
     }

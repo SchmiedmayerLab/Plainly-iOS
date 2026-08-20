@@ -8,9 +8,9 @@
 
 // swiftlint:disable missing_docs
 
-public import SpeziFHIR
-public import SpeziLLM
-public import SpeziLocalStorage
+public import GroveFHIR
+public import GroveLLM
+public import GroveLocalStorage
 
 
 public actor FHIRResourceProcessor<Content: Codable & LosslessStringConvertible> {
@@ -44,6 +44,13 @@ public actor FHIRResourceProcessor<Content: Codable & LosslessStringConvertible>
         self.summarizationPrompt = summarizationPrompt
         self.results = (try? localStorage?.load(.init(storageKey))) ?? [:]
     }
+
+    nonisolated static func inferenceContext(prompt: String) -> LLMContext {
+        var context = LLMContext()
+        context.append(systemMessage: prompt, to: .leadingSystemMessages)
+        context.append(userMessage: InternalInput.resourceSummaryRequest)
+        return context
+    }
     
     
     public func update(llmSchema schema: any LLMSchema, summarizationPrompt: FHIRPrompt) {
@@ -56,9 +63,10 @@ public actor FHIRResourceProcessor<Content: Codable & LosslessStringConvertible>
         if let result = results[resource.id], !result.description.isEmpty, !forceReload {
             return result
         }
+        let prompt = summarizationPrompt.prompt(withFHIRResource: resource.jsonDescription)
         let chatStreamResult: String = try await llmRunner.oneShot(
             with: llmSchema,
-            context: .init(systemMessages: [summarizationPrompt.prompt(withFHIRResource: resource.jsonDescription)])
+            context: Self.inferenceContext(prompt: prompt)
         )
         guard let content = Content(chatStreamResult) else {
             throw FHIRResourceProcessorError.notParsableAsAString

@@ -7,11 +7,11 @@
 //
 
 private import Foundation
+public import GroveFHIR
+public import GroveLLM
+public import GroveLocalStorage
 public import Observation
 private import os
-public import SpeziFHIR
-public import SpeziLLM
-public import SpeziLocalStorage
 
 
 private enum FHIRMultipleResourceInterpreterConstants {
@@ -27,7 +27,7 @@ private enum FHIRMultipleResourceInterpreterConstants {
 @Observable
 @MainActor
 public final class FHIRMultipleResourceInterpreter: Sendable {
-    private static let logger = Logger(subsystem: "edu.stanford.spezi.fhir", category: "SpeziFHIRLLM")
+    private static let logger = Logger(subsystem: "edu.stanford.plainly.fhir", category: "PlainlyFHIRLLM")
     
     private let localStorage: LocalStorage?
     private let llmRunner: LLMRunner
@@ -135,12 +135,10 @@ public final class FHIRMultipleResourceInterpreter: Sendable {
     private func performGeneration(generationIdentifier: Int) async throws -> LLMContextEntity? {
         do {
             let stream = try await llmSession.generate()
-            for try await token in stream {
+            for try await _ in stream {
                 try Task.checkCancellation()
-                llmSession.context.append(assistantOutput: token)
             }
             try Task.checkCancellation()
-            llmSession.context.completeAssistantStreaming()
             if let localStorage {
                 try localStorage.store(llmSession.context, for: .init(FHIRMultipleResourceInterpreterConstants.context))
             }
@@ -179,7 +177,7 @@ public final class FHIRMultipleResourceInterpreter: Sendable {
     
     private func createInterpretationContext(using prompt: FHIRPrompt) -> LLMContext {
         var context = LLMContext()
-        context.append(systemMessage: prompt.promptText)
+        context.append(systemMessage: prompt.promptText, to: .leadingSystemMessages)
         return context
     }
 }

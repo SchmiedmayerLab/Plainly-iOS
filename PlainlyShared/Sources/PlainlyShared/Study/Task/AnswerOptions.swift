@@ -7,7 +7,7 @@
 //
 
 import Foundation
-import SpeziFoundation
+import GroveFoundation
 
 
 extension Study.Task {

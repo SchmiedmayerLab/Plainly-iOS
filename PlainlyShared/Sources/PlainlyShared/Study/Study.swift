@@ -7,8 +7,8 @@
 //
 
 public import Foundation
+public import GroveLLMOpenAI
 public import struct ModelsR4.Questionnaire
-public import SpeziLLMOpenAI
 
 
 /// The definition of a study: its tasks, the prompts that frame them, and how it is reported.
@@ -18,7 +18,7 @@ public struct Study: Identifiable, Hashable, Sendable {
         case studyTitle
     }
 
-    /// The Firebase function that serves chat completions unless a study opts into another one.
+    /// The Firebase function that serves chat responses unless a study opts into another one.
     public static let defaultChatFunctionName = "chat"
     
     /// The survey's unique identifier.
@@ -36,7 +36,7 @@ public struct Study: Identifiable, Hashable, Sendable {
     public let ragEnabled: Bool
     /// How the study's survey answers are represented in its report.
     public let reportFormat: StudyReportFormat
-    /// The name of the Firebase function that generates the study's chat completions.
+    /// The name of the Firebase function that generates the study's chat responses.
     ///
     /// May carry query items, e.g. `chat?verbose=true`; they are merged into the callable's name.
     public let chatFunctionName: String

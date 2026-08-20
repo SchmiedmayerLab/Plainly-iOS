@@ -13,7 +13,7 @@ struct FirebaseConfigError: Error, CustomStringConvertible {
     init(_ description: String) { self.description = description }
 }
 
-struct FirebaseConfig {
+struct FirebaseConfig: Sendable {
     let apiKey: String
     let projectID: String
     let region: String

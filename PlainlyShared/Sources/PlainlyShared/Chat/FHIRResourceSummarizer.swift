@@ -6,10 +6,10 @@
 // SPDX-License-Identifier: MIT
 //
 
+public import GroveFHIR
+public import GroveLLM
+public import GroveLocalStorage
 public import Observation
-public import SpeziFHIR
-public import SpeziLLM
-public import SpeziLocalStorage
 
 
 /// Responsible for summarizing FHIR resources.

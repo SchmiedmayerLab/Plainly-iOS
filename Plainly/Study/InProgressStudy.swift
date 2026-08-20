@@ -6,8 +6,8 @@
 // SPDX-License-Identifier: MIT
 //
 
+import GroveQuestionnaire
 import PlainlyShared
-import SpeziQuestionnaire
 
 
 /// One participant's run of a ``Study``.

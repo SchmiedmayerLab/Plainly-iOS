@@ -10,7 +10,7 @@
 
 import AVFoundation
 import Foundation
-import SpeziViews
+import GroveViews
 import SwiftUI
 import VisionKit
 

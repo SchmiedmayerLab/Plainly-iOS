@@ -6,11 +6,11 @@
 // SPDX-License-Identifier: MIT
 //
 
+import GroveFHIRMockPatients
+import GroveFoundation
+import GroveHealthKit
 import struct ModelsR4.QuestionnaireResponse
 import PlainlyShared
-import SpeziFHIRMockPatients
-import SpeziFoundation
-import SpeziHealthKit
 import SwiftUI
 
 
@@ -300,7 +300,7 @@ extension StudyHomeView {
         if let preloadedStudy {
             fhirInterpretationModule.currentStudy = preloadedStudy
         }
-        if Plainly.mode == .test {
+        if FeatureFlags.usesSampleHealthRecords {
             await fhirInterpretationModule.multipleResourceInterpreter.fhirStore.loadTestingResources()
         } else {
             await standard.fetchRecordsFromHealthKit()

@@ -7,8 +7,8 @@
 //
 
 public import Foundation
+public import GroveFHIR
 private import ModelsR4
-public import SpeziFHIR
 
 
 extension FHIRStore {

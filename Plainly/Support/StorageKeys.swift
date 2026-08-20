@@ -6,9 +6,9 @@
 // SPDX-License-Identifier: MIT
 //
 
+import GroveFoundation
+import GroveLLMOpenAI
 import PlainlyShared
-import SpeziFoundation
-import SpeziLLMOpenAI
 
 
 extension LocalPreferenceKeys {

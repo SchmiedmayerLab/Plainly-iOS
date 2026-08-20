@@ -11,6 +11,53 @@ import HTTPTypes
 import OpenAPIRuntime
 import PlainlyShared
 
+
+struct FirebaseCallableStreamError: Error, CustomStringConvertible {
+    let description: String
+}
+
+
+struct FirebaseCallableStreamParser {
+    private(set) var receivedTerminalResult = false
+
+    mutating func consume(_ line: String) throws -> String? {
+        guard line.hasPrefix("data: ") else {
+            return nil
+        }
+        guard let jsonData = String(line.dropFirst(6)).data(using: .utf8),
+              let json = try JSONSerialization.jsonObject(with: jsonData) as? [String: Any] else {
+            throw FirebaseCallableStreamError(description: "Firebase chat function returned malformed stream data")
+        }
+        if json["error"] != nil {
+            throw FirebaseCallableStreamError(description: "Firebase chat function returned an error")
+        }
+        if json.keys.contains("message") {
+            let message = json["message"]
+            if message is NSNull {
+                return nil
+            }
+            guard let message = message as? String else {
+                throw FirebaseCallableStreamError(description: "Firebase chat function returned an invalid message")
+            }
+            return message
+        }
+        if json.keys.contains("result") {
+            receivedTerminalResult = true
+            guard json["result"] is NSNull else {
+                throw FirebaseCallableStreamError(description: "Firebase chat function returned an unexpected result")
+            }
+        }
+        return nil
+    }
+
+    func finish() throws {
+        guard receivedTerminalResult else {
+            throw FirebaseCallableStreamError(description: "Firebase chat function ended without a terminal result")
+        }
+    }
+}
+
+
 struct FirebaseChatInterceptor: ClientMiddleware, Sendable {
     private struct MiddlewareError: Error, CustomStringConvertible {
         let description: String
@@ -47,14 +94,24 @@ struct FirebaseChatInterceptor: ClientMiddleware, Sendable {
               let input = String(bytes: data, encoding: .utf8) else {
             throw MiddlewareError(description: "Missing Body")
         }
-        let stream = try await streamFirebaseFunctionCall(
+        let usesStreaming = try StudyChatResponsesRequestMetadata(body: input).usesStreaming
+        let request = try await firebaseRequest(
             name: chatFunctionName,
             queryItems: [
                 "ragEnabled": ragEnabled ? "true" : "false",
                 "studyId": studyId
             ],
-            body: input
+            body: input,
+            acceptsStreaming: usesStreaming
         )
+        guard usesStreaming else {
+            let responseBody = try await callFirebaseFunction(request)
+            return (
+                HTTPResponse(status: .ok, headerFields: [.contentType: "application/json"]),
+                HTTPBody(responseBody)
+            )
+        }
+        let stream = makeResponseStream(for: request)
         let res = HTTPResponse(
             status: .ok,
             headerFields: [
@@ -67,11 +124,12 @@ struct FirebaseChatInterceptor: ClientMiddleware, Sendable {
         return (res, body)
     }
 
-    private func streamFirebaseFunctionCall(
+    private func firebaseRequest(
         name: String,
         queryItems: [String: String],
         body: String,
-    ) async throws -> AsyncThrowingStream<HTTPBody.ByteChunk, any Swift.Error> {
+        acceptsStreaming: Bool
+    ) async throws -> URLRequest {
         var components =
             URLComponents(string: name, encodingInvalidCharacters: false) ?? URLComponents()
         let nameItems = components.queryItems ?? []
@@ -94,9 +152,9 @@ struct FirebaseChatInterceptor: ClientMiddleware, Sendable {
         urlRequest.httpMethod = "POST"
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         urlRequest.setValue("Bearer \(idToken)", forHTTPHeaderField: "Authorization")
-        urlRequest.setValue("text/event-stream", forHTTPHeaderField: "Accept")
+        urlRequest.setValue(acceptsStreaming ? "text/event-stream" : "application/json", forHTTPHeaderField: "Accept")
         urlRequest.httpBody = try JSONSerialization.data(withJSONObject: ["data": body])
-        return makeResponseStream(for: urlRequest)
+        return urlRequest
     }
 
     private func functionURL(for name: String) throws -> URL {
@@ -127,15 +185,16 @@ struct FirebaseChatInterceptor: ClientMiddleware, Sendable {
                         )
                         throw MiddlewareError(description: "Function call failed")
                     }
+                    var parser = FirebaseCallableStreamParser()
                     for try await line in bytes.lines {
-                        guard line.hasPrefix("data: "),
-                            let jsonData = String(line.dropFirst(6)).data(using: .utf8),
-                            let json = try? JSONSerialization.jsonObject(with: jsonData)
-                                as? [String: Any],
-                            let chunk = (json["message"] ?? json["result"]) as? String
-                        else { continue }
-                        continuation.yield(HTTPBody.ByteChunk(chunk.utf8))
+                        if let chunk = try parser.consume(line) {
+                            continuation.yield(HTTPBody.ByteChunk(chunk.utf8))
+                        }
+                        if parser.receivedTerminalResult {
+                            break
+                        }
                     }
+                    try parser.finish()
                     continuation.finish()
                 } catch {
                     continuation.finish(throwing: error)
@@ -145,6 +204,18 @@ struct FirebaseChatInterceptor: ClientMiddleware, Sendable {
                 task.cancel()
             }
         }
+    }
+
+    private func callFirebaseFunction(_ urlRequest: URLRequest) async throws -> String {
+        let (data, response) = try await URLSession.shared.data(for: urlRequest)
+        guard let response = response as? HTTPURLResponse, response.statusCode == 200 else {
+            throw MiddlewareError(description: "Function call failed")
+        }
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let result = json["result"] as? String else {
+            throw MiddlewareError(description: "Function call returned an invalid response")
+        }
+        return result
     }
 }
 

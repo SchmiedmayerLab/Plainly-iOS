@@ -7,7 +7,7 @@
 //
 
 import Foundation
-public import SpeziFHIR
+public import GroveFHIR
 
 
 extension FHIRResource {

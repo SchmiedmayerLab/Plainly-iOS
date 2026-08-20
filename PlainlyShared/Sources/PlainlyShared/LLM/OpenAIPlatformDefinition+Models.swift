@@ -6,7 +6,7 @@
 // SPDX-License-Identifier: MIT
 //
 
-public import SpeziLLMOpenAI
+public import GroveLLMOpenAI
 
 
 // The models Plainly can request from the Firebase chat function.
@@ -21,23 +21,14 @@ extension OpenAIPlatformDefinition.ModelType {
     /// Enforced by `Study.validateAllStudies()`, which runs in the test suite and when the
     /// `export-config` tool generates a `UserStudyConfig.plist`.
     ///
-    /// - Warning: The GPT-5.6 family rejects function tools on `/v1/chat/completions`. Plainly always
-    ///   sends the `get_resources` tool, so those models only work once the backend translates to the
-    ///   Responses API; ``gpt5_5`` is the newest model usable today, which is why the 5.6 identifiers
-    ///   are defined below but deliberately not listed here.
+    /// This remains an explicit allowlist even though Grove exposes additional model identifiers.
     public static let plainlySupportedModels: [Self] = [
-        .gpt5_5,
+        .gpt5_4, .gpt5_5,
         .gpt4o,
         .claudeOpus5, .claudeSonnet5, .claudeHaiku4_5,
         .gemini2_5Pro, .gemini2_5Flash, .gemini2_5FlashLite,
         .llama4
     ]
-
-    // OpenAI
-    public static let gpt5_6_sol = Self(rawValue: "gpt-5.6-sol")
-    public static let gpt5_6_terra = Self(rawValue: "gpt-5.6-terra")
-    public static let gpt5_6_luna = Self(rawValue: "gpt-5.6-luna")
-    public static let gpt5_5 = Self(rawValue: "gpt-5.5")
 
     // Anthropic
     public static let claudeOpus5 = Self(rawValue: "claude-opus-5")

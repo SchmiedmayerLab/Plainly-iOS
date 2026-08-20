@@ -6,11 +6,11 @@
 // SPDX-License-Identifier: MIT
 //
 
+import Grove
+import GroveFHIR
+import GroveLLM
+import GroveLLMOpenAI
 import PlainlyShared
-import Spezi
-import SpeziFHIR
-import SpeziLLM
-import SpeziLLMOpenAI
 
 
 final class SessionCoordinator: Module, @unchecked Sendable {
@@ -80,9 +80,10 @@ extension SessionCoordinator {
     @MainActor private var multipleResourceInterpreterOpenAISchema: LLMOpenAISchema {
         LLMOpenAISchema(
             parameters: .init(modelType: config.model),
-            modelParameters: .deterministic
+            modelParameters: .deterministic,
+            injectIntoContext: true
         ) {
-            FHIRGetResourceLLMFunction(
+            FHIRGetResourceLLMTool(
                 fhirStore: fhirStore,
                 resourceSummarizer: resourceSummarizer,
                 resourceCountLimit: config.resourceLimit

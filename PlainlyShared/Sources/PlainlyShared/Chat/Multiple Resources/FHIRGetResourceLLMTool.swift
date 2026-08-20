@@ -7,19 +7,24 @@
 //
 
 private import Foundation
+public import GroveFHIR
+public import GroveLLMOpenAI
 private import ModelsR4
 private import os
-public import SpeziFHIR
-public import SpeziLLMOpenAI
 
 
-public struct FHIRGetResourceLLMFunction: LLMFunction {
-    private static let logger = Logger(subsystem: "edu.stanford.spezi.fhir", category: "SpeziFHIRLLM")
+public struct FHIRGetResourceLLMTool: LLMTool {
+    private static let logger = Logger(subsystem: "edu.stanford.plainly.fhir", category: "PlainlyFHIRLLM")
     
-    public static let name = "get_resources"
+    /// The name the model calls this tool by, which is also how Plainly's transport recognises a request
+    /// as belonging to the participant's chat rather than to one of its own summarizing prompts.
+    public static let toolName = "get_resources"
+
+    public let name = Self.toolName
     
     private let fhirStore: FHIRStore
     private let resourceSummarizer: FHIRResourceSummarizer
+    private let forceSummaryReload: Bool
     
     @Parameter var resourceCategories: [String]
     
@@ -27,10 +32,12 @@ public struct FHIRGetResourceLLMFunction: LLMFunction {
     public init(
         fhirStore: FHIRStore,
         resourceSummarizer: FHIRResourceSummarizer,
-        resourceCountLimit: Int
+        resourceCountLimit: Int,
+        forceSummaryReload: Bool = false
     ) {
         self.fhirStore = fhirStore
         self.resourceSummarizer = resourceSummarizer
+        self.forceSummaryReload = forceSummaryReload
         let resourceIdentifiers = Self.resourceIdentifierEnum(
             Array(fhirStore.allResourcesFunctionCallIdentifier),
             limit: resourceCountLimit
@@ -128,27 +135,29 @@ public struct FHIRGetResourceLLMFunction: LLMFunction {
     
     
     private func summarizeFHIRResource(_ resource: FHIRResource, resourceCategory: String) async throws -> String {
-        let summary = try await resourceSummarizer.summarize(resource: resource)
+        let summary = try await resourceSummarizer.summarize(resource: resource, forceReload: forceSummaryReload)
         return String(localized: "This is the summary of the requested \(resourceCategory):\n\n\(summary.description)")
     }
 }
 
 
-extension FHIRGetResourceLLMFunction {
+extension FHIRGetResourceLLMTool {
     // swiftlint:disable:next missing_docs
-    public static let description = """
-        Call this function to request the relevant FHIR health records based on the user's question and conversation context using their FHIR resource identifiers.
-
-        The FHIR resource identifiers are composed of three elements:
-        1. The FHIR resource type, e.g., DocumentReference, DiagnosticReport, MedicationRequest, Encounter, Observation, Procedure, Condition, ...
-        2. The descriptive title of the FHIR resource.
-        3. The date associated with the FHIR resource.
-
-        Use this information to request the most relevant FHIR resources.
-        Pass in one or more resource identifiers that you need access to the `resourceCategories` argument.
-        You can also request a more extensive set of FHIR resources by only stating the resource type.
-
-        Use the date in the parameter enum cases to identify relevant resources within the correct time window. Aim to request recent FHIR resources.
-        Today's date is \(FHIRResource.functionCallIdentifierDateFormatter.string(from: .now)).
+    public var description: String {
         """
+            Call this function to request the relevant FHIR health records based on the user's question and conversation context using their FHIR resource identifiers.
+
+            The FHIR resource identifiers are composed of three elements:
+            1. The FHIR resource type, e.g., DocumentReference, DiagnosticReport, MedicationRequest, Encounter, Observation, Procedure, Condition, ...
+            2. The descriptive title of the FHIR resource.
+            3. The date associated with the FHIR resource.
+
+            Use this information to request the most relevant FHIR resources.
+            Pass in one or more resource identifiers that you need access to the `resourceCategories` argument.
+            You can also request a more extensive set of FHIR resources by only stating the resource type.
+
+            Use the date in the parameter enum cases to identify relevant resources within the correct time window. Aim to request recent FHIR resources.
+            Today's date is \(FHIRResource.functionCallIdentifierDateFormatter.string(from: .now)).
+            """
+    }
 }

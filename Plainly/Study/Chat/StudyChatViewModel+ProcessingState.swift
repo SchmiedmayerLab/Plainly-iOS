@@ -7,7 +7,7 @@
 //
 
 import Foundation
-import SpeziLLM
+import GroveLLM
 
 
 extension StudyChatViewModel {
@@ -69,7 +69,7 @@ extension StudyChatViewModel {
             switch lastMessage.role {
             case .system:
                 return .processingSystemPrompts
-            case .assistant(let toolCalls):
+            case .toolCalls(let toolCalls):
                 if !toolCalls.isEmpty {
                     var currentCall: Int
                     let totalCalls: Int
@@ -89,7 +89,7 @@ extension StudyChatViewModel {
                 } else {
                     return .generatingResponse
                 }
-            case .tool:
+            case .toolCallResponse:
                 var currentCall: Int
                 let totalCalls: Int
                 if case let .processingFunctionCalls(currentCurrentCall, currentTotalCalls) = self {
@@ -104,6 +104,8 @@ extension StudyChatViewModel {
                     currentCall: currentCall,
                     totalCalls: max(currentCall, totalCalls)
                 )
+            case .assistant, .assistantThinking:
+                return .generatingResponse
             case .user:
                 return self
             }
