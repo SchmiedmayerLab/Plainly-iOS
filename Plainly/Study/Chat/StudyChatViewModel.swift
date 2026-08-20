@@ -269,7 +269,11 @@ final class StudyChatViewModel: Sendable {
         taskStartTimes[task.id] = .now
         switch taskState {
         case .chatting:
-            presentedSheet = .instructions
+            // A task without instructions has nothing to present, and the sheet's only dismiss button
+            // lives in the content that would not exist.
+            if task.instructions != nil {
+                presentedSheet = .instructions
+            }
         case .answeringSurvey:
             presentedSheet = .survey
         }
