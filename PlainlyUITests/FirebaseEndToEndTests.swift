@@ -7,6 +7,7 @@
 //
 
 import XCTest
+import XCTestExtensions
 
 
 /// Mirrors the app's `FirebaseMockScenario`: a UI test runs in its own process and cannot import the app.
@@ -56,8 +57,9 @@ final class FirebaseEndToEndTests: XCTestCase, Sendable {
 
         let messageField = app.textFields["Message Input Textfield"]
         XCTAssertTrue(messageField.waitForExistence(timeout: 5))
-        messageField.tap()
-        messageField.typeText(Self.userMessage)
+        // Typed through the helper rather than `typeText`: a CI simulator keeps the hardware
+        // keyboard attached, and a plain tap then never hands the field keyboard focus.
+        try messageField.enter(value: Self.userMessage, options: [.disableKeyboardDismiss])
 
         let sendMessage = app.buttons["Send Message"]
         XCTAssertTrue(sendMessage.waitForExistence(timeout: 5))
