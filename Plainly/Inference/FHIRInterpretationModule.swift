@@ -168,10 +168,16 @@ extension FHIRInterpretationModule {
     /// from the home screen appearing, one from the session being started — and the loser used to wipe the
     /// answer the participant was already reading.
     fileprivate struct SchemaInputs: Equatable {
+        // The stored values are read only through the synthesized Equatable conformance.
+        // periphery:ignore
         let model: LLMOpenAIParameters.ModelType
+        // periphery:ignore
         let resourceLimit: Int
+        // periphery:ignore
         let resourceIdentifiers: Set<String>
+        // periphery:ignore
         let summarizePrompt: String
+        // periphery:ignore
         let interpretationPrompt: String
     }
 }
