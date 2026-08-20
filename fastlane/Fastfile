@@ -32,7 +32,7 @@ APP_CONFIG = {
   plist_path: "Plainly/Supporting Files/Info.plist"
 }.freeze
 
-GROVE_PACKAGE_URL = "https://github.com/SchmiedmayerLab/Grove".freeze
+GROVE_PACKAGE_URL = "https://github.com/SchmiedmayerLab/Grove.git".freeze
 GROVE_REQUIRED_TRAIT = "Textual".freeze
 
 SCREENSHOTS_DIRECTORY = File.expand_path("screenshots", __dir__).freeze
