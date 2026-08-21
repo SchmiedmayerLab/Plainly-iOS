@@ -49,8 +49,7 @@ cd "$firebase_root"
 if command -v firebase >/dev/null 2>&1; then
   firebase_cli=(firebase)
 else
-  # 15.25 prompts for string params despite their defaults, which hangs a headless run.
-  firebase_cli=(npx --yes firebase-tools@15.28.0)
+  firebase_cli=(npx --yes firebase-tools@15.25.1)
 fi
 
 "${firebase_cli[@]}" emulators:exec \
