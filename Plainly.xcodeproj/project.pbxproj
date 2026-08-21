@@ -566,8 +566,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/SchmiedmayerLab/Grove.git";
 			requirement = {
-				kind = revision;
-				revision = c2ee9bd0cedb3b165cb2bd83f075f2d93e02dbc5;
+				kind = exactVersion;
+				version = "0.3.0-beta.4";
 			};
 		};
 		2FD8E8282A1AADDA00357F4E /* XCRemoteSwiftPackageReference "FHIRModels" */ = {
