@@ -47,12 +47,12 @@ jobs:
       customcommand: scripts/run-firebase-e2e.sh
   uploadcoveragereport:
     name: Upload Coverage Report
-    needs: [app_tests, shared_spm_pkg_tests]
+    needs: [app_tests, shared_spm_pkg_tests, firebase_e2e_tests]
     uses: SchmiedmayerLab/.github/.github/workflows/coverage.yml@v0.5
     permissions:
       actions: read
       contents: read
     with:
-      coveragereports: Plainly.xcresult PlainlyShared.xcresult
+      coveragereports: Plainly.xcresult PlainlyShared.xcresult Plainly-Firebase-E2E.xcresult
     secrets:
       token: ${{ secrets.CODECOV_TOKEN }}
