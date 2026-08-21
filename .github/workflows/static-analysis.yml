@@ -35,6 +35,9 @@ jobs:
       contents: read
     with:
       runsonlabels: '["macOS", "self-hosted"]'
+      # Pinned so the scan always indexes the same conditional-compilation branches; an unpinned
+      # build alternated between device and simulator, flagging whichever side it left out.
+      extra-build-args: "-destination 'generic/platform=iOS Simulator'"
   markdownlinkcheck:
     name: Markdown Link Check
     uses: SchmiedmayerLab/.github/.github/workflows/markdown-links.yml@v0.5

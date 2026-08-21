@@ -6,10 +6,10 @@
 // SPDX-License-Identifier: MIT
 //
 
+import GroveLLMOpenAI
+import GroveQuestionnaire
 import PlainlyShared
 import PlainlyStudyDefinitions
-import SpeziLLMOpenAI
-import SpeziQuestionnaire
 import Testing
 
 

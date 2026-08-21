@@ -7,7 +7,7 @@
 //
 
 import Foundation
-import SpeziLLM
+import GroveLLM
 
 
 extension StudyChatViewModel {
@@ -18,15 +18,36 @@ extension StudyChatViewModel {
         case completed
         case error
         
+        /// The progress a state has certainly reached the moment it is entered.
         var progress: Double {
             switch self {
             case .processingSystemPrompts:
-                return 10
+                return 5
             case let .processingFunctionCalls(current, total):
                 let functionCallProgress = total > 0 ? Double(current) / Double(total) : 0
-                return 20 + functionCallProgress * 70
+                return 20 + functionCallProgress * 60
             case .generatingResponse:
                 return 90
+            case .completed:
+                return 100
+            case .error:
+                return 0
+            }
+        }
+
+        /// How far the bar may creep on time alone before the next real milestone arrives.
+        ///
+        /// Most of a turn is spent waiting inside one state — the gateway round trip alone lives
+        /// entirely in ``processingSystemPrompts`` — and a bar that only moves on state changes
+        /// reads as stuck. The creep keeps it visibly alive without ever promising the next stage.
+        var creepCeiling: Double {
+            switch self {
+            case .processingSystemPrompts:
+                return 45
+            case .processingFunctionCalls:
+                return min(progress + 18, 88)
+            case .generatingResponse:
+                return 97
             case .completed:
                 return 100
             case .error:
@@ -69,7 +90,7 @@ extension StudyChatViewModel {
             switch lastMessage.role {
             case .system:
                 return .processingSystemPrompts
-            case .assistant(let toolCalls):
+            case .toolCalls(let toolCalls):
                 if !toolCalls.isEmpty {
                     var currentCall: Int
                     let totalCalls: Int
@@ -89,7 +110,7 @@ extension StudyChatViewModel {
                 } else {
                     return .generatingResponse
                 }
-            case .tool:
+            case .toolCallResponse:
                 var currentCall: Int
                 let totalCalls: Int
                 if case let .processingFunctionCalls(currentCurrentCall, currentTotalCalls) = self {
@@ -104,6 +125,8 @@ extension StudyChatViewModel {
                     currentCall: currentCall,
                     totalCalls: max(currentCall, totalCalls)
                 )
+            case .assistant, .assistantThinking:
+                return .generatingResponse
             case .user:
                 return self
             }

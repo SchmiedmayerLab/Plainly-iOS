@@ -6,12 +6,12 @@
 // SPDX-License-Identifier: MIT
 //
 
+import GroveFHIR
+import GroveFHIRMockPatients
+import GroveFoundation
 import HealthKit
 @preconcurrency import ModelsR4
 import PlainlyShared
-import SpeziFHIR
-import SpeziFHIRMockPatients
-import SpeziFoundation
 import SwiftUI
 
 

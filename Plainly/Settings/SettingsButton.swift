@@ -10,7 +10,6 @@ import Foundation
 import SwiftUI
 
 
-// periphery:ignore - only reachable from the simulator-only toolbar item in `StudyHomeView`
 struct SettingsButton: View {
     @State private var isPresentingSheet = false
     

@@ -7,10 +7,10 @@
 //
 
 import Foundation
+import GroveLLMOpenAI
 import struct ModelsR4.Bundle
 import PlainlyShared
 import PlainlyStudyDefinitions
-import SpeziLLMOpenAI
 
 
 struct SimulatedSessionConfig: Sendable {

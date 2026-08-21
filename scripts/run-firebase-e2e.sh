@@ -13,6 +13,11 @@ if [[ -z "${DEVELOPER_DIR:-}" && -d /Applications/Xcode.app/Contents/Developer ]
   export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
 fi
 
+# fastlane decodes xcodebuild's output as the locale's encoding, and raises on the first byte that is not
+# valid in it, so a shell without a UTF-8 locale fails the run before any test starts.
+export LANG="${LANG:-en_US.UTF-8}"
+export LC_ALL="${LC_ALL:-en_US.UTF-8}"
+
 repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 firebase_root="$repository_root/Plainly-Firebase"
 secret_file="$firebase_root/functions/.secret.local"
@@ -25,7 +30,9 @@ cleanup() {
 }
 trap cleanup EXIT
 
-git -C "$repository_root" submodule update --init Plainly-Firebase
+if [[ ! -e "$firebase_root/.git" ]]; then
+  git -C "$repository_root" submodule update --init Plainly-Firebase
+fi
 npm --prefix "$firebase_root/functions" ci
 npm --prefix "$firebase_root/functions" run build
 
@@ -42,10 +49,11 @@ cd "$firebase_root"
 if command -v firebase >/dev/null 2>&1; then
   firebase_cli=(firebase)
 else
-  firebase_cli=(npx --yes firebase-tools@15.25.1)
+  # 15.25 prompts for string params despite their defaults, which hangs a headless run.
+  firebase_cli=(npx --yes firebase-tools@15.28.0)
 fi
 
 "${firebase_cli[@]}" emulators:exec \
   --project demo-plainly \
-  --only auth,functions,storage \
+  --only auth,functions,firestore,storage \
   "$test_command"

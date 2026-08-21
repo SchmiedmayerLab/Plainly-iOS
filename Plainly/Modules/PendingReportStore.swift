@@ -7,10 +7,10 @@
 //
 
 import Foundation
+import Grove
+import GroveFoundation
 import PlainlyShared
 import PlainlyStudyDefinitions
-import Spezi
-import SpeziFoundation
 
 
 /// Keeps study reports that could not be uploaded and retries them on later launches.

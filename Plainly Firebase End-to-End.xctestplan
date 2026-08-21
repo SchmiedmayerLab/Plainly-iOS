@@ -14,6 +14,15 @@
     }
   ],
   "defaultOptions" : {
+    "codeCoverage" : {
+      "targets" : [
+        {
+          "containerPath" : "container:Plainly.xcodeproj",
+          "identifier" : "653A254C283387FE005D4D48",
+          "name" : "Plainly"
+        }
+      ]
+    },
     "targetForVariableExpansion" : {
       "containerPath" : "container:Plainly.xcodeproj",
       "identifier" : "653A254C283387FE005D4D48",

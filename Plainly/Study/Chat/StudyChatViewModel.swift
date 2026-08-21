@@ -6,15 +6,15 @@
 // SPDX-License-Identifier: MIT
 //
 
-// swiftlint:disable file_length
 
+import GroveLLM
+import GroveLLMOpenAI
+import GroveQuestionnaire
 import struct ModelsR4.QuestionnaireResponse
 import PlainlyShared
-import SpeziChat
-import SpeziLLM
-import SpeziLLMOpenAI
-import SpeziQuestionnaire
 import SwiftUI
+
+// swiftlint:disable file_length
 
 
 private enum UserStudyResponseGenerationError: LocalizedError {
@@ -101,7 +101,7 @@ final class StudyChatViewModel: Sendable {
             self
         }
     }
-    
+
     private let uploader: FirebaseUpload?
     private let pendingReports: PendingReportStore?
     
@@ -269,7 +269,11 @@ final class StudyChatViewModel: Sendable {
         taskStartTimes[task.id] = .now
         switch taskState {
         case .chatting:
-            presentedSheet = .instructions
+            // A task without instructions has nothing to present, and the sheet's only dismiss button
+            // lives in the content that would not exist.
+            if task.instructions != nil {
+                presentedSheet = .instructions
+            }
         case .answeringSurvey:
             presentedSheet = .survey
         }
@@ -361,8 +365,7 @@ extension StudyChatViewModel {
     /// A message carrying tool calls has no content of its own yet, so it still counts as waiting.
     private var isResponseStreamingIn: Bool {
         guard let lastMessage = llmSession.context.last,
-              case let .assistant(toolCalls) = lastMessage.role,
-              toolCalls.isEmpty else {
+              case .assistant = lastMessage.role else {
             return false
         }
         return !lastMessage.content.isEmpty
@@ -398,10 +401,16 @@ extension StudyChatViewModel {
 
 
 extension StudyChatViewModel {
+    /// How many conversations the interpretation module has started, so the chat can notice its own being
+    /// replaced by a schema update and ask for an answer on the new one.
+    var conversationGeneration: Int {
+        interpretationModule.conversationGeneration
+    }
+
     /// Direct access to the current LLM session for observing state changes
     var llmSession: LLMOpenAISession {
         guard let llmSession = interpreter.llmSession as? LLMOpenAISession else {
-            preconditionFailure("Plainly requires a SpeziLLM OpenAI session.")
+            preconditionFailure("Plainly requires a GroveLLM OpenAI session.")
         }
         return llmSession
     }
@@ -445,7 +454,7 @@ extension StudyChatViewModel {
         // Check if the last message is from a user (needs a response)
         let lastMessageIsUser = interpreter.llmSession.context.last?.role == .user
         // Check if there are no assistant messages yet (initial prompt needs a response)
-        let noAssistantMessages = !interpreter.llmSession.context.contains(where: { $0.role == .assistant() })
+        let noAssistantMessages = !interpreter.llmSession.context.contains(where: { $0.role == .assistant })
         // Generate if last message is from user or if there are no assistant messages yet
         return lastMessageIsUser || noAssistantMessages
     }
@@ -477,20 +486,40 @@ extension StudyChatViewModel {
     /// to the interpreter to generate the actual response.
     func generateAssistantResponse() async throws -> LLMContextEntity? {
         let correlationID = AppDiagnostics.correlationID()
+        ensureResponseInput()
         await updateProcessingState()
         processingState = await processingState.calculateNewProcessingState(basedOn: llmSession)
         guard shouldGenerateResponse else {
+            // A chat that declines to answer looks exactly like one that failed silently, which is the
+            // hardest kind of report to act on; the counts say which of the two it happened to be.
+            let context = llmSession.context
+            AppDiagnostics.chat.notice(
+                """
+                Assistant response not needed; correlation=\(correlationID, privacy: .public); \
+                entities=\(context.count); participantInput=\(context.count(where: \.isParticipantInput)); \
+                lastIsAssistant=\(context.last?.role == .assistant)
+                """
+            )
             return nil
         }
         processingState = .processingSystemPrompts
         return try await requestAssistantResponse(correlationID: correlationID)
     }
 
+    /// Responses requests require input in addition to instructions. The previous transport accepted the
+    /// study's system prompt by itself for the opening turn, so add an internal user turn for that one case.
+    private func ensureResponseInput() {
+        guard llmSession.context.allSatisfy({ $0.role == .system }) else {
+            return
+        }
+        llmSession.context.append(userMessage: InternalInput.conversationStarter, id: InternalInput.conversationStarterID)
+    }
+
     private func requestAssistantResponse(correlationID: String) async throws -> LLMContextEntity {
         do {
             let response = try await interpreter.generateAssistantResponse()
             try Task.checkCancellation()
-            guard let response, response.role == .assistant() else {
+            guard let response, response.role == .assistant else {
                 throw UserStudyResponseGenerationError.emptyResponse
             }
             await updateProcessingState()
@@ -589,12 +618,11 @@ extension StudyChatViewModel {
     }
 
     private func generateTimeline() -> [StudyReport.TimelineEvent] {
-        var timeline: [StudyReport.TimelineEvent] = interpreter.llmSession.context.chat.map { message in
-            .chatMessage(.init(
-                timestamp: message.date,
-                role: message.role.rawValue,
-                content: message.content
-            ))
+        var timeline: [StudyReport.TimelineEvent] = interpreter.llmSession.context.compactMap { entity in
+            guard entity.id != InternalInput.conversationStarterID, let message = entity.studyReportChatMessage else {
+                return nil
+            }
+            return .chatMessage(message)
         }
         timeline.append(contentsOf: study.tasks.compactMap { task -> StudyReport.TimelineEvent? in
             guard let taskStartTime = taskStartTimes[task.id], let taskEndTime = taskEndTimes[task.id] else {

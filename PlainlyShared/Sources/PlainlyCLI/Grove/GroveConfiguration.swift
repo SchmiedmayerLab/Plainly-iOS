@@ -6,6 +6,6 @@
 // SPDX-License-Identifier: MIT
 //
 
-import Spezi
+import Grove
 
-typealias SpeziConfiguration = Configuration
+typealias GroveConfiguration = Configuration

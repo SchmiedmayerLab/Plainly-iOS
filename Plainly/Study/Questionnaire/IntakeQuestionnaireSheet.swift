@@ -6,19 +6,19 @@
 // SPDX-License-Identifier: MIT
 //
 
+import GroveLLM
+import GroveLLMOpenAI
+import GroveQuestionnaire
+import GroveQuestionnaireFHIR
+import GroveViews
 import struct ModelsR4.QuestionnaireResponse
 import PlainlyShared
-import SpeziLLM
-import SpeziLLMOpenAI
-import SpeziQuestionnaire
-import SpeziQuestionnaireFHIR
-import SpeziViews
 import SwiftUI
 
 
 private enum QuestionnaireLoadState {
     case loading
-    case loaded(SpeziQuestionnaire.Questionnaire)
+    case loaded(GroveQuestionnaire.Questionnaire)
     case failed
 }
 
@@ -44,7 +44,8 @@ struct IntakeQuestionnaireSheet: View {
                 QuestionnaireSheet(questionnaire, completionStepConfig: .disable) { result in
                     switch result {
                     case .completed(let responses):
-                        await processQuestionnaireResponses(responses)
+                        try await processQuestionnaireResponses(responses)
+                        dismiss()
                     case .cancelled:
                         dismiss()
                     }
@@ -60,13 +61,6 @@ struct IntakeQuestionnaireSheet: View {
             }
         }
         .viewStateAlert(state: $viewState)
-        .onChange(of: viewState) { oldValue, newValue in
-            if oldValue.isError && newValue == .idle {
-                // we were displaying an error but it got dismissed and we're now back in the idle state.
-                // in this case we simply want to dismiss the view
-                dismiss()
-            }
-        }
         .task {
             await loadQuestionnaire()
         }
@@ -99,39 +93,28 @@ struct IntakeQuestionnaireSheet: View {
         }
     }
     
-    private func processQuestionnaireResponses(_ speziResponses: SpeziQuestionnaire.QuestionnaireResponses) async {
+    /// Records the answers, and the summary the study chat opens with.
+    ///
+    /// Throwing hands the failure back to the questionnaire, which reports it and leaves the participant on
+    /// their answers to try again. Swallowing it returned them to the study home with a summary that was
+    /// never produced, and nothing said so.
+    private func processQuestionnaireResponses(_ groveResponses: GroveQuestionnaire.QuestionnaireResponses) async throws {
         let correlationID = AppDiagnostics.correlationID()
-        viewState = .processing
         do {
             // Kept before the summary is requested: a failing summary must not discard answers the
             // participant already gave, which the report carries even when the summary is missing.
-            fhirResponse = try ModelsR4.QuestionnaireResponse(speziResponses)
-            inProgressStudy.questionnaireSummary = try await speziResponses.summarize(
+            fhirResponse = try ModelsR4.QuestionnaireResponse(groveResponses)
+            inProgressStudy.questionnaireSummary = try await groveResponses.summarize(
                 using: llmRunner,
-                model: study.llmModel
+                model: study.inferenceModel
             )
-            dismiss()
         } catch {
             AppDiagnostics.questionnaire.logError(
                 error,
                 context: "Questionnaire response processing",
                 correlationID: correlationID
             )
-            // the view will get dismissed when the user dismisses the alert, via the `onChange(of: viewState)` above.
-            viewState = .error(AnyLocalizedError(error: error))
-            return
-        }
-    }
-}
-
-
-extension ViewState {
-    var isError: Bool {
-        switch self {
-        case .error:
-            true
-        case .idle, .processing:
-            false
+            throw error
         }
     }
 }

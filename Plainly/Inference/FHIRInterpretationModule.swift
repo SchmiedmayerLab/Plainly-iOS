@@ -6,13 +6,13 @@
 // SPDX-License-Identifier: MIT
 //
 
+import Grove
+import GroveFHIR
+import GroveFoundation
+import GroveLLM
+import GroveLLMOpenAI
+import GroveLocalStorage
 import PlainlyShared
-import Spezi
-import SpeziFHIR
-import SpeziFoundation
-import SpeziLLM
-import SpeziLLMOpenAI
-import SpeziLocalStorage
 import SwiftUI
 
 
@@ -32,12 +32,28 @@ final class FHIRInterpretationModule: Module, EnvironmentAccessible, @unchecked 
 
     @MainActor var currentStudy: InProgressStudy?
 
+    /// Counts the conversations this module has started.
+    ///
+    /// A schema update replaces the chat's session and starts its conversation over. Observers need to
+    /// know that happened, and cannot tell from the session itself: a replacement can be allocated at the
+    /// address the one it replaced just freed, so object identity compares equal across the swap.
+    @MainActor private(set) var conversationGeneration = 0
+
+    /// Whether the participant has said anything in the study chat yet.
+    ///
+    /// The opening turn is Plainly's own input, so it does not count: retrieval, and anything else that
+    /// serves a question, has nothing to serve until the participant has asked one.
+    @MainActor var hasParticipantInput: Bool {
+        multipleResourceInterpreter.llmSession.context.contains(where: \.isParticipantInput)
+    }
+
     @ObservationIgnored private var schemaUpdateTask: Task<Void, Never>?
     @ObservationIgnored private var schemaUpdateGeneration = 0
+    @ObservationIgnored @MainActor private var appliedSchemaInputs: SchemaInputs?
 
     /// The model requested from the Firebase chat function, as pinned by the active study.
     @MainActor private var llmModel: LLMOpenAIParameters.ModelType {
-        currentStudy?.study.llmModel ?? .default
+        currentStudy?.study.inferenceModel ?? .gpt5_5
     }
 
     @MainActor private var singleResourceSchema: LLMOpenAISchema {
@@ -45,11 +61,16 @@ final class FHIRInterpretationModule: Module, EnvironmentAccessible, @unchecked 
     }
 
     @MainActor private var multipleResourceSchema: LLMOpenAISchema {
-        LLMOpenAISchema(parameters: .init(modelType: llmModel), modelParameters: .deterministic) {
-            FHIRGetResourceLLMFunction(
+        LLMOpenAISchema(
+            parameters: .init(modelType: llmModel),
+            modelParameters: .deterministic,
+            injectIntoContext: true
+        ) {
+            FHIRGetResourceLLMTool(
                 fhirStore: self.fhirStore,
                 resourceSummarizer: self.resourceSummarizer,
-                resourceCountLimit: resourceLimit
+                resourceCountLimit: resourceLimit,
+                forceSummaryReload: FeatureFlags.firebaseMockScenario == .responseToolCall
             )
         }
     }
@@ -112,14 +133,51 @@ final class FHIRInterpretationModule: Module, EnvironmentAccessible, @unchecked 
         guard isCurrentSchemaUpdate(generation) else {
             return
         }
+        // Only the participant's own conversation is restarted by a schema change, so it is the one that
+        // has to be left alone when the schema would come out the same.
+        let inputs = SchemaInputs(
+            model: llmModel,
+            resourceLimit: resourceLimit,
+            resourceIdentifiers: Set(fhirStore.allResourcesFunctionCallIdentifier),
+            summarizePrompt: summarizePrompt.promptText,
+            interpretationPrompt: multipleResourcePrompt.promptText
+        )
+        guard inputs != appliedSchemaInputs else {
+            return
+        }
+        appliedSchemaInputs = inputs
         multipleResourceInterpreter.changeLLMSchema(
             to: multipleResourceSchema,
             using: multipleResourcePrompt
         )
+        conversationGeneration &+= 1
     }
 
     @MainActor
     private func isCurrentSchemaUpdate(_ generation: Int) -> Bool {
         !Task.isCancelled && schemaUpdateGeneration == generation
+    }
+}
+
+
+extension FHIRInterpretationModule {
+    /// Everything the interpretation schemas are built from.
+    ///
+    /// Applying a schema restarts the participant's conversation, so an update that would rebuild the same
+    /// schema has to be recognised as one and skipped: two updates race whenever a study is opened — one
+    /// from the home screen appearing, one from the session being started — and the loser used to wipe the
+    /// answer the participant was already reading.
+    fileprivate struct SchemaInputs: Equatable {
+        // The stored values are read only through the synthesized Equatable conformance.
+        // periphery:ignore
+        let model: LLMOpenAIParameters.ModelType
+        // periphery:ignore
+        let resourceLimit: Int
+        // periphery:ignore
+        let resourceIdentifiers: Set<String>
+        // periphery:ignore
+        let summarizePrompt: String
+        // periphery:ignore
+        let interpretationPrompt: String
     }
 }

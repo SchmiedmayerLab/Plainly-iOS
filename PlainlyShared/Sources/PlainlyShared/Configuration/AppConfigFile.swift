@@ -7,8 +7,8 @@
 //
 
 public import Foundation
+private import GroveFoundation
 private import OSLog
-private import SpeziFoundation
 
 
 /// The `UserStudyConfig.plist` file bundled with the app/

@@ -10,7 +10,7 @@
 
 import AVFoundation
 import Foundation
-import SpeziViews
+import GroveViews
 import SwiftUI
 import VisionKit
 
@@ -22,9 +22,11 @@ enum QRCodeScanningResponse {
 
 
 private struct ScanQRCodeSheet: View {
+    // periphery:ignore - read only from physical-device builds (the scan indexes a simulator destination)
     let onSuccess: @Sendable @MainActor (_ payload: String) -> QRCodeScanningResponse
-    
+
     @State private var isDeniedCameraAccess = false
+    // periphery:ignore - read only from physical-device builds (the scan indexes a simulator destination)
     @State private var isScanning = false
     
     var body: some View {
@@ -92,6 +94,7 @@ private struct ScanQRCodeSheet: View {
 }
 
 
+// periphery:ignore - used only from physical-device builds (the scan indexes a simulator destination)
 private struct DataScannerView: UIViewControllerRepresentable {
     typealias UIViewControllerType = DataScannerViewController
     
@@ -134,6 +137,7 @@ private struct DataScannerView: UIViewControllerRepresentable {
 }
 
 
+// periphery:ignore - used only from physical-device builds (the scan indexes a simulator destination)
 extension DataScannerView {
     fileprivate final class Coordinator: DataScannerViewControllerDelegate {
         var parent: DataScannerView

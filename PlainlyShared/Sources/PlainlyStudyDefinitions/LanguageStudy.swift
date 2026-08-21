@@ -7,9 +7,9 @@
 //
 
 import Foundation
+import GroveFoundation
 @preconcurrency import struct ModelsR4.Questionnaire
 public import PlainlyShared
-import SpeziFoundation
 
 
 extension Study {

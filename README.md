@@ -61,12 +61,16 @@ scripts/run-firebase-e2e.sh
 
 The script initializes the `Plainly-Firebase` submodule, starts the local emulators with a deterministic OpenAI-compatible response, and runs only the dedicated end-to-end UI test.
 
+To run the app itself against the emulator, launch it with `--useFirebaseEmulator`.
+Point the emulator at a real gateway by putting that key in `Plainly-Firebase/functions/.secret.local`, and — since a development key is rarely entitled to every model a deployment uses — pass `--llmModel <identifier>` to request one it can reach instead of the one the study pins.
+Both are ignored outside the emulator: the model a study runs on is part of what that study collects.
+
 
 ### UserStudyConfig.plist File
 
 Everything a study *does* — its prompts, tasks, model, retrieval, and chat function — is defined by the `Study` type in `PlainlyStudyDefinitions` and versioned with the code.
 The UserStudyConfig.plist file therefore carries only what cannot live in an open-source repository:
-- Firebase configuration: connects the app to a Firebase environment for chat completions and study report uploads
+- Firebase configuration: connects the app to a Firebase environment for chat responses and study report uploads
 - app launch mode: controls how the app behaves upon launch (e.g., whether to directly launch a study)
 
 The file bundled with the repository carries placeholder Firebase credentials and must be regenerated for a real deployment.

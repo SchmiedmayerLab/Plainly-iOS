@@ -9,9 +9,9 @@
 // periphery:ignore - These objects are used to create a JSON resprestation of the User Study Survey Report
 
 public import Foundation
+public import GroveFHIR
+public import GroveLLMOpenAI // for LLMOpenAIParameters.ModelType
 public import struct ModelsR4.QuestionnaireResponse
-public import SpeziFHIR
-public import SpeziLLMOpenAI // for LLMOpenAIParameters.ModelType
 
 
 /// A report summarizing a user study session, including metadata, FHIR resources, and timeline events.
@@ -77,9 +77,9 @@ extension StudyReport {
 
     /// A wrapper for a full FHIR resource, delegating encoding to the underlying resource.
     public struct FullFHIRResource: Encodable, Sendable {
-        private let versionedResource: SpeziFHIR.FHIRResource.VersionedFHIRResource
+        private let versionedResource: GroveFHIR.FHIRResource.VersionedFHIRResource
         
-        public init(_ versionedResource: SpeziFHIR.FHIRResource.VersionedFHIRResource) {
+        public init(_ versionedResource: GroveFHIR.FHIRResource.VersionedFHIRResource) {
             self.versionedResource = versionedResource
         }
         

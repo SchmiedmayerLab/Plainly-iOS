@@ -8,19 +8,19 @@
 
 import ArgumentParser
 import Foundation
+@_spi(APISupport) import Grove
+import GroveFHIR
+import GroveHealthKit
+import GroveLLM
+import GroveLLMOpenAI
 import OpenAPIRuntime
 import PlainlyShared
-@_spi(APISupport) import Spezi
-import SpeziFHIR
-import SpeziHealthKit
-import SpeziLLM
-import SpeziLLMOpenAI
 
 
 struct SessionSimulator: ~Copyable {
     private let config: SimulatedSessionConfig
     private let runIdx: Int
-    private let spezi: Spezi
+    private let grove: Grove
     private let fhirStore: FHIRStore
     private let coordinator: SessionCoordinator
     private let interpreter: FHIRMultipleResourceInterpreter
@@ -34,8 +34,8 @@ struct SessionSimulator: ~Copyable {
     init(config: SimulatedSessionConfig, runIdx: Int) throws {
         self.config = config
         self.runIdx = runIdx
-        spezi = try Spezi(from: Self.speziConfig(for: config))
-        coordinator = spezi.module(SessionCoordinator.self)! // swiftlint:disable:this force_unwrapping
+        grove = try Grove(from: Self.groveConfig(for: config))
+        coordinator = grove.module(SessionCoordinator.self)! // swiftlint:disable:this force_unwrapping
         fhirStore = coordinator.fhirStore
         interpreter = coordinator.multipleResourceInterpreter
         resourceSummarizer = coordinator.resourceSummarizer
@@ -44,11 +44,11 @@ struct SessionSimulator: ~Copyable {
     @concurrent
     consuming func run() async throws -> StudyReport {
         // start (& stop) service modules
-        let speziService = Task { [spezi] in
-            await spezi.run()
+        let groveService = Task { [grove] in
+            await grove.run()
         }
         defer {
-            speziService.cancel()
+            groveService.cancel()
         }
         return try await _run()
     }
@@ -60,7 +60,7 @@ struct SessionSimulator: ~Copyable {
         await coordinator.prepareForUse()
         for question in config.userQuestions {
             await MainActor.run {
-                interpreter.llmSession.context.append(userInput: question)
+                interpreter.llmSession.context.append(userMessage: question)
             }
             _ = try await interpreter.generateAssistantResponse()
         }
@@ -105,12 +105,11 @@ struct SessionSimulator: ~Copyable {
     
     @MainActor
     private func studyReportTimeline() -> [StudyReport.TimelineEvent] {
-        interpreter.llmSession.context.chat.map { message in
-            .chatMessage(.init(
-                timestamp: message.date,
-                role: message.role.rawValue,
-                content: message.content
-            ))
+        interpreter.llmSession.context.compactMap { entity in
+            guard let message = entity.studyReportChatMessage else {
+                return nil
+            }
+            return .chatMessage(message)
         }
     }
 }
@@ -130,7 +129,7 @@ extension SessionSimulator {
     }
     
     @MainActor
-    private static func speziConfig(for config: SimulatedSessionConfig) throws -> SpeziConfiguration {
+    private static func groveConfig(for config: SimulatedSessionConfig) throws -> GroveConfiguration {
         let middlewares: [any ClientMiddleware]
         switch config.service {
         case .firebase:
@@ -148,7 +147,7 @@ extension SessionSimulator {
                 )
             ]
         }
-        return SpeziConfiguration(standard: FakeStandard()) {
+        return GroveConfiguration(standard: FakeStandard()) {
             FHIRStore()
             SessionCoordinator(config: .init(
                 model: config.model,
@@ -161,6 +160,8 @@ extension SessionSimulator {
                 // the inference credentials, so the platform itself never authenticates.
                 LLMOpenAIPlatform(configuration: .init(
                     authToken: .none,
+                    apiMode: .fixed(.responses),
+                    streamingFallback: false,
                     concurrentStreams: 100,
                     retryPolicy: .attempts(3),
                     middlewares: middlewares

@@ -7,7 +7,7 @@
 //
 
 import Foundation
-public import SpeziQuestionnaire
+public import GroveQuestionnaire
 
 
 extension Questionnaire.Task {

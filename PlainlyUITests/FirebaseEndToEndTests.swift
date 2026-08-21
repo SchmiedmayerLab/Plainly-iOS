@@ -7,6 +7,18 @@
 //
 
 import XCTest
+import XCTestExtensions
+
+
+/// Mirrors the app's `FirebaseMockScenario`: a UI test runs in its own process and cannot import the app.
+private enum MockScenario: String {
+    case chatError
+    case chatErrorAfterFirstChunk
+    case responseStreamingUnsupported
+    case incrementalResponseState
+    case responseToolCall
+}
+
 
 @MainActor
 final class FirebaseEndToEndTests: XCTestCase, Sendable {
@@ -26,7 +38,7 @@ final class FirebaseEndToEndTests: XCTestCase, Sendable {
     }
 
     func testChatAndReportUploadThroughFirebaseEmulators() throws {
-        let app = launchApp()
+        let app = launchApp(scenario: .incrementalResponseState)
         let startSession = startSession(in: app)
 
         let responses = app.descendants(matching: .any)
@@ -36,11 +48,18 @@ final class FirebaseEndToEndTests: XCTestCase, Sendable {
             response.waitForExistence(timeout: 30),
             "The Firebase-backed streaming chat response did not appear."
         )
+        XCTAssertEqual(responses.count, 1, "The hidden opening prompt generated more than one assistant response.")
+        XCTAssertFalse(app.buttons["Add Attachment"].exists, "Study chat unexpectedly enabled file or photo uploads.")
+        XCTAssertFalse(
+            app.staticTexts["Follow the study instructions to begin the conversation."].exists,
+            "The internal Responses API conversation starter was visible to the participant."
+        )
 
         let messageField = app.textFields["Message Input Textfield"]
         XCTAssertTrue(messageField.waitForExistence(timeout: 5))
-        messageField.tap()
-        messageField.typeText(Self.userMessage)
+        // Typed through the helper rather than `typeText`: a CI simulator keeps the hardware
+        // keyboard attached, and a plain tap then never hands the field keyboard focus.
+        try messageField.enter(value: Self.userMessage, options: [.disableKeyboardDismiss])
 
         let sendMessage = app.buttons["Send Message"]
         XCTAssertTrue(sendMessage.waitForExistence(timeout: 5))
@@ -60,6 +79,68 @@ final class FirebaseEndToEndTests: XCTestCase, Sendable {
             "The Firebase-backed follow-up response did not appear."
         )
 
+        completeStudy(in: app, returningTo: startSession)
+    }
+
+    func testChatErrorThroughFirebaseEmulators() throws {
+        let app = launchApp(scenario: .chatError)
+        _ = startSession(in: app)
+
+        assertChatError(in: app)
+    }
+
+    func testChatErrorAfterStreamStartsThroughFirebaseEmulators() throws {
+        let app = launchApp(scenario: .chatErrorAfterFirstChunk)
+        _ = startSession(in: app)
+
+        assertChatError(in: app)
+    }
+
+    func testChatFallsBackWhenResponseStreamingIsUnsupported() throws {
+        let app = launchApp(scenario: .responseStreamingUnsupported)
+        _ = startSession(in: app)
+
+        let responses = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label == %@", expectedResponse))
+        XCTAssertTrue(
+            responses.firstMatch.waitForExistence(timeout: 30),
+            "The non-streaming Responses API fallback did not appear."
+        )
+        XCTAssertEqual(responses.count, 1, "The fallback displayed the response more than once.")
+        XCTAssertFalse(app.alerts.firstMatch.exists, "The recovered streaming failure was presented as an error.")
+    }
+
+    func testResponsesFunctionCallRoundTripThroughFirebaseEmulators() throws {
+        let app = launchApp(scenario: .responseToolCall)
+        _ = startSession(in: app)
+
+        XCTAssertTrue(
+            app.staticTexts[expectedResponse].waitForExistence(timeout: 30),
+            "The answer after the Responses API function-call continuation did not appear."
+        )
+        XCTAssertFalse(
+            app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "get_resources")).firstMatch.exists,
+            "The internal health-record function call was visible to the participant."
+        )
+        XCTAssertFalse(app.alerts.firstMatch.exists, "The function-call continuation presented an error.")
+    }
+
+    private func assertChatError(in app: XCUIApplication) {
+        XCTAssertTrue(
+            app.buttons["Try Again"].waitForExistence(timeout: 30),
+            "The Firebase callable error was not presented to the participant."
+        )
+        XCTAssertFalse(app.alerts.firstMatch.exists, "The failure should stay in the conversation, not become an alert.")
+        XCTAssertFalse(
+            app.descendants(matching: .any)
+                .matching(NSPredicate(format: "label == %@", expectedResponse))
+                .firstMatch
+                .exists,
+            "The mock response should not be displayed after a callable error."
+        )
+    }
+
+    private func completeStudy(in app: XCUIApplication, returningTo startSession: XCUIElement) {
         let nextTask = app.buttons["Proceed to the next task"]
         XCTAssertTrue(nextTask.waitForExistence(timeout: 5))
         nextTask.tap()
@@ -79,35 +160,6 @@ final class FirebaseEndToEndTests: XCTestCase, Sendable {
         XCTAssertTrue(
             startSession.waitForExistence(timeout: 10),
             "The study did not dismiss after confirming the completion."
-        )
-    }
-
-    func testChatErrorThroughFirebaseEmulators() throws {
-        let app = launchApp(mockChatError: true)
-        _ = startSession(in: app)
-
-        assertChatError(in: app)
-    }
-
-    func testChatErrorAfterStreamStartsThroughFirebaseEmulators() throws {
-        let app = launchApp(mockChatErrorAfterChunk: true)
-        _ = startSession(in: app)
-
-        assertChatError(in: app)
-    }
-
-    private func assertChatError(in app: XCUIApplication) {
-        let alert = app.alerts.firstMatch
-        XCTAssertTrue(
-            alert.waitForExistence(timeout: 30),
-            "The Firebase callable error was not presented to the participant."
-        )
-        XCTAssertFalse(
-            app.descendants(matching: .any)
-                .matching(NSPredicate(format: "label == %@", expectedResponse))
-                .firstMatch
-                .exists,
-            "The mock response should not be displayed after a callable error."
         )
     }
 
@@ -177,8 +229,7 @@ final class FirebaseEndToEndTests: XCTestCase, Sendable {
     ///   preceding launch retained. Every test otherwise starts without reports an earlier one left behind,
     ///   so the notice it waits for can only come from its own session.
     private func launchApp(
-        mockChatError: Bool = false,
-        mockChatErrorAfterChunk: Bool = false,
+        scenario: MockScenario? = nil,
         mockUploadError: Bool = false,
         slowAuthentication: Bool = false,
         keepRetainedReports: Bool = false
@@ -194,11 +245,8 @@ final class FirebaseEndToEndTests: XCTestCase, Sendable {
         if !keepRetainedReports {
             app.launchArguments.append("--resetRetainedReports")
         }
-        if mockChatError {
-            app.launchArguments.append("--useFirebaseMockChatError")
-        }
-        if mockChatErrorAfterChunk {
-            app.launchArguments.append("--useFirebaseMockChatErrorAfterChunk")
+        if let scenario {
+            app.launchArguments.append(contentsOf: ["--firebaseMockScenario", scenario.rawValue])
         }
         if mockUploadError {
             app.launchArguments.append("--useFirebaseMockUploadError")

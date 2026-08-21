@@ -23,25 +23,21 @@ let package = Package(
         .executable(name: "PlainlyCLI", targets: ["PlainlyCLI"])
     ],
     dependencies: [
-        .package(
-            url: "https://github.com/SchmiedmayerLab/Spezi.git",
-            .upToNextMinor(from: "0.2.0"),
-            traits: [.trait(name: "Textual")]
-        ),
-        .package(url: "https://github.com/apple/FHIRModels.git", .upToNextMinor(from: "0.9.0")),
+        .package(url: "https://github.com/SchmiedmayerLab/Grove.git", exact: "0.3.0-beta.4"),
+        .package(url: "https://github.com/SchmiedmayerLab/FHIRModels.git", .upToNextMinor(from: "0.9.3")),
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.7.0")
     ],
     targets: [
         .target(
             name: "PlainlyShared",
             dependencies: [
-                .product(name: "SpeziFoundation", package: "Spezi"),
+                .product(name: "GroveFoundation", package: "Grove"),
                 .product(name: "ModelsR4", package: "FHIRModels"),
-                .product(name: "SpeziLLM", package: "Spezi"),
-                .product(name: "SpeziLLMOpenAI", package: "Spezi"),
-                .product(name: "SpeziLocalStorage", package: "Spezi"),
-                .product(name: "SpeziQuestionnaire", package: "Spezi"),
-                .product(name: "SpeziFHIR", package: "Spezi")
+                .product(name: "GroveLLM", package: "Grove"),
+                .product(name: "GroveLLMOpenAI", package: "Grove"),
+                .product(name: "GroveLocalStorage", package: "Grove"),
+                .product(name: "GroveQuestionnaire", package: "Grove"),
+                .product(name: "GroveFHIR", package: "Grove")
             ],
             resources: [
                 .copy("Resources/Synthetic Patients")
@@ -68,7 +64,7 @@ let package = Package(
                 "PlainlyShared",
                 "PlainlyStudyDefinitions",
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
-                .product(name: "SpeziHealthKit", package: "Spezi")
+                .product(name: "GroveHealthKit", package: "Grove")
             ],
             swiftSettings: [
                 .enableUpcomingFeature("ExistentialAny")
@@ -76,7 +72,7 @@ let package = Package(
         ),
         .testTarget(
             name: "PlainlySharedTests",
-            dependencies: ["PlainlyShared", "PlainlyStudyDefinitions"]
+            dependencies: ["PlainlyShared", "PlainlyStudyDefinitions", "PlainlyCLI"]
         )
     ]
 )

@@ -8,25 +8,26 @@
 
 import FirebaseFunctions
 import Foundation
+import Grove
 import HTTPTypes
 import OpenAPIRuntime
 import PlainlyShared
-import Spezi
 
 
-/// Redirects the OpenAI client's chat completions to the Firebase chat function.
+/// Redirects the OpenAI client's Responses API requests to the Firebase chat function.
 ///
-/// The app never holds inference credentials: the request body built by `SpeziLLMOpenAI` is forwarded
+/// The app never holds inference credentials: the request body built by `GroveLLMOpenAI` is forwarded
 /// verbatim to the function, which resolves the provider and endpoint from the model identifier.
 @Observable
 final class FirebaseChatInterceptor: Module, EnvironmentAccessible, ClientMiddleware, @unchecked Sendable {
     private typealias FirebaseChatCallable = Callable<String, StreamResponse<String?, String?>>
+    private typealias FirebaseResponseCallable = Callable<String, String>
 
     /// The study-derived parameters forwarded to the Firebase chat function.
     private struct StudyDispatch {
         let functionName: String
         let studyID: String?
-        let ragEnabled: Bool
+        let mayRetrieve: Bool
     }
 
     private struct Error: LocalizedError, CustomDebugStringConvertible {
@@ -46,7 +47,7 @@ final class FirebaseChatInterceptor: Module, EnvironmentAccessible, ClientMiddle
     }
     
     @ObservationIgnored @Dependency(FHIRInterpretationModule.self) private var interpretationModule
-    
+
     func intercept(
         _ request: HTTPRequest,
         body: HTTPBody?,
@@ -60,7 +61,9 @@ final class FirebaseChatInterceptor: Module, EnvironmentAccessible, ClientMiddle
             return StudyDispatch(
                 functionName: study?.study.chatFunctionName ?? Study.defaultChatFunctionName,
                 studyID: study?.study.id,
-                ragEnabled: study?.study.ragEnabled ?? false
+                // Retrieval serves the participant's questions, so it starts with their first message: the
+                // generated opening turn, and whatever tool calls it makes, have nothing to retrieve for.
+                mayRetrieve: (study?.study.ragEnabled ?? false) && interpretationModule.hasParticipantInput
             )
         }
         dispatchPrecondition(condition: .notOnQueue(.main))
@@ -82,14 +85,35 @@ extension FirebaseChatInterceptor {
         correlationID: String
     ) async throws -> (HTTPResponse, HTTPBody?) {
         let input = try await firebaseRequestBody(body, operationID: operationID, correlationID: correlationID)
+        let requestMetadata: StudyChatResponsesRequestMetadata
+        do {
+            requestMetadata = try StudyChatResponsesRequestMetadata(body: input)
+        } catch {
+            throw Error("Invalid Responses API request")
+        }
+        // Only the participant's own chat retrieves: the resource summarizer shares this transport and
+        // advertises no health-record tool, so it must never pull study documents into its prompt.
+        let shouldUseRAG = dispatch.mayRetrieve && requestMetadata.isStudyChatRequest
+        let queryItems = [
+            "ragEnabled": shouldUseRAG ? "true" : "false",
+            "studyId": dispatch.studyID,
+            "mockScenario": FeatureFlags.firebaseMockScenario?.rawValue
+        ].compactMapValues { $0 }
+        guard requestMetadata.usesStreaming else {
+            let responseBody = try await callFirebaseFunction(
+                name: dispatch.functionName,
+                queryItems: queryItems,
+                body: input,
+                correlationID: correlationID
+            )
+            return (
+                HTTPResponse(status: .ok, headerFields: [.contentType: "application/json"]),
+                HTTPBody(responseBody)
+            )
+        }
         let stream = streamFirebaseFunctionCall(
             name: dispatch.functionName,
-            queryItems: [
-                "ragEnabled": dispatch.ragEnabled ? "true" : "false",
-                "studyId": dispatch.studyID,
-                "mockChatError": FeatureFlags.useFirebaseMockChatError ? "true" : nil,
-                "mockChatErrorAfterChunk": FeatureFlags.useFirebaseMockChatErrorAfterChunk ? "true" : nil
-            ].compactMapValues { $0 },
+            queryItems: queryItems,
             body: input,
             correlationID: correlationID
         )
@@ -157,6 +181,26 @@ extension FirebaseChatInterceptor {
         }
     }
 
+    private func callFirebaseFunction(
+        name: String,
+        queryItems: [String: String],
+        body: String,
+        correlationID: String
+    ) async throws -> String {
+        let callable: FirebaseResponseCallable = Functions.functions()
+            .httpsCallable(
+                firebaseCallableName(name: name, queryItems: queryItems),
+                requestAs: String.self,
+                responseAs: String.self
+            )
+        do {
+            return try await callable.call(body)
+        } catch {
+            AppDiagnostics.network.logError(error, context: "Firebase callable response", correlationID: correlationID)
+            throw error
+        }
+    }
+
     private func runFirebaseStream(
         _ callable: FirebaseChatCallable,
         body: String,
@@ -199,7 +243,6 @@ extension FirebaseChatInterceptor {
         continuation: AsyncThrowingStream<HTTPBody.ByteChunk, any Swift.Error>.Continuation,
         correlationID: String
     ) async throws where Stream.Element == StreamResponse<String?, String?> {
-        var completionChunk: String?
         var forwardedChunkCount = 0
         var forwardedByteCount = 0
         var receivedTerminalResult = false
@@ -211,19 +254,11 @@ extension FirebaseChatInterceptor {
                 guard let chunk else {
                     continue
                 }
-                let isDone = chunk.trimmingCharacters(in: .whitespacesAndNewlines) == "data: [DONE]"
-                if isDone {
-                    completionChunk = chunk
-                } else {
-                    forwardedChunkCount += 1
-                    forwardedByteCount += chunk.utf8.count
-                    continuation.yield(HTTPBody.ByteChunk(chunk.utf8))
-                }
+                forwardedChunkCount += 1
+                forwardedByteCount += chunk.utf8.count
+                continuation.yield(HTTPBody.ByteChunk(chunk.utf8))
             case .result:
                 receivedTerminalResult = true
-                if let completionChunk {
-                    continuation.yield(HTTPBody.ByteChunk(completionChunk.utf8))
-                }
             }
             if receivedTerminalResult {
                 break

@@ -6,8 +6,8 @@
 // SPDX-License-Identifier: MIT
 //
 
+import GroveLLMOpenAI
 public import PlainlyShared
-import SpeziLLMOpenAI
 
 
 extension Study {

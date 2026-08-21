@@ -8,20 +8,20 @@
 
 import FirebaseCore
 import GeneratedOpenAIClient // periphery:ignore - false positive
+@_spi(APISupport) import Grove
+import GroveAccount
+import GroveFirebaseAccount
+import GroveFirebaseConfiguration
+import GroveFirebaseStorage
+import GroveFoundation
+import GroveHealthKit
+import GroveKeychainStorage
+import GroveLLM
+import GroveLLMOpenAI
 import PlainlyShared
-@_spi(APISupport) import Spezi
-import SpeziAccount
-import SpeziFirebaseAccount
-import SpeziFirebaseConfiguration
-import SpeziFirebaseStorage
-import SpeziFoundation
-import SpeziHealthKit
-import SpeziKeychainStorage
-import SpeziLLM
-import SpeziLLMOpenAI
 
 
-final class PlainlyDelegate: SpeziAppDelegate {
+final class PlainlyDelegate: GroveAppDelegate {
     /// The Firebase emulators bind to IPv4, while `localhost` resolves to `::1` first in the simulator,
     /// so the emulator hosts have to be addressed by their IPv4 address.
     private static let emulatorHost = "127.0.0.1"
@@ -47,6 +47,8 @@ final class PlainlyDelegate: SpeziAppDelegate {
                 // the inference credentials, so the platform itself never authenticates.
                 LLMOpenAIPlatform(configuration: .init(
                     authToken: .none,
+                    apiMode: .fixed(.responses),
+                    streamingFallback: false,
                     concurrentStreams: 100,
                     retryPolicy: .attempts(3),
                     middlewares: [chatInterceptor]
