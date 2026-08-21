@@ -126,11 +126,11 @@ final class FirebaseEndToEndTests: XCTestCase, Sendable {
     }
 
     private func assertChatError(in app: XCUIApplication) {
-        let alert = app.alerts.firstMatch
         XCTAssertTrue(
-            alert.waitForExistence(timeout: 30),
+            app.buttons["Try Again"].waitForExistence(timeout: 30),
             "The Firebase callable error was not presented to the participant."
         )
+        XCTAssertFalse(app.alerts.firstMatch.exists, "The failure should stay in the conversation, not become an alert.")
         XCTAssertFalse(
             app.descendants(matching: .any)
                 .matching(NSPredicate(format: "label == %@", expectedResponse))

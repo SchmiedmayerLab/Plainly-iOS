@@ -18,11 +18,10 @@ struct StudyChatView: View {
     @Environment(\.dismiss) private var dismiss
     
     @State private var model: StudyChatViewModel
-    @State private var viewState: ViewState = .idle
     @State private var responseGenerationTask: Task<Void, Never>?
     @State private var responseGenerationAttempt = 0
-    /// An error that can only be shown once the presented sheet has gone away.
-    @State private var pendingError: AnyLocalizedError?
+    /// A failed generation, shown inline under the conversation with a retry.
+    @State private var generationError: AnyLocalizedError?
 
     /// Only what the participant actually sent counts: the internal opening input is not a message they wrote.
     private var userMessageCount: Int {
@@ -43,7 +42,7 @@ struct StudyChatView: View {
                         }
                     )
                 }
-                .sheet(item: $model.presentedSheet, onDismiss: presentPendingError) { sheet in
+                .sheet(item: $model.presentedSheet) { sheet in
                     switch sheet {
                     case .instructions:
                         taskInstructionSheet()
@@ -64,7 +63,6 @@ struct StudyChatView: View {
                 } message: {
                     Text("Do you want to end the chat and complete your participation in the study?")
                 }
-                .viewStateAlert(state: $viewState)
                 // `task` rather than `onAppear`: the opening answer is the whole screen, and a missed
                 // `onAppear` leaves the participant looking at an empty chat with nothing to retry.
                 // The work itself is an unstructured task, so it still outlives this one.
@@ -106,6 +104,12 @@ struct StudyChatView: View {
         )
         .chatHiddenMessages([InternalInput.conversationStarterID])
         .chatAttachments([])
+        // Reported inside the conversation rather than as an alert: the failure belongs to the answer
+        // the participant is waiting for, and the retry sits right where they are looking.
+        .chatError(generationError) {
+            generationError = nil
+            scheduleAssistantResponseGeneration()
+        }
         // Laid over the conversation rather than above it: taking space away as the bar appears moves
         // every message down, and the scroll the answer is arriving into with them.
         .overlay(alignment: .top) {
@@ -120,6 +124,7 @@ struct StudyChatView: View {
     }
 
     private func scheduleAssistantResponseGeneration() {
+        generationError = nil
         responseGenerationAttempt += 1
         let attempt = responseGenerationAttempt
         responseGenerationTask?.cancel()
@@ -143,29 +148,8 @@ struct StudyChatView: View {
             return
         } catch {
             AppDiagnostics.chat.logError(error, context: "Assistant response task")
-            present(AnyLocalizedError(error: error))
+            generationError = AnyLocalizedError(error: error)
         }
-    }
-
-    /// Shows the error, waiting for any presented sheet to go away first.
-    ///
-    /// A sheet and an alert cannot be presented at the same time, and a generation that fails while a
-    /// sheet is still animating in would otherwise lose its alert.
-    private func present(_ error: AnyLocalizedError) {
-        guard model.presentedSheet != nil else {
-            viewState = .error(error)
-            return
-        }
-        pendingError = error
-        model.presentedSheet = nil
-    }
-
-    private func presentPendingError() {
-        guard let pendingError else {
-            return
-        }
-        self.pendingError = nil
-        viewState = .error(pendingError)
     }
 
     @ViewBuilder
