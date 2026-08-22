@@ -73,14 +73,14 @@ extension SessionCoordinator {
     private var singleResourceLLMSchema: any LLMSchema {
         LLMOpenAISchema(
             parameters: .init(modelType: config.model),
-            modelParameters: .deterministic
+            modelParameters: .deterministic(for: config.model)
         )
     }
     
     @MainActor private var multipleResourceInterpreterOpenAISchema: LLMOpenAISchema {
         LLMOpenAISchema(
             parameters: .init(modelType: config.model),
-            modelParameters: .deterministic,
+            modelParameters: .deterministic(for: config.model),
             injectIntoContext: true
         ) {
             FHIRGetResourceLLMTool(
