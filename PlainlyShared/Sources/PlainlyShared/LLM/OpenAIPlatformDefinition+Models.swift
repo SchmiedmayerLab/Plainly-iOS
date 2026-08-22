@@ -42,4 +42,19 @@ extension OpenAIPlatformDefinition.ModelType {
 
     // Meta
     public static let llama4 = Self(rawValue: "Llama-4")
+
+    /// Whether Plainly may pin sampling for this model.
+    ///
+    /// Grove answers this for the models OpenAI serves. The gateway also fronts Anthropic and Google, whose
+    /// identifiers Grove reads as OpenAI ones and so answers for as though they were: the entries below are the
+    /// models where that answer is wrong, and they are the reason this is a list rather than a rule.
+    public var acceptsSamplingControls: Bool {
+        switch self {
+        // Anthropic stopped taking non-default sampling at Opus 4.7, and carried that into this generation.
+        case .claudeOpus5, .claudeSonnet5:
+            return false
+        default:
+            return supportsSamplingControls
+        }
+    }
 }

@@ -57,13 +57,13 @@ final class FHIRInterpretationModule: Module, EnvironmentAccessible, @unchecked 
     }
 
     @MainActor private var singleResourceSchema: LLMOpenAISchema {
-        LLMOpenAISchema(parameters: .init(modelType: llmModel), modelParameters: .deterministic)
+        LLMOpenAISchema(parameters: .init(modelType: llmModel), modelParameters: .deterministic(for: llmModel))
     }
 
     @MainActor private var multipleResourceSchema: LLMOpenAISchema {
         LLMOpenAISchema(
             parameters: .init(modelType: llmModel),
-            modelParameters: .deterministic,
+            modelParameters: .deterministic(for: llmModel),
             injectIntoContext: true
         ) {
             FHIRGetResourceLLMTool(
