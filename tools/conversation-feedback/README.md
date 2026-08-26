@@ -18,6 +18,8 @@ exports as a JSON file we can read programmatically.
 - Feedback fields mirror the old Excel columns exactly (satisfaction + what was good / bad
   / resources / further comments), plus **inline notes**: reviewers can highlight any span
   of an answer and attach a comment (like the ALL-CAPS notes they used to type into cells).
+- Each answer also shows its **sources** — the documents the model drew on, as the app shows
+  them to the participant — in a collapsed `Sources — N` block under the answer.
 - Autosaves continuously to the browser and can Export / Import JSON to resume.
 
 ## Files
@@ -52,7 +54,8 @@ JSON**, and send the JSON back.
 1. Open the HTML file (double-click; any modern browser).
 2. Enter name + email at the top.
 3. For each answer: pick a satisfaction level and fill in the text fields. To comment on a
-   specific passage, **select text in the answer** and add an inline note.
+   specific passage, **select text in the answer** and add an inline note. Open **Sources**
+   under an answer to see the documents it drew on; web sources open in a new tab.
 4. Click **Export JSON** to download the results.
 
 The reviewer can also **drag additional `StudyReport` JSON files** onto the page, and
@@ -71,7 +74,7 @@ The reviewer can also **drag additional `StudyReport` JSON files** onto the page
 
 ```json
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "exportedAt": "2026-07-06T12:00:00.000Z",
   "reviewer": { "name": "...", "email": "..." },
   "conversations": [
@@ -86,6 +89,10 @@ The reviewer can also **drag additional `StudyReport` JSON files** onto the page
           "index": 0,
           "question": "...",
           "answer": "...",
+          "sources": [
+            { "title": "Lumbar Stenosis Guideline", "file": "stenosis.pdf" },
+            { "title": "Spinal Stenosis", "url": "https://www.spine-health.org/stenosis" }
+          ],
           "satisfaction": "neutral",
           "whatWasGood": "...",
           "whatWasBad": "...",
@@ -103,6 +110,12 @@ The reviewer can also **drag additional `StudyReport` JSON files** onto the page
 
 `satisfaction` is one of `very dissatisfied`, `dissatisfied`, `neutral`, `satisfied`,
 `very satisfied`, or `null`. Field names map 1:1 to the old Excel columns.
+
+`sources` is copied from the answer's `citations` in the StudyReport, so the export can be read
+on its own without joining it back. Each entry has a `title` plus at most one of `url` (a page
+on the web) or `file` (a document the model was given); an entry carries neither when the
+report gave an address the reviewer's copy would not link to. The array is empty for an answer
+with no sources, and for any report exported before reports carried them (`schemaVersion: 1`).
 
 Each conversation's display title is the session's free-form **`comment`** (propagated to
 `metadata.userInfo.comment` in the StudyReport). When no comment is present, the title

@@ -14,9 +14,15 @@ extension LLMContextEntity {
     ///
     /// The mapping intentionally matches the projection used before the Grove migration. Reasoning summaries are
     /// a presentation detail and are omitted so a dependency update does not silently change the report schema.
+    ///
+    /// Sources are the one deliberate addition since. The chat shows a participant which documents an answer drew
+    /// on, and a report that dropped them left everyone reading the session afterwards — a reviewer grading the
+    /// answer most of all — unable to see what the participant saw. The field is additive: it is written only for
+    /// an assistant message that has sources, so a report from before it existed reads back unchanged.
     public var studyReportChatMessage: StudyReport.TimelineEvent.ChatMessage? {
         let role: String
         let content: String
+        var citations: [StudyReport.TimelineEvent.ChatMessage.Citation] = []
         switch self.role {
         case .system:
             role = "hidden_system"
@@ -27,6 +33,7 @@ extension LLMContextEntity {
         case .assistant:
             role = "assistant"
             content = self.content
+            citations = (self.citations ?? []).map(\.studyReportCitation)
         case .toolCalls(let toolCalls):
             role = "hidden_assistantToolCall"
             content = toolCalls
@@ -38,6 +45,19 @@ extension LLMContextEntity {
         case .assistantThinking:
             return nil
         }
-        return .init(timestamp: date, role: role, content: content)
+        return .init(timestamp: date, role: role, content: content, citations: citations)
+    }
+}
+
+
+extension LLMCitation {
+    /// The citation, flattened into the shape a study report writes.
+    fileprivate var studyReportCitation: StudyReport.TimelineEvent.ChatMessage.Citation {
+        switch source {
+        case .web(let url):
+            .init(title: title, url: url, file: nil)
+        case .file(let name):
+            .init(title: title, url: nil, file: name)
+        }
     }
 }
