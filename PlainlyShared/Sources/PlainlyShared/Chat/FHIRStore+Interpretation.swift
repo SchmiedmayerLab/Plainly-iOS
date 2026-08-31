@@ -97,7 +97,6 @@ extension FHIRStore {
     @MainActor public var allResourcesFunctionCallIdentifier: [String] {
         let relevantResources: [FHIRResource] = llmRelevantResources
             .lazy
-            .filter { $0.date != nil }
             .sorted { $0.date ?? .distantPast < $1.date ?? .distantPast }
         return relevantResources.map { $0.functionCallIdentifier }
     }

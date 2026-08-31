@@ -24,6 +24,10 @@ extension FHIRResource {
             + "-"
             + displayName.filter { $0.isLetter || $0.isWholeNumber }.prefix(75)
             + "-"
-            + (date.map { FHIRResource.functionCallIdentifierDateFormatter.string(from: $0) } ?? "")
+            + uniqueId
+    }
+    
+    private var uniqueId: String {
+        date.map { FHIRResource.functionCallIdentifierDateFormatter.string(from: $0) } ?? fhirId ?? ""
     }
 }

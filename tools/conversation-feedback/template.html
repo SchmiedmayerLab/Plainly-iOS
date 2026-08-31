@@ -200,13 +200,13 @@ SPDX-License-Identifier: MIT
   .conv-header .meta { font-size: 12.5px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 16px; }
   .conv-header .meta code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; }
 
-  details.sys, details.ctx, details.resources {
+  details.sys, details.ctx, details.resources, details.sources {
     border: 1px solid var(--border);
     border-radius: 8px;
     background: var(--panel-2);
     margin-top: 10px;
   }
-  details.sys > summary, details.ctx > summary, details.resources > summary {
+  details.sys > summary, details.ctx > summary, details.resources > summary, details.sources > summary {
     cursor: pointer;
     padding: 8px 12px;
     font-size: 12.5px;
@@ -330,6 +330,11 @@ SPDX-License-Identifier: MIT
 
   .ctx-call { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; margin: 6px 0; overflow-x: auto; }
   .ctx-summary { white-space: pre-wrap; font-size: 12.5px; color: var(--text); border-left: 3px solid var(--border-strong); padding-left: 10px; margin: 6px 0; }
+  .src-row { display: flex; align-items: baseline; gap: 8px; padding: 4px 0; font-size: 12.5px; }
+  .src-icon { flex: none; }
+  .src-title { overflow-wrap: anywhere; }
+  .src-link { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+  .src-sub { color: var(--muted); font-size: 11.5px; overflow-wrap: anywhere; }
   .res-table { width: 100%; border-collapse: collapse; font-size: 12px; }
   .res-table th, .res-table td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--border); }
   .res-table th { color: var(--muted); font-weight: 600; }
@@ -406,11 +411,11 @@ SPDX-License-Identifier: MIT
 "use strict";
 (function () {
   const SAT_OPTIONS = ["very dissatisfied", "dissatisfied", "neutral", "satisfied", "very satisfied"];
-  const SCHEMA_VERSION = 1;
+  const SCHEMA_VERSION = 2;
   const STORAGE_PREFIX = "convFeedback:v1:";
 
   // ---------- State ----------
-  /** conversations: [{ id, patient, studyID, model, temperature, startTime, systemPrompt, resources, turns:[{index, question, questionTs, answer, answerTs, context:[...]}] }] */
+  /** conversations: [{ id, patient, studyID, model, temperature, startTime, systemPrompt, resources, turns:[{index, question, questionTs, answer, answerTs, context:[...], sources:[...]}] }] */
   let conversations = [];
   /** feedback keyed by conversationId -> answerIndex -> {satisfaction, whatWasGood, whatWasBad, resourcesToMention, furtherComments, inlineAnnotations:[]} */
   let feedback = {};
@@ -445,6 +450,45 @@ SPDX-License-Identifier: MIT
   };
 
   // ---------- Parser: StudyReport -> review model ----------
+
+  // The sources an answer drew on, as the report's `citations` records them: a title plus either a `url`
+  // (a page on the web) or a `file` (a document the model was given). Called "sources" throughout, to keep
+  // them apart from the reviewer's own inline annotations.
+  //
+  // Only http(s) survives as a link. This file is opened straight off disk with patient data in it, so a
+  // "url" from an untrusted report must never become an href the browser will execute.
+  function normalizeSources(list) {
+    if (!Array.isArray(list)) return [];
+    const sources = [];
+    for (const c of list) {
+      if (!c || typeof c !== "object") continue;
+      const file = typeof c.file === "string" ? c.file.trim() : "";
+      let url = "";
+      if (typeof c.url === "string" && c.url.trim()) {
+        try {
+          const parsed = new URL(c.url.trim());
+          if (parsed.protocol === "http:" || parsed.protocol === "https:") url = parsed.href;
+        } catch { /* not a URL we can safely link to; keep the source, drop the link */ }
+      }
+      // A provider that reports no title still leaves something to show — the file it names, or the host —
+      // and a source shown under its host beats one silently dropped from the list.
+      const title = (typeof c.title === "string" ? c.title.trim() : "") || file || sourceLabel({ title: "", url });
+      if (!title) continue;
+      sources.push({ title, url, file });
+    }
+    return sources;
+  }
+
+  // A web source reads better under its host than under a bare address, matching how the app labels one.
+  function sourceLabel(source) {
+    if (!source.url) return source.title;
+    try {
+      return new URL(source.url).host.replace(/^www\./, "");
+    } catch {
+      return source.url;
+    }
+  }
+
   function parseReport(id, report) {
     const md = report && report.metadata ? report.metadata : {};
     const timeline = Array.isArray(report && report.timeline) ? report.timeline : [];
@@ -463,7 +507,7 @@ SPDX-License-Identifier: MIT
         if (!systemPrompt) systemPrompt = m.content || "";
       } else if (role === "user") {
         // finalize any dangling user without an answer
-        current = { index: turns.length, question: m.content || "", questionTs: m.timestamp, answer: null, answerTs: null, context: [] };
+        current = { index: turns.length, question: m.content || "", questionTs: m.timestamp, answer: null, answerTs: null, context: [], sources: [] };
         pendingContext = [];
         turns.push(current);
       } else if (role === "hidden_assistantToolCall") {
@@ -475,11 +519,12 @@ SPDX-License-Identifier: MIT
           current.answer = m.content || "";
           current.answerTs = m.timestamp;
           current.context = pendingContext;
+          current.sources = normalizeSources(m.citations);
           pendingContext = [];
           current = null;
         } else {
           // assistant without a preceding open user turn — attach as its own turn
-          turns.push({ index: turns.length, question: "(no user prompt)", questionTs: m.timestamp, answer: m.content || "", answerTs: m.timestamp, context: pendingContext });
+          turns.push({ index: turns.length, question: "(no user prompt)", questionTs: m.timestamp, answer: m.content || "", answerTs: m.timestamp, context: pendingContext, sources: normalizeSources(m.citations) });
           pendingContext = [];
         }
       }
@@ -620,6 +665,16 @@ SPDX-License-Identifier: MIT
             index: t.index,
             question: t.question,
             answer: t.answer,
+            // Carried along with the question and the answer so the export stands on its own, rather than
+            // having to be joined back to the StudyReport it was generated from. A source whose address the
+            // reviewer's copy refused to link keeps its title and loses the address, rather than being
+            // re-labelled as a file it never was.
+            sources: (t.sources || []).map((s) => {
+              const out = { title: s.title };
+              if (s.url) out.url = s.url;
+              else if (s.file) out.file = s.file;
+              return out;
+            }),
             satisfaction: fb.satisfaction || null,
             whatWasGood: fb.whatWasGood || "",
             whatWasBad: fb.whatWasBad || "",
@@ -874,6 +929,30 @@ SPDX-License-Identifier: MIT
     const bubble = renderAnswerWithAnnotations(turn.answer, fb.inlineAnnotations);
     attachSelectionHandler(bubble, conv, turn);
     aMsg.appendChild(bubble);
+
+    // sources the answer drew on
+    if (turn.sources && turn.sources.length) {
+      const src = el("details", { class: "sources" });
+      src.appendChild(el("summary", { text: `Sources — ${turn.sources.length}` }));
+      const body = el("div", { class: "details-body" });
+      for (const s of turn.sources) {
+        const label = sourceLabel(s);
+        const title = el("span", { class: "src-title", text: s.title });
+        const row = el("div", { class: "src-row" }, [
+          // Keyed off the file rather than the link, so a web source whose address was refused above still
+          // reads as a web source — it just isn't clickable.
+          el("span", { class: "src-icon", text: s.file ? "📄" : "🌐", "aria-hidden": "true" }),
+          s.url
+            ? el("a", { class: "src-link", href: s.url, target: "_blank", rel: "noopener noreferrer" }, [title])
+            : title,
+        ]);
+        // A file cited under its own name has nothing left to say on a second line.
+        if (label !== s.title) row.appendChild(el("span", { class: "src-sub", text: label }));
+        body.appendChild(row);
+      }
+      src.appendChild(body);
+      aMsg.appendChild(src);
+    }
 
     // context
     if (turn.context && turn.context.length) {

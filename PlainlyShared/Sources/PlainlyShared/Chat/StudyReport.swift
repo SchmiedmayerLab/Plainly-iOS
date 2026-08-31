@@ -129,11 +129,37 @@ extension StudyReport {
             fileprivate let timestamp: Date
             private let role: String
             private let content: String
-            
-            public init(timestamp: Date, role: String, content: String) {
+            /// Where the message's content came from, for an answer the assistant sourced.
+            private let citations: [Citation]
+
+            public init(timestamp: Date, role: String, content: String, citations: [Citation] = []) {
                 self.timestamp = timestamp
                 self.role = role
                 self.content = content
+                self.citations = citations
+            }
+
+            /// Reads a message, tolerating one written before sources were part of the report.
+            public init(from decoder: any Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.timestamp = try container.decode(Date.self, forKey: .timestamp)
+                self.role = try container.decode(String.self, forKey: .role)
+                self.content = try container.decode(String.self, forKey: .content)
+                self.citations = try container.decodeIfPresent([Citation].self, forKey: .citations) ?? []
+            }
+
+            /// Writes a message, leaving the key out entirely when there are no sources.
+            ///
+            /// Most messages in a report — every system prompt, question, tool call and tool result — can never have
+            /// one, and an empty array on each of them would be noise in a file people also read by hand.
+            public func encode(to encoder: any Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(timestamp, forKey: .timestamp)
+                try container.encode(role, forKey: .role)
+                try container.encode(content, forKey: .content)
+                if !citations.isEmpty {
+                    try container.encode(citations, forKey: .citations)
+                }
             }
         }
 
@@ -185,6 +211,39 @@ extension StudyReport {
                 try container.encode(task, forKey: .data)
             }
         }
+    }
+}
+
+
+extension StudyReport.TimelineEvent.ChatMessage {
+    /// One source an assistant message drew on.
+    ///
+    /// A flattened stand-in for Grove's `LLMCitation` rather than the type itself: that type carries a freshly
+    /// generated `id`, which would make an otherwise identical report encode differently on every run, and its
+    /// source is an enum with associated values, which encodes as a nested `{"web": {"_0": …}}` rather than as
+    /// something a downstream reader can pick apart. Exactly one of `url` and `file` is ever set, so a reader
+    /// tells the two kinds apart the same way the app's own sources list does.
+    public struct Citation: Hashable, Codable, Sendable {
+        private let title: String
+        private let url: URL?
+        private let file: String?
+
+        /// - Parameters:
+        ///   - title: The source's title, as the provider reported it.
+        ///   - url: The page the source points at, for a source on the web.
+        ///   - file: The name of the document, for a source the model was given.
+        public init(title: String, url: URL?, file: String?) {
+            self.title = title
+            self.url = url
+            self.file = file
+        }
+    }
+
+    fileprivate enum CodingKeys: String, CodingKey {
+        case timestamp
+        case role
+        case content
+        case citations
     }
 }
 
