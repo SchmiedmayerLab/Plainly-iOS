@@ -21,6 +21,11 @@ struct StudyChatToolbar: ToolbarContent {
         ToolbarItem(placement: .cancellationAction) {
             dismissButton
         }
+        if model.study.defaultExplanationLevel != nil {
+            ToolbarItem(placement: .primaryAction) {
+                explanationLevelButton
+            }
+        }
         ToolbarItem(placement: .primaryAction) {
             viewInstructionsButton
         }
@@ -50,6 +55,15 @@ struct StudyChatToolbar: ToolbarContent {
                 Text("Do you want to continue?")
             }
         )
+    }
+
+    private var explanationLevelButton: some View {
+        Button {
+            model.presentedSheet = .explanationLevel
+        } label: {
+            Image(systemName: "slider.horizontal.3")
+                .accessibilityLabel("Explanation Detail")
+        }
     }
 
     private var viewInstructionsButton: some View {

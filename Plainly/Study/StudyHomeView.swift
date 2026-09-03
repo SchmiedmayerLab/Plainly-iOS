@@ -26,7 +26,10 @@ struct StudyHomeView: View {
     @WaitingState private var waitingState
     
     @State private var isPresentingQuestionnaire = false
-    @State private var questionnaireResponse: QuestionnaireResponse?
+    // A UI test can open the chat without answering a study's questionnaire first.
+    @State private var questionnaireResponse: QuestionnaireResponse? = FeatureFlags.skipInitialQuestionnaire
+        ? QuestionnaireResponse(status: .init(.completed))
+        : nil
     
     @State private var isPresentingEarliestHealthRecords = false
     @State private var isPresentingQRCodeScanner = false

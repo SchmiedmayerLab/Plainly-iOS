@@ -40,6 +40,10 @@ struct Plainly: App {
     }
 
     init() {
+        // Lets a UI test start from a clean slate without deleting the app, which the simulator does not always survive.
+        if FeatureFlags.resetPreferences, let bundleIdentifier = Bundle.main.bundleIdentifier {
+            UserDefaults.standard.removePersistentDomain(forName: bundleIdentifier)
+        }
         let preferences = LocalPreferencesStore.standard
         if FeatureFlags.showOnboarding {
             preferences[.onboardingFlowComplete] = false

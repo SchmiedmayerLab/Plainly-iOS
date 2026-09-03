@@ -76,6 +76,17 @@ final class FHIRInterpretationModule: Module, EnvironmentAccessible, @unchecked 
     }
 
 
+    /// The study's interpretation prompt, carrying the participant's questionnaire summary where there is one.
+    @MainActor private var multipleResourcePrompt: FHIRPrompt {
+        currentStudy.map { inProgressStudy -> FHIRPrompt in
+            let prompt = inProgressStudy.study.interpretMultipleResourcesPrompt
+            guard let summary = inProgressStudy.questionnaireSummary else {
+                return prompt
+            }
+            return FHIRPrompt(promptText: prompt.promptText + "\n\nInitial User Questionnaire Summary:\n" + summary)
+        } ?? .interpretMultipleResourcesDefaultPrompt
+    }
+
     nonisolated init() {}
 
 
@@ -101,6 +112,16 @@ final class FHIRInterpretationModule: Module, EnvironmentAccessible, @unchecked 
     }
     
     
+    /// Throws away the conversation and starts the study's next one from its instructions alone.
+    ///
+    /// The interpreter outlives any one presentation of the chat, so leaving its session in place is what let a
+    /// discarded conversation reappear. A new session also drops the response the gateway is holding, which the
+    /// next turn would otherwise continue from.
+    @MainActor
+    func startNewConversation() {
+        multipleResourceInterpreter.startNewConversation(using: multipleResourcePrompt)
+    }
+
     /// Immediately updates the schemas used by the interpretation module.
     @MainActor
     func updateSchemas() async {
@@ -118,13 +139,7 @@ final class FHIRInterpretationModule: Module, EnvironmentAccessible, @unchecked 
         let singleResourceSchema = self.singleResourceSchema
         let multipleResourceSchema = self.multipleResourceSchema
         let summarizePrompt = currentStudy?.study.summarizeSingleResourcePrompt ?? .summarizeSingleFHIRResourceDefaultPrompt
-        let multipleResourcePrompt = currentStudy.map { inProgressStudy -> FHIRPrompt in
-            let prompt = inProgressStudy.study.interpretMultipleResourcesPrompt
-            guard let summary = inProgressStudy.questionnaireSummary else {
-                return prompt
-            }
-            return FHIRPrompt(promptText: prompt.promptText + "\n\nInitial User Questionnaire Summary:\n" + summary)
-        } ?? .interpretMultipleResourcesDefaultPrompt
+        let multipleResourcePrompt = self.multipleResourcePrompt
         await resourceSummarizer.update(llmSchema: singleResourceSchema, summarizationPrompt: summarizePrompt)
         guard isCurrentSchemaUpdate(generation) else {
             return
