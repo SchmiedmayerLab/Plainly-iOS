@@ -6,9 +6,10 @@
 // SPDX-License-Identifier: MIT
 //
 
-import Foundation
-@preconcurrency import struct ModelsR4.Questionnaire
+// swiftlint:disable line_length
+
 public import PlainlyShared
+import GroveQuestionnaire
 
 
 extension Study {
@@ -17,7 +18,8 @@ extension Study {
 
     /// Plainly's SpineAI study
     public static var spineAI: Study {
-        Study(
+        let effectivenessQuestion: Questionnaire.Task = .scale("How effective was the app in helping to answer your spine-related health question?", options: effectivenessOptions)
+        return Study(
             id: "edu.stanford.plainly.spineAI",
             title: "SpineAI",
             explainer: "Welcome to the SpineAI Study!",
@@ -27,12 +29,256 @@ extension Study {
             interpretMultipleResourcesPrompt: .spineAISystemPrompt,
             chatTitleConfig: .studyTitle,
             initialQuestionnaire: "SpineAI_InitialSurvey",
-            tasks: [],
+            tasks: [
+                Task(
+                    id: "0",
+                    title: nil,
+                    instructions: "Ask SpineAI to explain your most recent MRI or X-ray report in plain language, then ask any follow-up questions about what the findings mean for your pain and function.",
+                    assistantMessagesLimit: 2...5,
+                    questions: [
+                        effectivenessQuestion,
+                        .freeText("What surprised you about the app’s answer, either positively or negatively?", isOptional: true)
+                    ]
+                ),
+                Task(
+                    id: "1",
+                    title: nil,
+                    instructions: "Ask SpineAI what treatment options exist for your specific condition, including the non-surgical ones, and have it compare the pros and cons of each for your situation.",
+                    assistantMessagesLimit: 1...5,
+                    questions: [effectivenessQuestion]
+                ),
+                // The protocol gates this task and the recovery task below on baseline gate
+                // question G1 ("Is surgery currently one of the options being discussed for your
+                // spine condition?"), answered before the session. Tasks cannot branch, so both
+                // are always shown and their prompts carry the condition instead.
+                Task(
+                    id: "2",
+                    title: nil,
+                    instructions: "If surgery is one of your options, ask SpineAI what the recommended procedure would involve and what the risks and complications would be for someone with your profile.",
+                    assistantMessagesLimit: 1...5,
+                    questions: [effectivenessQuestion]
+                ),
+                Task(
+                    id: "3",
+                    title: nil,
+                    instructions: "Ask SpineAI how to manage your current pain and medications — how to take them, what side effects to watch for, and what to do if the pain isn’t improving as expected.",
+                    assistantMessagesLimit: 1...5,
+                    questions: [effectivenessQuestion]
+                ),
+                Task(
+                    id: "4",
+                    title: nil,
+                    instructions: "Ask SpineAI what recovery would realistically look like if you had the recommended procedure — week by week, and when you could return to work, driving, and the activities that matter most to you.",
+                    assistantMessagesLimit: 1...5,
+                    questions: [effectivenessQuestion]
+                ),
+                Task(
+                    id: "5",
+                    title: nil,
+                    instructions: "Ask SpineAI how to get a second opinion and what your insurance is likely to cover, and tell it about any fears you have about your condition or a possible operation and ask what can help you cope.",
+                    assistantMessagesLimit: 1...5,
+                    questions: [effectivenessQuestion]
+                ),
+                Task(
+                    id: "6",
+                    title: nil,
+                    instructions: "Before we end our session, feel free to ask the app any medical questions you might have related to your spine problem or symptoms.",
+                    assistantMessagesLimit: 1...10,
+                    questions: freeExplorationQuestions
+                ),
+                Task(
+                    id: "7",
+                    title: nil,
+                    instructions: nil,
+                    assistantMessagesLimit: nil,
+                    questions: postInterventionQuestions
+                ),
+                Task(
+                    id: "8",
+                    title: nil,
+                    instructions: nil,
+                    assistantMessagesLimit: nil,
+                    questions: confidenceQuestions
+                )
+            ],
             // Tried out in simulators and development deployments; participants see neither yet.
             previews: .init(defaultExplanationLevel: .balanced, generatesImages: true)
         )
     }
 }
+
+
+// The study's questionnaire corrects the shared effectiveness scale's middle option and rates the
+// other questions on scales that carry an explicit N/A choice, so none of these can reuse the
+// shared scales, which studies that are already collecting pin.
+private let effectivenessOptions: Study.Task.AnswerOptions = [
+    "Very effective",
+    "Somewhat effective",
+    "Neither effective nor ineffective",
+    "Somewhat ineffective",
+    "Very ineffective"
+]
+
+private let websiteComparisonOptions: Study.Task.AnswerOptions = [
+    "Significantly better",
+    "Slightly better",
+    "No change",
+    "Slightly worse",
+    "Significantly worse",
+    "N/A — I have not used websites for this"
+]
+
+private let doctorComparisonOptions: Study.Task.AnswerOptions = [
+    "Significantly better",
+    "Slightly better",
+    "No change",
+    "Slightly worse",
+    "Significantly worse",
+    "N/A"
+]
+
+private let appointmentChangeOptions: Study.Task.AnswerOptions = [
+    "Yes, a lot",
+    "Yes, somewhat",
+    "No",
+    "Not sure"
+]
+
+private let agreementOptions: Study.Task.AnswerOptions = [
+    "Strongly Disagree",
+    "Disagree",
+    "Agree",
+    "Strongly Agree",
+    "N/A"
+]
+
+private let confidenceOptions: Study.Task.AnswerOptions = [
+    "Not at all confident",
+    "Slightly confident",
+    "Moderately confident",
+    "Very confident",
+    "Extremely confident",
+    "N/A"
+]
+
+
+private let freeExplorationQuestions: [Questionnaire.Task] = [
+    .scale("Compared to health information websites, how do you rate the app’s responses?", options: websiteComparisonOptions),
+    .scale("Compared to what your doctor has told you, how do you rate the app’s responses?", options: doctorComparisonOptions),
+    .freeText("What were the most and least useful features of the app? Do you have any suggestions to share?", isOptional: true),
+    .scale("Has using the app changed what you plan to ask or discuss at your upcoming appointment?", options: appointmentChangeOptions),
+    .freeText("If yes: What will you ask that you would not have asked before?", isOptional: true),
+    .scale(
+        "On a scale of 0–10, how likely are you to recommend this tool to a friend or colleague?",
+        range: 0...10,
+        labels: [0: "Would not recommend", 10: "Would recommend"]
+    )
+]
+
+
+private let postInterventionQuestions: [Questionnaire.Task] = [
+    .instructional(
+        """
+        Please complete the survey below. Thank you!
+
+        In the future, if you had SpineAI available…
+
+        These are the same statements you answered in the online questionnaire before this session. Please answer them again now, based on how you would feel about managing your spine condition with continued access to an application like SpineAI.
+        """
+    ),
+    .instructional(
+        """
+        Section A — Managing my spine condition
+
+        Below are some statements that people sometimes make when they talk about their spine condition. Please indicate how much you agree or disagree with each statement as it applies to you personally. Your answers should be what is true for you and not just what you think others want you to say. If a statement does not apply to you, select N/A.
+        """
+    ),
+    .scale("When all is said and done, I am the person who is responsible for managing my spine condition.", options: agreementOptions),
+    .scale("Taking an active role in my spine care affects my back/neck health and ability to function.", options: agreementOptions),
+    .scale("I understand what each of my treatments or medications for my spine condition is for.", options: agreementOptions),
+    .scale("I am confident I can tell my spine care provider concerns I have, even when he or she does not ask.", options: agreementOptions),
+    .scale("I am confident I can tell whether I need to see a doctor for my spine problem or whether I can manage it on my own.", options: agreementOptions),
+    .scale("I am confident I can help prevent or reduce problems associated with my spine condition.", options: agreementOptions),
+    .scale("I know the lifestyle changes — like activity, posture, and exercise — that are recommended for my spine condition.", options: agreementOptions),
+    .scale("I am confident I can follow through on treatments for my spine condition that I may need to do at home (e.g., exercises, stretches).", options: agreementOptions),
+    .scale("I am confident I can take actions that will help prevent or minimize symptoms of my spine condition.", options: agreementOptions),
+    .scale("I am confident I can follow through on recommendations my spine provider makes, such as physical therapy or exercise.", options: agreementOptions),
+    .scale("I understand the nature and causes of my spine condition.", options: agreementOptions),
+    .scale("I know the different treatment options available for my spine condition (e.g., physical therapy, injections, surgery).", options: agreementOptions),
+    .scale("I have been able to keep up with the activity or exercise changes I have made for my spine health.", options: agreementOptions),
+    .scale("I know how to prevent further problems with my spine.", options: agreementOptions),
+    .scale("I know about the self-care and self-treatments for my spine condition.", options: agreementOptions),
+    .scale("I have made the changes in my activity and exercise that are recommended for my spine condition.", options: agreementOptions),
+    .scale("I am confident I can figure out solutions when new problems arise with my spine.", options: agreementOptions),
+    .scale("I am able to handle symptoms of my spine condition on my own at home.", options: agreementOptions),
+    .scale("I am confident I can maintain activity and exercise changes for my spine, even during times of stress.", options: agreementOptions),
+    .scale("I am able to handle flare-ups of my spine condition on my own at home.", options: agreementOptions),
+    .scale("I am confident I can keep my spine problems from interfering with the things I want to do.", options: agreementOptions),
+    .scale("Managing recommendations by my physicians for my spine condition is too hard for me on a daily basis.", options: agreementOptions)
+]
+
+
+// Clusters follow the session-task order of the document. The document gates Cluster 3 and
+// Cluster 5 on G1 like their session tasks and marks that in their headers; without branching
+// support every cluster is always shown, so the headers drop the gate annotation and N/A plus
+// skippable questions stand in for it. The document's per-cluster "Session task." reminders are
+// staff-facing context and are not rendered.
+private let confidenceClusters: [(header: String, questions: [String])] = [
+    ("Cluster 1 — Diagnosis & imaging", [
+        "How confident are you that you could explain what your MRI or X-ray report says, in your own words?",
+        "How confident are you that you could describe what exactly is wrong with your spine, and how severe it is?",
+        "How confident are you that you know what is causing your pain, and whether anything else could be causing your symptoms?",
+        "How confident are you that you know what is likely to happen to your spine if you do nothing right now?"
+    ]),
+    ("Cluster 2 — Treatment options & decision-making", [
+        "How confident are you that you could list all of your treatment options, including the non-surgical ones?",
+        "How confident are you that you know the pros and cons of physical therapy, injections and surgery for your condition?",
+        "How confident are you that you could explain the difference between a decompression, a fusion and a disc replacement, and which would fit your situation?",
+        "How confident are you that you know the specific things you need to do at home to treat your spine condition?",
+        "How confident are you that you know whether it would be better to operate sooner or to wait, and what the risks of waiting would be?"
+    ]),
+    ("Cluster 3 — Procedure, risks & surgeon", [
+        "How confident are you that you know what the operation would involve, if surgery were recommended for you?",
+        "How confident are you that you know what complications could happen, and how likely they would be for someone like you?",
+        "How confident are you that you know what anaesthesia options you would have, and what you should know about them?",
+        "How confident are you that you know how to find out how experienced a surgeon is with this procedure, and what their outcomes are?"
+    ]),
+    ("Cluster 8 — Pain & medication", [
+        "How confident are you that you know how to take your pain medication — whether with food, whether you can stop it suddenly or need to taper, and what to do about side effects?",
+        "How confident are you that you know what to do if your pain is not improving as fast as you expected, and whether that is a bad sign?"
+    ]),
+    ("Cluster 5 — Recovery expectations", [
+        "How confident are you that you know what recovery would look like week by week, if you had surgery for your spine condition?",
+        "How confident are you that you know when you could go back to work, drive, and return to the activities that matter to you?"
+    ]),
+    ("Cluster 9 — System, insurance & emotions", [
+        "How confident are you that you know whether your insurance would cover the treatments you are considering, and what to ask your insurer before deciding?",
+        "How confident are you that you know how to get a second opinion, and which records to bring?",
+        "How confident are you that you know what can help you cope with worries about your condition or about a possible operation?"
+    ])
+]
+
+private let confidenceQuestions: [Questionnaire.Task] = {
+    var questions: [Questionnaire.Task] = [
+        .instructional(
+            """
+            Below are the same statements you answered in the online questionnaire before this session. Now that you have used the app, please rate again how confident you feel about your own situation, and — if you can — briefly write what you would say. If a statement does not apply to you, select N/A.
+
+            Some questions ask you to think about treatments, including surgery, that you may or may not need. Some people find this uncomfortable. You may skip any question, and you may stop at any time.
+            """
+        )
+    ]
+    for (header, clusterQuestions) in confidenceClusters {
+        questions.append(.instructional(header))
+        for question in clusterQuestions {
+            // The introduction promises that any question can be skipped, so the scales are
+            // optional like the free-text answers.
+            questions.append(.scale(question, options: confidenceOptions, isOptional: true))
+            questions.append(.freeText("In a sentence, what would you say?", isOptional: true))
+        }
+    }
+    return questions
+}()
 
 
 extension FHIRPrompt {

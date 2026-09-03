@@ -13,7 +13,7 @@ public import PlainlyShared
 
 
 extension Study {
-    /// Plainly's SpineAI study
+    /// Plainly's language study
     public static var languageStudy: Study {
         Study(
             id: "edu.stanford.plainly.languageStudy",

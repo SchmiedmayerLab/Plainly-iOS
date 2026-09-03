@@ -26,7 +26,8 @@ struct StudyTests {
         (Study.gynStudy.id, LLMOpenAIParameters.ModelType.gpt4o, false),
         (Study.usabilityStudy.id, .gpt5_5, false),
         (Study.languageStudy.id, .gpt5_5, false),
-        (Study.spineAI.id, .gpt5_5, true)
+        (Study.spineAI.id, .gpt5_5, true),
+        (Study.pedCardioStudy.id, .gpt5_5, false)
     ])
     func inferenceConfiguration(studyId: Study.ID, model: LLMOpenAIParameters.ModelType, ragEnabled: Bool) throws {
         let study = try #require(Study.withId(studyId))
@@ -67,6 +68,32 @@ struct StudyTests {
         // A chatless task with no questions would leave the participant on an empty chat.
         #expect(chatlessWithoutQuestions.isEmpty)
         #expect(tasks.filter(\.hasChat).map(\.id) == ["0", "1", "2", "3", "4", "5"])
+    }
+
+    /// The closing questionnaires have no chat, so the app presents them without returning to it.
+    @Test
+    func pedCardioStudyClosesWithoutChat() {
+        let tasks = Study.pedCardioStudy.tasks
+        let chatlessTasks = tasks.filter { !$0.hasChat }
+        let chatlessWithoutQuestions = chatlessTasks.filter(\.questions.isEmpty)
+
+        #expect(chatlessTasks.map(\.id) == ["4", "5"])
+        // A chatless task with no questions would leave the participant on an empty chat.
+        #expect(chatlessWithoutQuestions.isEmpty)
+        #expect(tasks.filter(\.hasChat).map(\.id) == ["0", "1", "2", "3"])
+    }
+
+    /// The closing questionnaires have no chat, so the app presents them without returning to it.
+    @Test
+    func spineAIClosesWithoutChat() {
+        let tasks = Study.spineAI.tasks
+        let chatlessTasks = tasks.filter { !$0.hasChat }
+        let chatlessWithoutQuestions = chatlessTasks.filter(\.questions.isEmpty)
+
+        #expect(chatlessTasks.map(\.id) == ["7", "8"])
+        // A chatless task with no questions would leave the participant on an empty chat.
+        #expect(chatlessWithoutQuestions.isEmpty)
+        #expect(tasks.filter(\.hasChat).map(\.id) == ["0", "1", "2", "3", "4", "5", "6"])
     }
 
     /// A task that limits the chat to no messages is not a chat task either.
