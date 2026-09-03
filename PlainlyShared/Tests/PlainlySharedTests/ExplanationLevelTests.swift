@@ -69,7 +69,9 @@ struct ExplanationLevelTests {
 
     @Test("Only the study that measures comprehension offers the control")
     func onlySpineAIOffersTheControl() {
-        #expect(Study.spineAI.defaultExplanationLevel == .balanced)
+        #expect(Study.spineAI.defaultExplanationLevel == nil)
+        #expect(Study.spineAI.previews.defaultExplanationLevel == .balanced)
+        #expect(Study.spineAI.enablingPreviews().defaultExplanationLevel == .balanced)
         for study in [Study.languageStudy, .gynStudy, .usabilityStudy] {
             #expect(study.defaultExplanationLevel == nil, "\(study.id) offers a control it does not measure.")
         }

@@ -50,7 +50,7 @@ struct StudyChatProcessingView: View {
         .frame(height: Self.lineHeight)
         .opacity(isVisible ? 1 : 0)
         .animation(.easeInOut(duration: 0.25), value: isVisible)
-        .accessibilityHidden(true)
+        .accessibilityLabel(model.processingState.statusDescription)
         .onChange(of: model.processingState) { previous, current in
             // A turn that starts over reports less progress than the one before it: carrying the old value
             // across would leave the next answer's line starting where the last one stopped.
