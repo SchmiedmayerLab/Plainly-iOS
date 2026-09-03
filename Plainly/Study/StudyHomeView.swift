@@ -275,7 +275,7 @@ extension StudyHomeView {
     }
 
     init(study: Study, userInfo: [String: String]) {
-        preloadedStudy = InProgressStudy(study: study, userInfo: userInfo)
+        preloadedStudy = InProgressStudy(study: Deployment.isDevelopment ? study.enablingPreviews() : study, userInfo: userInfo)
     }
     
     init() {

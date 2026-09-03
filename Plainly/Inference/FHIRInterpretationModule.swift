@@ -64,7 +64,8 @@ final class FHIRInterpretationModule: Module, EnvironmentAccessible, @unchecked 
         LLMOpenAISchema(
             parameters: .init(modelType: llmModel),
             modelParameters: .deterministic(for: llmModel),
-            injectIntoContext: true
+            injectIntoContext: true,
+            generatesImages: currentStudy?.study.generatesImages ?? false
         ) {
             FHIRGetResourceLLMTool(
                 fhirStore: self.fhirStore,

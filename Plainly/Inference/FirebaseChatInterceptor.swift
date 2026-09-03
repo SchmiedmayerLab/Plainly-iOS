@@ -28,6 +28,8 @@ final class FirebaseChatInterceptor: Module, EnvironmentAccessible, ClientMiddle
         let functionName: String
         let studyID: String?
         let mayRetrieve: Bool
+        /// Whether the study lets the model draw; the function refuses the tool otherwise.
+        let generatesImages: Bool
     }
 
     private struct Error: LocalizedError, CustomDebugStringConvertible {
@@ -63,7 +65,8 @@ final class FirebaseChatInterceptor: Module, EnvironmentAccessible, ClientMiddle
                 studyID: study?.study.id,
                 // Retrieval serves the participant's questions, so it starts with their first message: the
                 // generated opening turn, and whatever tool calls it makes, have nothing to retrieve for.
-                mayRetrieve: (study?.study.ragEnabled ?? false) && interpretationModule.hasParticipantInput
+                mayRetrieve: (study?.study.ragEnabled ?? false) && interpretationModule.hasParticipantInput,
+                generatesImages: study?.study.generatesImages ?? false
             )
         }
         dispatchPrecondition(condition: .notOnQueue(.main))
@@ -96,6 +99,7 @@ extension FirebaseChatInterceptor {
         let shouldUseRAG = dispatch.mayRetrieve && requestMetadata.isStudyChatRequest
         let queryItems = [
             "ragEnabled": shouldUseRAG ? "true" : "false",
+            "generatesImages": dispatch.generatesImages && requestMetadata.isStudyChatRequest ? "true" : "false",
             "studyId": dispatch.studyID,
             "mockScenario": FeatureFlags.firebaseMockScenario?.rawValue
         ].compactMapValues { $0 }
