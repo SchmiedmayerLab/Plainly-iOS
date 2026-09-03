@@ -1,3 +1,9 @@
 [submodule "Plainly-Firebase"]
 	path = Plainly-Firebase
 	url = https://github.com/SchmiedmayerLab/Plainly-Firebase.git
+[submodule "Grove"]
+	path = Grove
+	url = git@github.com:SchmiedmayerLab/Grove.git
+[submodule "Textual"]
+	path = Textual
+	url = git@github.com:PSchmiedmayer/textual.git

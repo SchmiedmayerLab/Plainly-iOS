@@ -47,5 +47,3 @@ firebase-debug.*.log*
 .firebase/
 .vscode/
 
-# A local Grove checkout, used while a change is being developed against the package.
-/Grove/
