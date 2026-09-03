@@ -16,7 +16,6 @@ class OnboardingTests: XCTestCase, Sendable {
     override func setUp() async throws {
         try await super.setUp()
         continueAfterFailure = false
-        XCUIApplication().delete(app: "Plainly")
     }
     
     
@@ -25,7 +24,7 @@ class OnboardingTests: XCTestCase, Sendable {
     func testOnboardingFlow() throws {
         let app = XCUIApplication()
         app.resetAuthorizationStatus(for: .health)
-        app.launchArguments = ["--showOnboarding", "--mode", "study"]
+        app.launchArguments = ["--resetPreferences", "--showOnboarding", "--mode", "study"]
         app.launch()
         try app.navigateOnboardingFlowWelcome()
         try app.navigateOnboardingFlowDisclaimers()
@@ -41,7 +40,7 @@ class OnboardingTests: XCTestCase, Sendable {
     func testOnboardingContinuesWhenHealthRecordsAuthorizationIsCancelled() throws {
         let app = XCUIApplication()
         app.resetAuthorizationStatus(for: .health)
-        app.launchArguments = ["--showOnboarding", "--mode", "study"]
+        app.launchArguments = ["--resetPreferences", "--showOnboarding", "--mode", "study"]
         app.launch()
         try app.navigateOnboardingFlowWelcome()
         try app.navigateOnboardingFlowDisclaimers()
@@ -68,7 +67,7 @@ class OnboardingTests: XCTestCase, Sendable {
     func testOnboardingContinuesWhenNoHealthRecordsAreShared() throws {
         let app = XCUIApplication()
         app.resetAuthorizationStatus(for: .health)
-        app.launchArguments = ["--showOnboarding", "--mode", "study"]
+        app.launchArguments = ["--resetPreferences", "--showOnboarding", "--mode", "study"]
         app.launch()
         try app.navigateOnboardingFlowWelcome()
         try app.navigateOnboardingFlowDisclaimers()

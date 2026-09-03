@@ -15,7 +15,6 @@ final class QuestionnaireTests: XCTestCase, Sendable {
     override func setUp() async throws {
         try await super.setUp()
         continueAfterFailure = false
-        XCUIApplication().delete(app: "Plainly")
     }
 
     func testSpineAIQuestionnaireLoadsAfterFreshInstallAndRelaunch() {
@@ -32,6 +31,7 @@ final class QuestionnaireTests: XCTestCase, Sendable {
     private func makeApp() -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = [
+            "--resetPreferences",
             "--skipOnboarding",
             "--mode",
             "study:edu.stanford.plainly.spineAI",

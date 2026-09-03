@@ -8,8 +8,8 @@
 
 // swiftlint:disable line_length
 
-public import PlainlyShared
 import GroveQuestionnaire
+public import PlainlyShared
 
 
 extension Study {
