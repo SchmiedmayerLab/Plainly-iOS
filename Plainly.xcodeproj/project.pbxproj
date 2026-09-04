@@ -566,8 +566,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/SchmiedmayerLab/Grove.git";
 			requirement = {
-				branch = "chat-follow-up-and-image-generation";
-				kind = branch;
+				kind = exactVersion;
+				version = "0.3.0-beta.7";
 			};
 		};
 		2FD8E8282A1AADDA00357F4E /* XCRemoteSwiftPackageReference "FHIRModels" */ = {
