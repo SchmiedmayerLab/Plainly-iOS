@@ -88,7 +88,7 @@
       "location" : "https://github.com/SchmiedmayerLab/Grove.git",
       "state" : {
         "branch" : "chat-follow-up-and-image-generation",
-        "revision" : "3d194b3620d6b4e14f2ad2d484f555c71e4cfc7c"
+        "revision" : "3146741413d549bca7656e5135d3bcd7f2575a4e"
       }
     },
     {
@@ -366,8 +366,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/PSchmiedmayer/textual.git",
       "state" : {
-        "revision" : "c08495f8cfdae468784153cf146a08e9ab21b170",
-        "version" : "0.6.1"
+        "revision" : "8a58f8290aeb1d04e2b3128288cd9a63f15791c1",
+        "version" : "0.6.2"
       }
     },
     {
