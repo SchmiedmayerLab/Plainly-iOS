@@ -53,6 +53,8 @@ class OnboardingTests: XCTestCase, Sendable {
         XCTAssertTrue(app.staticTexts["Health Records Access"].waitForNonExistence(timeout: 10))
 
         app.terminate()
+        // The first launch already started clean; a second reset would forget what the participant just decided.
+        app.launchArguments = ["--showOnboarding", "--mode", "study"]
         app.launch()
         try app.navigateOnboardingFlowWelcome()
         try app.navigateOnboardingFlowDisclaimers()
@@ -76,6 +78,8 @@ class OnboardingTests: XCTestCase, Sendable {
         XCTAssertTrue(app.staticTexts["Health Records Access"].waitForNonExistence(timeout: 10))
 
         app.terminate()
+        // The first launch already started clean; a second reset would forget what the participant just decided.
+        app.launchArguments = ["--showOnboarding", "--mode", "study"]
         app.launch()
         try app.navigateOnboardingFlowWelcome()
         try app.navigateOnboardingFlowDisclaimers()
