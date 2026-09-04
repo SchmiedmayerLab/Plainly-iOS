@@ -46,11 +46,12 @@ export PLAINLY_MOCK_CHAT_RESPONSE="${PLAINLY_MOCK_CHAT_RESPONSE:-Plainly Firebas
 
 test_command="cd $(printf '%q' "$repository_root") && PLAINLY_RUN_FIREBASE_E2E=1 fastlane firebase_uitest"
 cd "$firebase_root"
+# Always the pinned CLI through the Node that just built the functions: a `firebase` on a runner's PATH is
+# whatever got installed there, and one of them dies with SIGKILL the moment it starts.
 if command -v firebase >/dev/null 2>&1; then
-  firebase_cli=(firebase)
-else
-  firebase_cli=(npx --yes firebase-tools@15.25.1)
+  echo "Ignoring $(command -v firebase): $(file -b "$(command -v firebase)" | cut -c1-80)"
 fi
+firebase_cli=(npx --yes firebase-tools@15.25.1)
 
 "${firebase_cli[@]}" emulators:exec \
   --project demo-plainly \
