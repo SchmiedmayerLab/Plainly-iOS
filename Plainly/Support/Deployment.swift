@@ -16,7 +16,7 @@ enum Deployment {
         return true
         #else
         let config = FeatureFlags.useFirebaseEmulator ? .emulator : AppConfigFile.current().firebaseConfig
-        return (config.asNSDictionary()["PROJECT_ID"] as? String)?.hasSuffix("-dev") == true
+        return (config?.asNSDictionary()["PROJECT_ID"] as? String)?.hasSuffix("-dev") == true
         #endif
     }()
 }
