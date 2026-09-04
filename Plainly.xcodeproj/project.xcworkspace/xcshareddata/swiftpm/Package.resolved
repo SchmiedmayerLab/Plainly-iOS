@@ -87,8 +87,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/SchmiedmayerLab/Grove.git",
       "state" : {
-        "branch" : "chat-follow-up-and-image-generation",
-        "revision" : "77ba7e15c54e765a4db8e28ca0b4ad9433533557"
+        "revision" : "fcec2ba3ed32b10fe6e2c7aa90f2babbd9f9d127",
+        "version" : "0.3.0-beta.7"
       }
     },
     {

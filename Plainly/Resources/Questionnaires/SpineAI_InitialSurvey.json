@@ -731,17 +731,17 @@
             },
             {
               "valueCoding": {
-                "system": "https://spineai.stanford.edu/CodeSystem/axial-posture-worse",
-                "code": "same",
-                "display": "About the same"
-              }
-            },
-            {
-              "valueCoding": {
                 "id": "67595eb7-2eb2-407c-ef11-d80784a14969",
                 "code": "walking",
                 "system": "https://spineai.stanford.edu/CodeSystem/axial-posture-worse",
                 "display": "Walking"
+              }
+            },
+            {
+              "valueCoding": {
+                "system": "https://spineai.stanford.edu/CodeSystem/axial-posture-worse",
+                "code": "same",
+                "display": "About the same"
               }
             }
           ],
