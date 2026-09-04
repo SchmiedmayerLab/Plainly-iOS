@@ -45,6 +45,16 @@ public struct Study: Identifiable, Hashable, Sendable {
     public let interpretMultipleResourcesPrompt: FHIRPrompt
     
     public let chatTitleConfig: ChatTitleConfig
+
+    /// The level of detail the study starts participants on, when it lets them set one at all.
+    ///
+    /// `nil` keeps the control out of the chat: a study that does not ask about comprehension gains nothing
+    /// from a setting that adds variance to what its participants read.
+    public let defaultExplanationLevel: ExplanationLevel?
+    /// Whether the model may draw images in its answers. Off unless the study asks for it.
+    public let generatesImages: Bool
+    /// What the study tries out before participants see it; applied by ``enablingPreviews()``.
+    public let previews: Previews
     
     /// Initial Questionnaire that should be asked before the user enters the chat view.
     private let _initialQuestionnaire: String?
@@ -71,6 +81,9 @@ public struct Study: Identifiable, Hashable, Sendable {
         initialQuestionnaire: String?,
         tasks: [Task],
         chatFunctionName: String = Study.defaultChatFunctionName,
+        defaultExplanationLevel: ExplanationLevel? = nil,
+        generatesImages: Bool = false,
+        previews: Previews = .init(),
         reportFormat: StudyReportFormat = .questionnaireResponse
     ) {
         self.id = id
@@ -83,11 +96,35 @@ public struct Study: Identifiable, Hashable, Sendable {
         self.summarizeSingleResourcePrompt = summarizeSingleResourcePrompt ?? .summarizeSingleFHIRResourceDefaultPrompt
         self.interpretMultipleResourcesPrompt = interpretMultipleResourcesPrompt ?? .interpretMultipleResourcesDefaultPrompt
         self.chatTitleConfig = chatTitleConfig
+        self.defaultExplanationLevel = defaultExplanationLevel
+        self.generatesImages = generatesImages
+        self.previews = previews
         self._initialQuestionnaire = initialQuestionnaire
         self.tasks = tasks
     }
     
     
+    /// The study with its previews switched on, for simulators and development deployments.
+    public func enablingPreviews() -> Study {
+        Study(
+            id: id,
+            title: title,
+            explainer: explainer,
+            llmModel: llmModel,
+            ragEnabled: ragEnabled,
+            summarizeSingleResourcePrompt: summarizeSingleResourcePrompt,
+            interpretMultipleResourcesPrompt: interpretMultipleResourcesPrompt,
+            chatTitleConfig: chatTitleConfig,
+            initialQuestionnaire: _initialQuestionnaire,
+            tasks: tasks,
+            chatFunctionName: chatFunctionName,
+            defaultExplanationLevel: previews.defaultExplanationLevel ?? defaultExplanationLevel,
+            generatesImages: generatesImages || previews.generatesImages,
+            previews: previews,
+            reportFormat: reportFormat
+        )
+    }
+
     /// Resolves the initial questionnaire resource without loading or decoding it.
     public func initialQuestionnaireURL(in bundle: Bundle) throws -> URL? {
         guard let initialQuestionnaire = _initialQuestionnaire else {
@@ -109,5 +146,19 @@ public struct Study: Identifiable, Hashable, Sendable {
         }
         let data = try Data(contentsOf: url)
         return try JSONDecoder().decode(Questionnaire.self, from: data)
+    }
+}
+
+
+extension Study {
+    /// Features a study offers only where they are being tried: in simulators and development deployments.
+    public struct Previews: Hashable, Sendable {
+        public let defaultExplanationLevel: ExplanationLevel?
+        public let generatesImages: Bool
+
+        public init(defaultExplanationLevel: ExplanationLevel? = nil, generatesImages: Bool = false) {
+            self.defaultExplanationLevel = defaultExplanationLevel
+            self.generatesImages = generatesImages
+        }
     }
 }

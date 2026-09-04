@@ -7,6 +7,7 @@
 //
 
 
+import GroveFoundation
 import GroveLLM
 import GroveLLMOpenAI
 import GroveQuestionnaire
@@ -96,6 +97,7 @@ final class StudyChatViewModel: Sendable {
         case instructions
         case survey
         case completion
+        case explanationLevel
         
         var id: some Hashable {
             self
@@ -145,6 +147,26 @@ final class StudyChatViewModel: Sendable {
     }
     /// The response to the Study's initial questionnaire, if any.
     private let initialQuestionnaireResponse: ModelsR4.QuestionnaireResponse?
+    /// Whether the participant has taken over how detailed an answer should be.
+    ///
+    /// Off until they say otherwise, so a study reads the way its own instructions ask for by default. Kept
+    /// between sessions, along with the level itself.
+    var isExplanationLevelEnabled: Bool {
+        didSet {
+            LocalPreferencesStore.standard[.explanationLevelEnabled] = isExplanationLevelEnabled
+        }
+    }
+
+    /// How much clinical detail the participant asked for, starting from what the study pre-selects.
+    ///
+    /// Only meaningful for a study that sets ``PlainlyShared/Study/defaultExplanationLevel``; the chat hides
+    /// the control otherwise, and the value then never reaches a request.
+    var explanationLevel: ExplanationLevel {
+        didSet {
+            LocalPreferencesStore.standard[.explanationLevel] = explanationLevel.rawValue
+        }
+    }
+
     private let studyStartTime = Date.now
     private var taskStartTimes: [Study.Task.ID: Date] = [:]
     private var taskEndTimes: [Study.Task.ID: Date] = [:]
@@ -165,6 +187,13 @@ final class StudyChatViewModel: Sendable {
         pendingReports: PendingReportStore?
     ) {
         self.inProgressStudy = inProgressStudy
+        // The participant's own choice outlives the session; the study's default is only where they start.
+        let store = LocalPreferencesStore.standard
+        self.isExplanationLevelEnabled = store[.explanationLevelEnabled]
+        self.explanationLevel = store[.explanationLevel]
+            .flatMap(ExplanationLevel.init(rawValue:))
+            ?? inProgressStudy.study.defaultExplanationLevel
+            ?? .balanced
         self.initialQuestionnaireResponse = initialQuestionnaireResponse
         self.interpretationModule = interpretationModule
         self.uploader = uploader
@@ -209,6 +238,10 @@ final class StudyChatViewModel: Sendable {
         taskStartTimes.removeAll()
         taskEndTimes.removeAll()
         navigationState = .introduction
+        // The conversation lives on the interpretation module, which outlasts this view model, so clearing the
+        // study's own state is not what the participant was told would happen.
+        interpretationModule.startNewConversation()
+        processingState = .completed
     }
     
     /// Starts the survey portion of the study
@@ -487,6 +520,11 @@ extension StudyChatViewModel {
     func generateAssistantResponse() async throws -> LLMContextEntity? {
         let correlationID = AppDiagnostics.correlationID()
         ensureResponseInput()
+        if study.defaultExplanationLevel != nil && isExplanationLevelEnabled {
+            // Applied per request rather than when the participant picks: a schema update rebuilds the context,
+            // and the choice has to survive that without the participant setting it again.
+            llmSession.context.setExplanationLevel(explanationLevel)
+        }
         await updateProcessingState()
         processingState = await processingState.calculateNewProcessingState(basedOn: llmSession)
         guard shouldGenerateResponse else {

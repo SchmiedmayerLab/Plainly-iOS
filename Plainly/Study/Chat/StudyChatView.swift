@@ -48,6 +48,8 @@ struct StudyChatView: View {
                         taskInstructionSheet()
                     case .survey:
                         SurveySheet(model: model)
+                    case .explanationLevel:
+                        ExplanationLevelSheet(model: model)
                     case .completion:
                         StudyCompletedSheet(studyTitle: model.study.title, state: model.completionState) {
                             model.finishCompletedStudy()
@@ -104,14 +106,16 @@ struct StudyChatView: View {
         )
         .chatHiddenMessages([InternalInput.conversationStarterID])
         .chatAttachments([])
+        .chatMessageActions([.followUp])
         // Reported inside the conversation rather than as an alert: the failure belongs to the answer
         // the participant is waiting for, and the retry sits right where they are looking.
         .chatError(generationError) {
             generationError = nil
             scheduleAssistantResponseGeneration()
         }
-        // Laid over the conversation rather than above it: taking space away as the bar appears moves
-        // every message down, and the scroll the answer is arriving into with them.
+        // Laid over the conversation rather than above it: taking space away as the line appears moves every
+        // message down, and the scroll the answer is arriving into with them. The safe area's top edge sits
+        // directly under the navigation bar, which is where the line belongs.
         .overlay(alignment: .top) {
             StudyChatProcessingView(model: model)
                 .allowsHitTesting(false)

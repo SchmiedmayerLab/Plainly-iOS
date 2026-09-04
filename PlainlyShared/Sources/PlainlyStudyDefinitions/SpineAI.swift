@@ -27,7 +27,9 @@ extension Study {
             interpretMultipleResourcesPrompt: .spineAISystemPrompt,
             chatTitleConfig: .studyTitle,
             initialQuestionnaire: "SpineAI_InitialSurvey",
-            tasks: []
+            tasks: [],
+            // Tried out in simulators and development deployments; participants see neither yet.
+            previews: .init(defaultExplanationLevel: .balanced, generatesImages: true)
         )
     }
 }
