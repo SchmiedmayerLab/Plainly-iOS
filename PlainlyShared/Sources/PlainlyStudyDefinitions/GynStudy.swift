@@ -133,7 +133,7 @@ private let postInterventionQuestions: [Questionnaire.Task] = [
             
             Below are some statements that people sometimes make when they talk about their reproductive health. Please indicate how much you agree or disagree with each statement as it applies to you personally by circling your answer. Your answers should be what is true for you and not just what you think others want you to say.
             
-            If the statement does not apply to you, select N/A. (All questions are assessed with Always, Often, Sometimes, Rarely, Never)
+            (All questions are assessed with Always, Often, Sometimes, Rarely, Never)
             
             Please answer these questions based on how you feel **with access to an application** like Plainly.
             """),
