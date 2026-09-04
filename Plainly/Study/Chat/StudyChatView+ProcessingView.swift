@@ -17,7 +17,8 @@ import SwiftUI
 /// messages does not.
 struct StudyChatProcessingView: View {
     /// How quickly the line approaches its ceiling; after this many seconds it has covered ~63 % of the way.
-    private static let creepTimeConstant: TimeInterval = 8
+    /// An unstreamed answer with an image can take most of a minute; the bar must still be moving when it lands.
+    private static let creepTimeConstant: TimeInterval = 20
     private static let lineHeight: CGFloat = 2.5
     /// How long the finished line stays at full width before it fades.
     private static let completionHold: Duration = .milliseconds(400)

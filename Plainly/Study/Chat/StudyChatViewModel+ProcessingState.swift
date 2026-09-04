@@ -37,15 +37,12 @@ extension StudyChatViewModel {
 
         /// How far the bar may creep on time alone before the next real milestone arrives.
         ///
-        /// Most of a turn is spent waiting inside one state — the gateway round trip alone lives
-        /// entirely in ``processingSystemPrompts`` — and a bar that only moves on state changes
-        /// reads as stuck. The creep keeps it visibly alive without ever promising the next stage.
+        /// Without streaming the whole answer lands at the end of one long wait, so the creep runs on
+        /// towards 90 % instead of stopping at a stage's share and leaves only the last stretch for the finish.
         var creepCeiling: Double {
             switch self {
-            case .processingSystemPrompts:
-                return 45
-            case .processingFunctionCalls:
-                return min(progress + 18, 88)
+            case .processingSystemPrompts, .processingFunctionCalls:
+                return 90
             case .generatingResponse:
                 return 97
             case .completed:
