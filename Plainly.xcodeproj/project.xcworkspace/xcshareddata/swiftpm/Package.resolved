@@ -366,8 +366,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/PSchmiedmayer/textual.git",
       "state" : {
-        "revision" : "8a58f8290aeb1d04e2b3128288cd9a63f15791c1",
-        "version" : "0.6.2"
+        "revision" : "493e55ea5ee04c6716cc69f2c5879f5df2b7162e",
+        "version" : "0.6.3"
       }
     },
     {
