@@ -61,9 +61,11 @@ final class FirebaseUpload: Module, EnvironmentAccessible, Sendable {
                 NSLocalizedDescriptionKey: "Unable to upload: failed to find user"
             ])
         }
-        let storageRef = Storage.storage().reference(withPath: "/studies/\(study.id)/users/\(userId)/\(UUID().uuidString).json")
+        let storagePath = try await StudyReportUpload.storagePath(studyID: study.id, reportAt: url)
+        let storageRef = Storage.storage().reference(withPath: storagePath)
         let metadata = StorageMetadata()
         metadata.contentType = "application/octet-stream"
+        metadata.customMetadata = ["userId": userId]
         do {
             _ = try await storageRef.putFileAsync(from: url, metadata: metadata)
         } catch {
