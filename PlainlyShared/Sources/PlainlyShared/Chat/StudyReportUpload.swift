@@ -19,6 +19,10 @@ public enum StudyReportUpload {
         let metadata: Metadata
     }
 
+    private static let allowedFilenameCharacters = CharacterSet(
+        charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-."
+    )
+
     /// Places all participants' reports directly in their study's folder.
     ///
     /// Reads the participant ID from the report itself so retained reports keep their enrollment
@@ -31,11 +35,11 @@ public enum StudyReportUpload {
         identifier: UUID = UUID()
     ) throws -> String {
         let report = try JSONDecoder().decode(Report.self, from: reportData)
-        let studyComponent = filenameComponent(studyID)
+        let studyComponent = try filenameComponent(studyID)
         var components = [studyComponent]
         if let participantID = report.metadata.userInfo["pid"]?.trimmingCharacters(in: .whitespacesAndNewlines),
            !participantID.isEmpty {
-            components.append("pid-\(filenameComponent(participantID))")
+            components.append("pid-\(try filenameComponent(participantID))")
         }
         let timestamp = uploadedAt.formatted(Date.ISO8601FormatStyle(includingFractionalSeconds: true))
             .replacingOccurrences(of: ":", with: "-")
@@ -44,17 +48,11 @@ public enum StudyReportUpload {
         return "studies/\(studyComponent)/\(components.joined(separator: "_")).json"
     }
 
-    private static func filenameComponent(_ value: String) -> String {
-        // Preserve ASCII letters, digits, dots, and hyphens. Escape every other UTF-8 byte,
-        // including separators and percent signs, without merging distinct identifiers.
-        let encodedBytes = value.utf8.map { byte in
-            switch byte {
-            case 45, 46, 48...57, 65...90, 97...122:
-                String(UnicodeScalar(byte))
-            default:
-                String(format: "%%%02X", byte)
-            }
+    private static func filenameComponent(_ value: String) throws -> String {
+        // Escape separators and percent signs so distinct identifiers stay distinct.
+        guard let encoded = value.addingPercentEncoding(withAllowedCharacters: allowedFilenameCharacters) else {
+            throw CocoaError(.fileWriteInapplicableStringEncoding)
         }
-        return encodedBytes.joined()
+        return encoded
     }
 }
