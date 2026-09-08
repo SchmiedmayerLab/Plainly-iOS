@@ -15,31 +15,22 @@ struct Welcome: View {
     @Environment(ManagedNavigationStack.Path.self) private var managedNavigationStackPath
     
     var body: some View {
-        OnboardingView(
+        PageView(
             title: "WELCOME_TITLE",
             subtitle: "WELCOME_SUBTITLE",
             areas: [
                 OnboardingInformationView.Area(
-                    icon: {
-                        Image(systemName: "apps.iphone")
-                            .accessibilityHidden(true)
-                    },
+                    iconSymbol: "waveform.path.ecg.text.page.fill",
                     title: "WELCOME_AREA1_TITLE",
                     description: "WELCOME_AREA1_DESCRIPTION"
                 ),
                 OnboardingInformationView.Area(
-                    icon: {
-                        Image(systemName: "shippingbox.fill")
-                            .accessibilityHidden(true)
-                    },
+                    iconSymbol: "wand.and.sparkles",
                     title: "WELCOME_AREA2_TITLE",
                     description: "WELCOME_AREA2_DESCRIPTION"
                 ),
                 OnboardingInformationView.Area(
-                    icon: {
-                        Image(systemName: "list.bullet.clipboard.fill")
-                            .accessibilityHidden(true)
-                    },
+                    iconSymbol: "text.bubble.fill",
                     title: "WELCOME_AREA3_TITLE",
                     description: "WELCOME_AREA3_DESCRIPTION"
                 )

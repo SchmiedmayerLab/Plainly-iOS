@@ -15,39 +15,27 @@ struct Disclaimer: View {
     @Environment(ManagedNavigationStack.Path.self) private var path
 
     var body: some View {
-        OnboardingView(
+        PageView(
             title: "DISCLAIMER_TITLE",
             subtitle: "DISCLAIMER_SUBTITLE",
             areas: [
                 OnboardingInformationView.Area(
-                    icon: {
-                        Image(systemName: "info.circle.fill")
-                            .accessibilityHidden(true)
-                    },
+                    iconSymbol: "info.circle.fill",
                     title: "DISCLAIMER_AREA1_TITLE",
                     description: "DISCLAIMER_AREA1_DESCRIPTION"
                 ),
                 OnboardingInformationView.Area(
-                    icon: {
-                        Image(systemName: "bubble.left.and.exclamationmark.bubble.right.fill")
-                            .accessibilityHidden(true)
-                    },
+                    iconSymbol: "exclamationmark.triangle.fill",
                     title: "DISCLAIMER_AREA2_TITLE",
                     description: "DISCLAIMER_AREA2_DESCRIPTION"
                 ),
                 OnboardingInformationView.Area(
-                    icon: {
-                        Image(systemName: "cross.case.fill")
-                            .accessibilityHidden(true)
-                    },
+                    iconSymbol: "stethoscope.circle.fill",
                     title: "DISCLAIMER_AREA3_TITLE",
                     description: "DISCLAIMER_AREA3_DESCRIPTION"
                 ),
                 OnboardingInformationView.Area(
-                    icon: {
-                        Image(systemName: "flask.fill")
-                            .accessibilityHidden(true)
-                    },
+                    iconSymbol: "flask.fill",
                     title: "DISCLAIMER_AREA4_TITLE",
                     description: "DISCLAIMER_AREA4_DESCRIPTION"
                 )

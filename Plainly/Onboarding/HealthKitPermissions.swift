@@ -8,7 +8,6 @@
 
 import GroveFoundation
 import GroveHealthKit
-import GroveOnboarding
 import GroveViews
 import SwiftUI
 
@@ -32,44 +31,26 @@ struct HealthKitPermissions: View {
     
     
     var body: some View {
-        OnboardingView {
-            VStack {
-                OnboardingTitleView(
-                    title: "HEALTHKIT_PERMISSIONS_TITLE",
-                    subtitle: "HEALTHKIT_PERMISSIONS_SUBTITLE"
-                )
-                Spacer()
-                Image(systemName: "heart.text.square.fill")
-                    .accessibilityHidden(true)
-                    .font(.system(size: 150))
-                    .foregroundColor(.accentColor)
-                Text("HEALTHKIT_PERMISSIONS_DESCRIPTION")
-                    .multilineTextAlignment(.leading)
-                    .padding(.vertical, 16)
-                Spacer()
-            }
+        PageView {
+            PageHeader(
+                title: "HEALTHKIT_PERMISSIONS_TITLE",
+                subtitle: "HEALTHKIT_PERMISSIONS_SUBTITLE",
+                image: Image(systemName: "waveform.path.ecg.text.page.fill") // swiftlint:disable:this accessibility_label_for_image
+            )
+        } content: {
+            Text("HEALTHKIT_PERMISSIONS_DESCRIPTION")
+                .frame(maxWidth: .infinity, alignment: .leading)
         } footer: {
-            VStack(spacing: 0) {
-                Button(action: requestAuthorization) {
-                    HStack {
-                        Text(primaryButtonTitle)
-                            .bold()
-                        if authorizationState.isProcessing {
-                            ProgressView()
-                                .tint(.white)
-                        }
-                    }
-                    .frame(maxWidth: .infinity, minHeight: 38)
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(authorizationState != .idle)
-
-                if authorizationState == .recoveryAvailable {
-                    Button("HEALTHKIT_PERMISSIONS_SKIP_BUTTON") {
-                        completeAuthorization(fetchRecords: false)
-                    }
-                        .padding(.vertical, 10)
-                }
+            if authorizationState == .recoveryAvailable {
+                PageActions(
+                    primaryTitle: primaryButtonTitle,
+                    primaryViewState: primaryViewState,
+                    primaryAction: requestAuthorization,
+                    secondaryTitle: "HEALTHKIT_PERMISSIONS_SKIP_BUTTON",
+                    secondaryAction: { completeAuthorization(fetchRecords: false) }
+                )
+            } else {
+                PageActions(primaryButtonTitle, viewState: primaryViewState, action: requestAuthorization)
             }
         }
         .navigationBarBackButtonHidden(authorizationState.isProcessing)
@@ -95,6 +76,12 @@ struct HealthKitPermissions: View {
 
     private var primaryButtonTitle: LocalizedStringResource {
         authorizationState.isProcessing ? "HEALTHKIT_PERMISSIONS_WAITING" : "HEALTHKIT_PERMISSIONS_BUTTON"
+    }
+
+    /// The system sheet does the waiting, so the button only reflects it; nothing is written back. Once recovery is
+    /// offered the button rests again, or the actions view would disable the skip button along with it.
+    private var primaryViewState: Binding<ViewState> {
+        Binding(get: { authorizationState == .requesting ? .processing : .idle }, set: { _ in })
     }
 
     private func requestAuthorization() {
