@@ -60,11 +60,62 @@ struct StudyReportUploadTests {
         }
     }
 
+    @Test
+    @MainActor
+    func namesRetainedReportFromItsSavedMetadata() async throws {
+        let studyID = "edu.stanford.plainly.spineAI"
+        let reportData = try encodedReport(userInfo: ["pid": "P042"], studyID: studyID)
+        let reportURL = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString).json")
+        try reportData.write(to: reportURL)
+        defer { try? FileManager.default.removeItem(at: reportURL) }
+
+        let path = try await StudyReportUpload.storagePath(
+            studyID: studyID,
+            reportAt: reportURL,
+            uploadedAt: Date(timeIntervalSince1970: 1_000.125),
+            identifier: #require(UUID(uuidString: "A8F39C21-1111-2222-3333-444444444444"))
+        )
+
+        #expect(path == "studies/edu.stanford.plainly.spineAI/edu.stanford.plainly.spineAI_pid-P042_1970-01-01T00-16-40.125Z_a8f39c21.json")
+        #expect(try Data(contentsOf: reportURL) == reportData)
+    }
+
+    @Test
+    func propagatesReportFileReadFailure() async {
+        let missingReportURL = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString).json")
+
+        await #expect(throws: CocoaError.self) {
+            try await StudyReportUpload.storagePath(studyID: "study", reportAt: missingReportURL)
+        }
+    }
+
+    @Test
+    func rejectsCancelledUploadBeforeReadingReport() async {
+        let missingReportURL = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString).json")
+        let task = Task {
+            withUnsafeCurrentTask { $0?.cancel() }
+            return try await StudyReportUpload.storagePath(studyID: "study", reportAt: missingReportURL)
+        }
+
+        await #expect(throws: CancellationError.self) {
+            try await task.value
+        }
+    }
+
     private func storagePath(
         userInfo: [String: String],
         studyID: String = "edu.stanford.plainly.spineAI",
         identifier: String = "A8F39C21-1111-2222-3333-444444444444"
     ) throws -> String {
+        try StudyReportUpload.storagePath(
+            studyID: studyID,
+            reportData: encodedReport(userInfo: userInfo, studyID: studyID),
+            uploadedAt: Date(timeIntervalSince1970: 1_000.125),
+            identifier: #require(UUID(uuidString: identifier))
+        )
+    }
+
+    private func encodedReport(userInfo: [String: String], studyID: String) throws -> Data {
         let report = StudyReport(
             metadata: .init(
                 studyID: studyID,
@@ -77,11 +128,6 @@ struct StudyReportUploadTests {
             fhirResources: .init(llmRelevantResources: [], allResources: []),
             timeline: []
         )
-        return try StudyReportUpload.storagePath(
-            studyID: studyID,
-            reportData: JSONEncoder().encode(report),
-            uploadedAt: Date(timeIntervalSince1970: 1_000.125),
-            identifier: #require(UUID(uuidString: identifier))
-        )
+        return try JSONEncoder().encode(report)
     }
 }

@@ -23,6 +23,28 @@ public enum StudyReportUpload {
         charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-."
     )
 
+    /// Reads a report and prepares its upload path off the caller's actor.
+    ///
+    /// File reading and JSON decoding can be expensive for retained reports, so both run away from
+    /// the main actor. Cancellation prevents a stopped retry from proceeding to upload the file.
+    @concurrent
+    public static func storagePath(
+        studyID: String,
+        reportAt url: URL,
+        uploadedAt: Date = .now,
+        identifier: UUID = UUID()
+    ) async throws -> String {
+        try Task.checkCancellation()
+        let path = try storagePath(
+            studyID: studyID,
+            reportData: Data(contentsOf: url),
+            uploadedAt: uploadedAt,
+            identifier: identifier
+        )
+        try Task.checkCancellation()
+        return path
+    }
+
     /// Places all participants' reports directly in their study's folder.
     ///
     /// Reads the participant ID from the report itself so retained reports keep their enrollment
