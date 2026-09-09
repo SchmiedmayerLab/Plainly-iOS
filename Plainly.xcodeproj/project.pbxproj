@@ -18,6 +18,7 @@
 		803D16682F30DA3C0060B931 /* PlainlyStudyDefinitions in Frameworks */ = {isa = PBXBuildFile; productRef = 803D16672F30DA3C0060B931 /* PlainlyStudyDefinitions */; };
 		80525CBB2F8CFC410046D600 /* GroveLLM in Frameworks */ = {isa = PBXBuildFile; productRef = 44E18E872CEBEC9500829A26 /* GroveLLM */; };
 		80525CBC2F8CFC410046D600 /* GroveLLMOpenAI in Frameworks */ = {isa = PBXBuildFile; productRef = 44E18E8F2CEBEC9500829A26 /* GroveLLMOpenAI */; };
+		80E0A0012FAB000100000001 /* GroveOnboarding in Frameworks */ = {isa = PBXBuildFile; productRef = 80E0A0022FAB000100000001 /* GroveOnboarding */; };
 		80525CBD2F8CFC410046D600 /* GroveFHIR in Frameworks */ = {isa = PBXBuildFile; productRef = 806DF5B92EC234AD00A8243C /* GroveFHIR */; };
 		80525CBE2F8CFC410046D600 /* GroveHealthKitFHIR in Frameworks */ = {isa = PBXBuildFile; productRef = 806DF5BB2EC234AD00A8243C /* GroveHealthKitFHIR */; };
 		80525CBF2F8CFC410046D600 /* GroveFHIRMockPatients in Frameworks */ = {isa = PBXBuildFile; productRef = 806DF5BD2EC234AD00A8243C /* GroveFHIRMockPatients */; };
@@ -86,6 +87,7 @@
 				80525CBE2F8CFC410046D600 /* GroveHealthKitFHIR in Frameworks */,
 				80525CBD2F8CFC410046D600 /* GroveFHIR in Frameworks */,
 				80525CBC2F8CFC410046D600 /* GroveLLMOpenAI in Frameworks */,
+				80E0A0012FAB000100000001 /* GroveOnboarding in Frameworks */,
 				80525CBB2F8CFC410046D600 /* GroveLLM in Frameworks */,
 				3A3B672E3023AC1300C229B0 /* GroveFirebaseAccount in Frameworks */,
 				803D16682F30DA3C0060B931 /* PlainlyStudyDefinitions in Frameworks */,
@@ -165,6 +167,7 @@
 				9710D3552B84151F00E0A20F /* GroveChat */,
 				44E18E872CEBEC9500829A26 /* GroveLLM */,
 				44E18E8F2CEBEC9500829A26 /* GroveLLMOpenAI */,
+				80E0A0022FAB000100000001 /* GroveOnboarding */,
 				806DF5B92EC234AD00A8243C /* GroveFHIR */,
 				806DF5BB2EC234AD00A8243C /* GroveHealthKitFHIR */,
 				806DF5BD2EC234AD00A8243C /* GroveFHIRMockPatients */,
@@ -566,8 +569,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/SchmiedmayerLab/Grove.git";
 			requirement = {
-				kind = exactVersion;
-				version = "0.3.0-beta.7";
+				branch = "consent-and-documentation-grid";
+				kind = branch;
 			};
 		};
 		2FD8E8282A1AADDA00357F4E /* XCRemoteSwiftPackageReference "FHIRModels" */ = {
@@ -641,6 +644,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 3A3B67223023ABD400C229B0 /* XCRemoteSwiftPackageReference "Grove" */;
 			productName = GroveLLM;
+		};
+		80E0A0022FAB000100000001 /* GroveOnboarding */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3A3B67223023ABD400C229B0 /* XCRemoteSwiftPackageReference "Grove" */;
+			productName = GroveOnboarding;
 		};
 		44E18E8F2CEBEC9500829A26 /* GroveLLMOpenAI */ = {
 			isa = XCSwiftPackageProductDependency;

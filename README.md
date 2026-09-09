@@ -81,6 +81,16 @@ swift run PlainlyCLI export-config -f ~/GoogleService-Info.plist ../Plainly/Supp
 
 Study reports are uploaded to Firebase Storage. A report that cannot be uploaded is kept in Application Support, surfaced on the study home screen, and retried when the participant returns to that screen or relaunches the app.
 
+### Study Uploads
+
+Reports land in the production bucket under `studies/<study>/reports/`; older builds put them under `studies/<study>/users/<uid>/`. [`scripts/download-study-uploads.sh`](scripts/download-study-uploads.sh) pulls a study's reports into one flat folder per study, renaming the older ones from their content and upload time so they sort with the rest, and leaves the RAG files alone. `--project` names the Firebase project whose default bucket holds the studies, and `--study all` takes every study in it:
+
+```bash
+scripts/download-study-uploads.sh --project <firebase project> --study edu.stanford.LLMonFHIR.gynStudy
+```
+
+The script uses the [Google Cloud CLI](https://cloud.google.com/sdk/docs/install), `brew install --cask google-cloud-sdk`, and asks you to sign in the first time. Files go to `study-uploads/<study>/`, which git ignores; a second run only fetches what is new. They contain study data.
+
 ## Session Simulation
 
 The PlainlyShared subpackage contains a tool that lets you simulate user chat sessions.

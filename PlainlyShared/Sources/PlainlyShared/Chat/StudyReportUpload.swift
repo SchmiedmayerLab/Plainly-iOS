@@ -45,7 +45,7 @@ public enum StudyReportUpload {
         return path
     }
 
-    /// Places all participants' reports directly in their study's folder.
+    /// Places all participants' reports in their study's `reports` folder, beside the RAG files.
     ///
     /// Reads the participant ID from the report itself so retained reports keep their enrollment
     /// information when retried. The timestamp describes this upload attempt, in UTC; the suffix
@@ -67,7 +67,7 @@ public enum StudyReportUpload {
             .replacingOccurrences(of: ":", with: "-")
         components.append(timestamp)
         components.append(String(identifier.uuidString.prefix(8)).lowercased())
-        return "studies/\(studyComponent)/\(components.joined(separator: "_")).json"
+        return "studies/\(studyComponent)/reports/\(components.joined(separator: "_")).json"
     }
 
     private static func filenameComponent(_ value: String) throws -> String {

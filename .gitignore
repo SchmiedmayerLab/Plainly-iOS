@@ -47,3 +47,6 @@ firebase-debug.*.log*
 .firebase/
 .vscode/
 
+
+# Study data pulled with scripts/download-study-uploads.sh
+study-uploads/
