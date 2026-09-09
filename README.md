@@ -83,13 +83,13 @@ Study reports are uploaded to Firebase Storage. A report that cannot be uploaded
 
 ### Study Uploads
 
-Reports land in the production bucket under `studies/<study>/`; older builds put them under `studies/<study>/users/<uid>/`. [`scripts/download-study-uploads.sh`](scripts/download-study-uploads.sh) mirrors a study folder with everything in it:
+Reports land in the production bucket under `studies/<study>/`; older builds put them under `studies/<study>/users/<uid>/`. [`scripts/download-study-uploads.sh`](scripts/download-study-uploads.sh) mirrors a study folder with everything in it and lays the reports out flat in `reports/`, renaming the older ones from their content and upload time so they sort with the rest:
 
 ```bash
 scripts/download-study-uploads.sh edu.stanford.LLMonFHIR.gynStudy
 ```
 
-The script uses the [Google Cloud CLI](https://cloud.google.com/sdk/docs/install), `brew install --cask google-cloud-sdk`, and asks you to sign in the first time. Files go to `study-uploads/`, which git ignores. They contain study data.
+The script uses the [Google Cloud CLI](https://cloud.google.com/sdk/docs/install), `brew install --cask google-cloud-sdk`, and asks you to sign in the first time. Files go to `study-uploads/`, which git ignores: the bucket as it is under `bucket/`, the flat view under `reports/`. They contain study data.
 
 ## Session Simulation
 
