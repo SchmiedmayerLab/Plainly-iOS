@@ -44,11 +44,11 @@ struct HealthKitPermissions: View {
             if authorizationState == .recoveryAvailable {
                 PageActions(
                     primaryTitle: primaryButtonTitle,
-                    primaryViewState: primaryViewState,
                     primaryAction: requestAuthorization,
                     secondaryTitle: "HEALTHKIT_PERMISSIONS_SKIP_BUTTON",
                     secondaryAction: { completeAuthorization(fetchRecords: false) }
                 )
+                .actionButtonDisabled(.primary)
             } else {
                 PageActions(primaryButtonTitle, viewState: primaryViewState, action: requestAuthorization)
             }
@@ -78,10 +78,9 @@ struct HealthKitPermissions: View {
         authorizationState.isProcessing ? "HEALTHKIT_PERMISSIONS_WAITING" : "HEALTHKIT_PERMISSIONS_BUTTON"
     }
 
-    /// The system sheet does the waiting, so the button only reflects it; nothing is written back. Once recovery is
-    /// offered the button rests again, or the actions view would disable the skip button along with it.
+    /// The system sheet does the waiting, so the button only reflects it; nothing is written back.
     private var primaryViewState: Binding<ViewState> {
-        Binding(get: { authorizationState == .requesting ? .processing : .idle }, set: { _ in })
+        Binding(get: { authorizationState.isProcessing ? .processing : .idle }, set: { _ in })
     }
 
     private func requestAuthorization() {
