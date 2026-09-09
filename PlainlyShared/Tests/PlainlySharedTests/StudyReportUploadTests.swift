@@ -16,7 +16,7 @@ struct StudyReportUploadTests {
     func namesReportFromItsParticipantID(participantID: String) throws {
         let path = try storagePath(userInfo: ["pid": participantID])
 
-        #expect(path == "studies/edu.stanford.plainly.spineAI/edu.stanford.plainly.spineAI_pid-P042_1970-01-01T00-16-40.125Z_a8f39c21.json")
+        #expect(path == "studies/edu.stanford.plainly.spineAI/reports/edu.stanford.plainly.spineAI_pid-P042_1970-01-01T00-16-40.125Z_a8f39c21.json")
     }
 
     @Test(arguments: [nil, "", " \t\n"] as [String?])
@@ -25,7 +25,7 @@ struct StudyReportUploadTests {
         userInfo["pid"] = participantID
         let path = try storagePath(userInfo: userInfo)
 
-        #expect(path == "studies/edu.stanford.plainly.spineAI/edu.stanford.plainly.spineAI_1970-01-01T00-16-40.125Z_a8f39c21.json")
+        #expect(path == "studies/edu.stanford.plainly.spineAI/reports/edu.stanford.plainly.spineAI_1970-01-01T00-16-40.125Z_a8f39c21.json")
     }
 
     @Test(arguments: [
@@ -39,8 +39,8 @@ struct StudyReportUploadTests {
     func escapesIdentifiersWithoutLosingTheirIdentity(identifier: String, escaped: String) throws {
         let path = try storagePath(userInfo: ["pid": identifier], studyID: identifier)
 
-        #expect(path == "studies/\(escaped)/\(escaped)_pid-\(escaped)_1970-01-01T00-16-40.125Z_a8f39c21.json")
-        #expect(path.split(separator: "/").count == 3)
+        #expect(path == "studies/\(escaped)/reports/\(escaped)_pid-\(escaped)_1970-01-01T00-16-40.125Z_a8f39c21.json")
+        #expect(path.split(separator: "/").count == 4)
     }
 
     @Test
@@ -76,7 +76,7 @@ struct StudyReportUploadTests {
             identifier: #require(UUID(uuidString: "A8F39C21-1111-2222-3333-444444444444"))
         )
 
-        #expect(path == "studies/edu.stanford.plainly.spineAI/edu.stanford.plainly.spineAI_pid-P042_1970-01-01T00-16-40.125Z_a8f39c21.json")
+        #expect(path == "studies/edu.stanford.plainly.spineAI/reports/edu.stanford.plainly.spineAI_pid-P042_1970-01-01T00-16-40.125Z_a8f39c21.json")
         #expect(try Data(contentsOf: reportURL) == reportData)
     }
 
