@@ -4,14 +4,56 @@
   "name": "LumbarSpineTriageAndPhenotyping",
   "title": "SpineAI Questionnaire",
   "description": "Triage and phenotyping questionnaire for lumbar spine conditions including axial back pain and radiculopathy.",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "status": "active",
   "publisher": "Spine AI Research Team",
   "subjectType": [
     "Patient"
   ],
-  "date": "2026-03-13",
+  "date": "2026-09-11",
   "url": "https://spineai.stanford.edu/fhir/Questionnaire/lumbar-spine-triage",
+  "extension": [
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/variable",
+      "valueExpression": {
+        "name": "caudaEquina",
+        "language": "text/fhirpath",
+        "expression": "%resource.descendants().where(linkId='1.6').answer.value.where(code='retention' or code='bladder-bowel' or code='perineal-numbness' or code='leg-weakness' or code='bilateral-weakness' or code='bilateral-numbness').exists()"
+      }
+    },
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/variable",
+      "valueExpression": {
+        "name": "injury",
+        "language": "text/fhirpath",
+        "expression": "%resource.descendants().where(linkId='1.3').answer.value.where(code='373066001').exists() and %resource.descendants().where(linkId='1.3a' or linkId='1.3b' or linkId='1.3c').answer.value.where(code='373066001').exists()"
+      }
+    },
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/variable",
+      "valueExpression": {
+        "name": "cancer",
+        "language": "text/fhirpath",
+        "expression": "%resource.descendants().where(linkId='1.4').answer.value.where(code='373066001').exists() and %resource.descendants().where(linkId='1.4a' or linkId='1.4b' or linkId='1.4c' or linkId='1.4d').answer.value.where(code='373066001').exists()"
+      }
+    },
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/variable",
+      "valueExpression": {
+        "name": "infection",
+        "language": "text/fhirpath",
+        "expression": "%resource.descendants().where(linkId='1.5').answer.value.where(code='373066001').exists() and %resource.descendants().where(linkId='1.5a' or linkId='1.5b' or linkId='1.5c').answer.value.where(code='373066001').exists()"
+      }
+    },
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/variable",
+      "valueExpression": {
+        "name": "legWeakness",
+        "language": "text/fhirpath",
+        "expression": "%caudaEquina.not() and %resource.descendants().where(linkId='1.1').answer.value.where(code='leg-pain' or code='trouble-walking' or code='mixed').exists() and %resource.descendants().where(linkId='7.5').answer.value.where(code='severe').exists()"
+      }
+    }
+  ],
   "item": [
     {
       "linkId": "1",
@@ -22,6 +64,7 @@
           "linkId": "1.1",
           "text": "Which option best describes your primary symptom?",
           "type": "choice",
+          "required": true,
           "answerOption": [
             {
               "valueCoding": {
@@ -51,13 +94,20 @@
                 "display": "Both back and leg symptoms"
               }
             }
-          ],
-          "required": true
+          ]
         },
         {
           "linkId": "1.2",
+          "code": [
+            {
+              "system": "http://loinc.org",
+              "code": "38207-7",
+              "display": "Pain duration - Reported"
+            }
+          ],
           "text": "How long have these symptoms been present?",
           "type": "choice",
+          "required": true,
           "answerOption": [
             {
               "valueCoding": {
@@ -87,20 +137,13 @@
                 "display": "More than 1 year"
               }
             }
-          ],
-          "required": true,
-          "code": [
-            {
-              "system": "http://loinc.org",
-              "code": "38207-7",
-              "display": "Pain duration - Reported"
-            }
           ]
         },
         {
           "linkId": "1.3",
-          "text": "Did your symptoms start following a significant fall or trauma?",
+          "text": "Did your symptoms start after a fall, an accident or an injury?",
           "type": "choice",
+          "required": true,
           "answerOption": [
             {
               "valueCoding": {
@@ -116,13 +159,112 @@
                 "display": "No"
               }
             }
+          ]
+        },
+        {
+          "linkId": "1.3a",
+          "text": "Did the pain start suddenly?",
+          "type": "choice",
+          "required": true,
+          "enableWhen": [
+            {
+              "question": "1.3",
+              "operator": "=",
+              "answerCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373066001"
+              }
+            }
           ],
-          "required": true
+          "enableBehavior": "any",
+          "answerOption": [
+            {
+              "valueCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373066001",
+                "display": "Yes"
+              }
+            },
+            {
+              "valueCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373067005",
+                "display": "No"
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "1.3b",
+          "text": "Is the pain much worse when you cough or sneeze?",
+          "type": "choice",
+          "required": true,
+          "enableWhen": [
+            {
+              "question": "1.3",
+              "operator": "=",
+              "answerCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373066001"
+              }
+            }
+          ],
+          "enableBehavior": "any",
+          "answerOption": [
+            {
+              "valueCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373066001",
+                "display": "Yes"
+              }
+            },
+            {
+              "valueCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373067005",
+                "display": "No"
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "1.3c",
+          "text": "Is the pain worse when you move or stand, and better when you lie still?",
+          "type": "choice",
+          "required": true,
+          "enableWhen": [
+            {
+              "question": "1.3",
+              "operator": "=",
+              "answerCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373066001"
+              }
+            }
+          ],
+          "enableBehavior": "any",
+          "answerOption": [
+            {
+              "valueCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373066001",
+                "display": "Yes"
+              }
+            },
+            {
+              "valueCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373067005",
+                "display": "No"
+              }
+            }
+          ]
         },
         {
           "linkId": "1.4",
           "text": "Have you ever been diagnosed with cancer?",
           "type": "choice",
+          "required": true,
           "answerOption": [
             {
               "valueCoding": {
@@ -137,21 +279,146 @@
                 "code": "373067005",
                 "display": "No"
               }
+            }
+          ]
+        },
+        {
+          "linkId": "1.4a",
+          "text": "Does your back pain wake you up at night and/or is it there when you are lying still?",
+          "type": "choice",
+          "required": true,
+          "enableWhen": [
+            {
+              "question": "1.4",
+              "operator": "=",
+              "answerCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373066001"
+              }
+            }
+          ],
+          "enableBehavior": "any",
+          "answerOption": [
+            {
+              "valueCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373066001",
+                "display": "Yes"
+              }
             },
             {
               "valueCoding": {
                 "system": "http://snomed.info/sct",
-                "code": "261665006",
-                "display": "Not sure"
+                "code": "373067005",
+                "display": "No"
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "1.4b",
+          "text": "Have you been losing weight without trying to?",
+          "type": "choice",
+          "required": true,
+          "enableWhen": [
+            {
+              "question": "1.4",
+              "operator": "=",
+              "answerCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373066001"
               }
             }
           ],
-          "required": true
+          "enableBehavior": "any",
+          "answerOption": [
+            {
+              "valueCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373066001",
+                "display": "Yes"
+              }
+            },
+            {
+              "valueCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373067005",
+                "display": "No"
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "1.4c",
+          "text": "Has your back pain changed or got worse in the last few weeks?",
+          "type": "choice",
+          "required": true,
+          "enableWhen": [
+            {
+              "question": "1.4",
+              "operator": "=",
+              "answerCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373066001"
+              }
+            }
+          ],
+          "enableBehavior": "any",
+          "answerOption": [
+            {
+              "valueCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373066001",
+                "display": "Yes"
+              }
+            },
+            {
+              "valueCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373067005",
+                "display": "No"
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "1.4d",
+          "text": "Have you been having night sweats?",
+          "type": "choice",
+          "required": true,
+          "enableWhen": [
+            {
+              "question": "1.4",
+              "operator": "=",
+              "answerCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373066001"
+              }
+            }
+          ],
+          "enableBehavior": "any",
+          "answerOption": [
+            {
+              "valueCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373066001",
+                "display": "Yes"
+              }
+            },
+            {
+              "valueCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373067005",
+                "display": "No"
+              }
+            }
+          ]
         },
         {
           "linkId": "1.5",
-          "text": "Have you recently experienced fevers or chills, or have you been diagnosed with a spinal infection?",
+          "text": "Have you had fevers or chills in the last few weeks?",
           "type": "choice",
+          "required": true,
           "answerOption": [
             {
               "valueCoding": {
@@ -167,14 +434,134 @@
                 "display": "No"
               }
             }
+          ]
+        },
+        {
+          "linkId": "1.5a",
+          "text": "Have you been recently told you have an infection in your spine?",
+          "type": "choice",
+          "required": true,
+          "enableWhen": [
+            {
+              "question": "1.5",
+              "operator": "=",
+              "answerCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373066001"
+              }
+            }
           ],
-          "required": true
+          "enableBehavior": "any",
+          "answerOption": [
+            {
+              "valueCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373066001",
+                "display": "Yes"
+              }
+            },
+            {
+              "valueCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373067005",
+                "display": "No"
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "1.5b",
+          "text": "Is the pain there all the time, including when you rest?",
+          "type": "choice",
+          "required": true,
+          "enableWhen": [
+            {
+              "question": "1.5",
+              "operator": "=",
+              "answerCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373066001"
+              }
+            }
+          ],
+          "enableBehavior": "any",
+          "answerOption": [
+            {
+              "valueCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373066001",
+                "display": "Yes"
+              }
+            },
+            {
+              "valueCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373067005",
+                "display": "No"
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "1.5c",
+          "text": "Have you had an injection, procedure or surgery on your spine in the last few months?",
+          "type": "choice",
+          "required": true,
+          "enableWhen": [
+            {
+              "question": "1.5",
+              "operator": "=",
+              "answerCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373066001"
+              }
+            }
+          ],
+          "enableBehavior": "any",
+          "answerOption": [
+            {
+              "valueCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373066001",
+                "display": "Yes"
+              }
+            },
+            {
+              "valueCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373067005",
+                "display": "No"
+              }
+            }
+          ]
         },
         {
           "linkId": "1.6",
-          "text": "Do you currently have any of the following symptoms?",
+          "text": "Do you currently have any of the following new symptoms?",
           "type": "choice",
+          "required": true,
+          "repeats": true,
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "system": "http://hl7.org/fhir/ValueSet/questionnaire-item-control",
+                    "code": "check-box"
+                  }
+                ]
+              }
+            }
+          ],
           "answerOption": [
+            {
+              "valueCoding": {
+                "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
+                "code": "retention",
+                "display": "Trouble starting to pass urine, or a feeling that your bladder does not empty"
+              }
+            },
             {
               "valueCoding": {
                 "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
@@ -185,15 +572,29 @@
             {
               "valueCoding": {
                 "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
-                "code": "leg-weakness",
-                "display": "Severe leg weakness that is getting worse"
+                "code": "perineal-numbness",
+                "display": "New numbness around the groin, buttocks or inner thighs"
               }
             },
             {
               "valueCoding": {
                 "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
-                "code": "perineal-numbness",
-                "display": "Numbness around the groin or inner thighs"
+                "code": "leg-weakness",
+                "display": "Severe leg weakness"
+              }
+            },
+            {
+              "valueCoding": {
+                "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
+                "code": "bilateral-weakness",
+                "display": "New weakness in both legs"
+              }
+            },
+            {
+              "valueCoding": {
+                "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
+                "code": "bilateral-numbness",
+                "display": "New dense numbness in both legs"
               }
             },
             {
@@ -209,9 +610,13 @@
                 }
               ]
             }
-          ],
+          ]
+        },
+        {
+          "linkId": "1.7",
+          "text": "Have you ever been told you have any of the following conditions?",
+          "type": "choice",
           "repeats": true,
-          "required": true,
           "extension": [
             {
               "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
@@ -224,12 +629,7 @@
                 ]
               }
             }
-          ]
-        },
-        {
-          "linkId": "1.7",
-          "text": "Have you ever been told you have any of the following conditions?",
-          "type": "choice",
+          ],
           "answerOption": [
             {
               "valueCoding": {
@@ -272,26 +672,23 @@
                 }
               ]
             }
-          ],
-          "repeats": true,
-          "extension": [
-            {
-              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
-              "valueCodeableConcept": {
-                "coding": [
-                  {
-                    "system": "http://hl7.org/fhir/ValueSet/questionnaire-item-control",
-                    "code": "check-box"
-                  }
-                ]
-              }
-            }
           ]
         },
         {
           "linkId": "1.8",
           "text": "Do you currently have known metastatic disease involving your spine?",
           "type": "choice",
+          "enableWhen": [
+            {
+              "question": "1.4",
+              "operator": "=",
+              "answerCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373066001"
+              }
+            }
+          ],
+          "enableBehavior": "any",
           "answerOption": [
             {
               "valueCoding": {
@@ -306,27 +703,8 @@
                 "code": "373067005",
                 "display": "No"
               }
-            },
-            {
-              "valueCoding": {
-                "system": "http://snomed.info/sct",
-                "code": "261665006",
-                "display": "Not sure"
-              }
             }
-          ],
-          "enableWhen": [
-            {
-              "question": "1.4",
-              "operator": "=",
-              "answerCoding": {
-                "system": "http://snomed.info/sct",
-                "code": "373066001",
-                "display": "Yes"
-              }
-            }
-          ],
-          "enableBehavior": "all"
+          ]
         },
         {
           "linkId": "1.9",
@@ -355,126 +733,173 @@
               }
             }
           ]
+        },
+        {
+          "linkId": "screening-outcome",
+          "code": [
+            {
+              "system": "https://plainly.stanford.edu/fhir/CodeSystem/questionnaire-item",
+              "code": "screening-outcome",
+              "display": "Screening outcome"
+            }
+          ],
+          "text": "Screening outcome",
+          "type": "choice",
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-hidden",
+              "valueBoolean": true
+            },
+            {
+              "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-calculatedExpression",
+              "valueExpression": {
+                "language": "text/fhirpath",
+                "expression": "iif(%caudaEquina or %legWeakness, 'needs-attention', 'eligible')"
+              }
+            }
+          ],
+          "answerOption": [
+            {
+              "valueCoding": {
+                "system": "https://plainly.stanford.edu/fhir/CodeSystem/screening-outcome",
+                "code": "eligible",
+                "display": "Eligible"
+              }
+            },
+            {
+              "valueCoding": {
+                "system": "https://plainly.stanford.edu/fhir/CodeSystem/screening-outcome",
+                "code": "ineligible",
+                "display": "Ineligible"
+              }
+            },
+            {
+              "valueCoding": {
+                "system": "https://plainly.stanford.edu/fhir/CodeSystem/screening-outcome",
+                "code": "needs-attention",
+                "display": "Needs attention"
+              }
+            }
+          ]
         }
       ]
     },
     {
       "linkId": "2",
+      "text": "Please Have Your Injury Checked",
       "type": "group",
-      "text": "Lumbar Fracture Pathway",
-      "enableWhen": [
+      "extension": [
         {
-          "question": "1.3",
-          "operator": "=",
-          "answerCoding": {
-            "system": "http://snomed.info/sct",
-            "code": "373066001",
-            "display": "Yes"
+          "url": "https://spineai.stanford.edu/fhir/StructureDefinition/pathway-priority",
+          "valueInteger": 3
+        },
+        {
+          "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-enableWhenExpression",
+          "valueExpression": {
+            "language": "text/fhirpath",
+            "expression": "%injury and %caudaEquina.not()"
           }
         }
       ],
-      "enableBehavior": "all",
       "item": [
         {
           "linkId": "2.1",
-          "type": "display",
-          "text": "Please proceed to the Lumbar Fracture Pathway for urgent management."
+          "text": "Some of your answers suggest your pain may be related to the injury you described. If your pain is severe, you should have imaging and an evaluation by a clinician. Please tell the study coordinator about this now and they will help you arrange it. You can carry on with the rest of the session in the meantime.",
+          "type": "display"
         }
       ]
     },
     {
       "linkId": "3",
+      "text": "Please Mention These Symptoms To Your Clinician",
       "type": "group",
-      "text": "Lumbar Tumor Pathway",
-      "enableWhen": [
+      "extension": [
         {
-          "question": "1.8",
-          "operator": "=",
-          "answerCoding": {
-            "system": "http://snomed.info/sct",
-            "code": "373066001",
-            "display": "Yes"
-          }
+          "url": "https://spineai.stanford.edu/fhir/StructureDefinition/pathway-priority",
+          "valueInteger": 4
         },
         {
-          "question": "1.8",
-          "operator": "=",
-          "answerCoding": {
-            "system": "http://snomed.info/sct",
-            "code": "261665006",
-            "display": "Not sure"
+          "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-enableWhenExpression",
+          "valueExpression": {
+            "language": "text/fhirpath",
+            "expression": "%cancer and %injury.not() and %caudaEquina.not()"
           }
         }
       ],
-      "enableBehavior": "any",
       "item": [
         {
           "linkId": "3.1",
-          "type": "display",
-          "text": "Please proceed to the Lumbar Tumor Pathway for evaluation of possible metastasis."
+          "text": "Some of your answers are worth checking with a clinician, given the history you described. Please tell the study coordinator about them now. You can carry on with the rest of the session in the meantime.",
+          "type": "display"
         }
       ]
     },
     {
       "linkId": "4",
+      "text": "Please Mention These Symptoms To Your Clinician",
       "type": "group",
-      "text": "Lumbar Infection Pathway",
-      "enableWhen": [
+      "extension": [
         {
-          "question": "1.5",
-          "operator": "=",
-          "answerCoding": {
-            "system": "http://snomed.info/sct",
-            "code": "373066001",
-            "display": "Yes"
+          "url": "https://spineai.stanford.edu/fhir/StructureDefinition/pathway-priority",
+          "valueInteger": 5
+        },
+        {
+          "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-enableWhenExpression",
+          "valueExpression": {
+            "language": "text/fhirpath",
+            "expression": "%infection and %cancer.not() and %injury.not() and %caudaEquina.not()"
           }
         }
       ],
-      "enableBehavior": "all",
       "item": [
         {
           "linkId": "4.1",
-          "type": "display",
-          "text": "Please proceed to the Lumbar Infection Pathway for evaluation of possible infection."
+          "text": "Some of your answers are worth checking with a clinician. Please tell the study coordinator about them now. You can carry on with the rest of the session in the meantime.",
+          "type": "display"
         }
       ]
     },
     {
       "linkId": "5",
+      "text": "Please Have Your Symptoms Checked",
       "type": "group",
-      "text": "Immediate Emergency Evaluation (Possible Cauda Equina)",
-      "enableWhen": [
+      "extension": [
         {
-          "question": "1.6",
-          "operator": "=",
-          "answerCoding": {
-            "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
-            "code": "bladder-bowel"
-          }
+          "url": "https://spineai.stanford.edu/fhir/StructureDefinition/pathway-priority",
+          "valueInteger": 1
         },
         {
-          "question": "1.6",
-          "operator": "=",
-          "answerCoding": {
-            "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
-            "code": "leg-weakness"
-          }
+          "url": "https://spineai.stanford.edu/fhir/StructureDefinition/pathway-terminal",
+          "valueBoolean": true
         },
         {
-          "question": "1.6",
-          "operator": "=",
-          "answerCoding": {
-            "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
-            "code": "perineal-numbness"
+          "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-enableWhenExpression",
+          "valueExpression": {
+            "language": "text/fhirpath",
+            "expression": "%caudaEquina"
           }
         }
       ],
-      "enableBehavior": "any",
       "item": [
         {
           "linkId": "5.1",
-          "type": "display",
-          "text": "Immediate evaluation is recommended due to potential cauda equina syndrome."
+          "text": "Your answers include symptoms that should be checked by a clinician today, because they can point to pressure on the nerves at the base of the spine. Please tell the study coordinator about these symptoms now, and do not continue with the study for the moment. If your symptoms are severe or getting worse, call 911 or your local emergency number, or go to the nearest emergency department. Otherwise the study coordinator will help you find care and tell you how to proceed.",
+          "type": "display"
+        },
+        {
+          "linkId": "5.2",
+          "text": "Acknowledgement",
+          "type": "choice",
+          "required": true,
+          "answerOption": [
+            {
+              "valueCoding": {
+                "system": "https://spineai.stanford.edu/CodeSystem/acknowledgement",
+                "code": "acknowledged",
+                "display": "I have read this"
+              }
+            }
+          ]
         }
       ]
     },
@@ -482,31 +907,35 @@
       "linkId": "6",
       "text": "Axial Lumbar Back Pain Module",
       "type": "group",
-      "enableWhen": [
+      "extension": [
         {
-          "question": "1.1",
-          "operator": "=",
-          "answerCoding": {
-            "system": "https://spineai.stanford.edu/CodeSystem/primary-symptom",
-            "code": "low-back-only"
-          }
-        },
-        {
-          "question": "1.1",
-          "operator": "=",
-          "answerCoding": {
-            "system": "https://spineai.stanford.edu/CodeSystem/primary-symptom",
-            "code": "mixed"
+          "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-enableWhenExpression",
+          "valueExpression": {
+            "language": "text/fhirpath",
+            "expression": "%caudaEquina.not() and %resource.descendants().where(linkId='1.1').answer.value.where(code='low-back-only' or code='mixed').exists()"
           }
         }
       ],
-      "enableBehavior": "any",
       "item": [
         {
           "linkId": "6.1",
           "text": "Where do you feel your back pain?",
           "type": "choice",
+          "required": true,
           "repeats": true,
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "system": "http://hl7.org/fhir/ValueSet/questionnaire-item-control",
+                    "code": "check-box"
+                  }
+                ]
+              }
+            }
+          ],
           "answerOption": [
             {
               "valueCoding": {
@@ -551,8 +980,13 @@
                 "display": "Upper buttock"
               }
             }
-          ],
-          "required": true,
+          ]
+        },
+        {
+          "linkId": "6.2",
+          "text": "Which activities make your back pain worse?",
+          "type": "choice",
+          "repeats": true,
           "extension": [
             {
               "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
@@ -565,12 +999,7 @@
                 ]
               }
             }
-          ]
-        },
-        {
-          "linkId": "6.2",
-          "text": "Which activities make your back pain worse?",
-          "type": "choice",
+          ],
           "answerOption": [
             {
               "valueCoding": {
@@ -614,26 +1043,13 @@
                 "display": "Twisting or rotating"
               }
             }
-          ],
-          "repeats": true,
-          "extension": [
-            {
-              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
-              "valueCodeableConcept": {
-                "coding": [
-                  {
-                    "system": "http://hl7.org/fhir/ValueSet/questionnaire-item-control",
-                    "code": "check-box"
-                  }
-                ]
-              }
-            }
           ]
         },
         {
           "linkId": "6.3",
           "text": "Does lying down improve your pain?",
           "type": "choice",
+          "required": true,
           "answerOption": [
             {
               "valueCoding": {
@@ -649,13 +1065,13 @@
                 "display": "No"
               }
             }
-          ],
-          "required": true
+          ]
         },
         {
           "linkId": "6.4",
           "text": "When you bend forward, does your pain improve, stay the same, or worsen?",
           "type": "choice",
+          "required": true,
           "answerOption": [
             {
               "valueCoding": {
@@ -678,13 +1094,13 @@
                 "display": "Worsens"
               }
             }
-          ],
-          "required": true
+          ]
         },
         {
           "linkId": "6.5",
           "text": "When you bend backward, does your pain improve, stay the same, or worsen?",
           "type": "choice",
+          "required": true,
           "answerOption": [
             {
               "valueCoding": {
@@ -707,13 +1123,13 @@
                 "display": "Worsens"
               }
             }
-          ],
-          "required": true
+          ]
         },
         {
           "linkId": "6.6",
           "text": "Is your pain generally worse when you are sitting, standing, walking, or about the same?",
           "type": "choice",
+          "required": true,
           "answerOption": [
             {
               "valueCoding": {
@@ -744,13 +1160,23 @@
                 "display": "About the same"
               }
             }
-          ],
-          "required": true
+          ]
         },
         {
           "linkId": "6.7",
           "text": "If sitting makes your pain worse, is it pain that builds while you are sitting or does it increase when moving to the standing position after sitting?",
           "type": "choice",
+          "enableWhen": [
+            {
+              "question": "6.6",
+              "operator": "=",
+              "answerCoding": {
+                "system": "https://spineai.stanford.edu/CodeSystem/axial-posture-worse",
+                "code": "sitting"
+              }
+            }
+          ],
+          "enableBehavior": "any",
           "answerOption": [
             {
               "valueCoding": {
@@ -766,23 +1192,13 @@
                 "display": "Pain that becomes severe when standing after sitting"
               }
             }
-          ],
-          "enableWhen": [
-            {
-              "question": "6.6",
-              "operator": "=",
-              "answerCoding": {
-                "system": "https://spineai.stanford.edu/CodeSystem/axial-posture-worse",
-                "code": "sitting"
-              }
-            }
-          ],
-          "enableBehavior": "any"
+          ]
         },
         {
           "linkId": "6.8",
           "text": "Have you ever been told you have scoliosis (a curvature of the spine)?",
           "type": "choice",
+          "required": true,
           "answerOption": [
             {
               "valueCoding": {
@@ -805,13 +1221,24 @@
                 "display": "Not sure"
               }
             }
-          ],
-          "required": true
+          ]
         },
         {
           "linkId": "6.9",
           "text": "If you have scoliosis, is your back pain worse on one side of your back?",
           "type": "choice",
+          "enableWhen": [
+            {
+              "question": "6.8",
+              "operator": "=",
+              "answerCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373066001",
+                "display": "Yes"
+              }
+            }
+          ],
+          "enableBehavior": "any",
           "answerOption": [
             {
               "valueCoding": {
@@ -827,10 +1254,15 @@
                 "display": "No"
               }
             }
-          ],
+          ]
+        },
+        {
+          "linkId": "6.10",
+          "text": "Which side has more severe back pain?",
+          "type": "choice",
           "enableWhen": [
             {
-              "question": "6.8",
+              "question": "6.9",
               "operator": "=",
               "answerCoding": {
                 "system": "http://snomed.info/sct",
@@ -839,12 +1271,7 @@
               }
             }
           ],
-          "enableBehavior": "any"
-        },
-        {
-          "linkId": "6.10",
-          "text": "Which side has more severe back pain?",
-          "type": "choice",
+          "enableBehavior": "any",
           "answerOption": [
             {
               "valueCoding": {
@@ -860,19 +1287,7 @@
                 "display": "Left"
               }
             }
-          ],
-          "enableWhen": [
-            {
-              "question": "6.9",
-              "operator": "=",
-              "answerCoding": {
-                "system": "http://snomed.info/sct",
-                "code": "373066001",
-                "display": "Yes"
-              }
-            }
-          ],
-          "enableBehavior": "any"
+          ]
         }
       ]
     },
@@ -880,25 +1295,15 @@
       "linkId": "7",
       "text": "Lumbar Radiculopathy Module",
       "type": "group",
-      "enableWhen": [
+      "extension": [
         {
-          "question": "1.1",
-          "operator": "=",
-          "answerCoding": {
-            "system": "https://spineai.stanford.edu/CodeSystem/primary-symptom",
-            "code": "leg-pain"
-          }
-        },
-        {
-          "question": "1.1",
-          "operator": "=",
-          "answerCoding": {
-            "system": "https://spineai.stanford.edu/CodeSystem/primary-symptom",
-            "code": "mixed"
+          "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-enableWhenExpression",
+          "valueExpression": {
+            "language": "text/fhirpath",
+            "expression": "%caudaEquina.not() and %resource.descendants().where(linkId='1.1').answer.value.where(code='leg-pain' or code='trouble-walking' or code='mixed').exists()"
           }
         }
       ],
-      "enableBehavior": "any",
       "item": [
         {
           "linkId": "7.1",
@@ -939,6 +1344,7 @@
           "linkId": "7.2",
           "text": "Do you experience numbness or tingling?",
           "type": "choice",
+          "required": true,
           "answerOption": [
             {
               "valueCoding": {
@@ -961,8 +1367,7 @@
                 "display": "Yes — different area"
               }
             }
-          ],
-          "required": true
+          ]
         },
         {
           "linkId": "7.3",
@@ -1014,6 +1419,7 @@
           "linkId": "7.4",
           "text": "Does coughing, sneezing, or straining make your leg pain worse?",
           "type": "choice",
+          "required": true,
           "answerOption": [
             {
               "valueCoding": {
@@ -1036,13 +1442,13 @@
                 "display": "Not sure"
               }
             }
-          ],
-          "required": true
+          ]
         },
         {
           "linkId": "7.5",
           "text": "Have you noticed any weakness in your leg?",
           "type": "choice",
+          "required": true,
           "answerOption": [
             {
               "valueCoding": {
@@ -1072,13 +1478,26 @@
                 "display": "Severe — I cannot lift my foot up or push off with my foot"
               }
             }
-          ],
-          "required": true
+          ]
         },
         {
           "linkId": "7.6",
           "text": "Have you experienced any of the following motor difficulties?",
           "type": "choice",
+          "repeats": true,
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "system": "http://hl7.org/fhir/ValueSet/questionnaire-item-control",
+                    "code": "check-box"
+                  }
+                ]
+              }
+            }
+          ],
           "answerOption": [
             {
               "valueCoding": {
@@ -1121,26 +1540,13 @@
                 }
               ]
             }
-          ],
-          "repeats": true,
-          "extension": [
-            {
-              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
-              "valueCodeableConcept": {
-                "coding": [
-                  {
-                    "system": "http://hl7.org/fhir/ValueSet/questionnaire-item-control",
-                    "code": "check-box"
-                  }
-                ]
-              }
-            }
           ]
         },
         {
           "linkId": "7.7",
           "text": "How did your leg pain start?",
           "type": "choice",
+          "required": true,
           "answerOption": [
             {
               "valueCoding": {
@@ -1163,13 +1569,13 @@
                 "display": "Gradually over months"
               }
             }
-          ],
-          "required": true
+          ]
         },
         {
           "linkId": "7.8",
           "text": "How long have you had leg symptoms?",
           "type": "choice",
+          "required": true,
           "answerOption": [
             {
               "valueCoding": {
@@ -1199,13 +1605,13 @@
                 "display": "> 12 months"
               }
             }
-          ],
-          "required": true
+          ]
         },
         {
           "linkId": "7.9",
           "text": "Do your symptoms get worse when you stand or walk and improve when you sit?",
           "type": "choice",
+          "required": true,
           "answerOption": [
             {
               "valueCoding": {
@@ -1221,13 +1627,13 @@
                 "display": "No"
               }
             }
-          ],
-          "required": true
+          ]
         },
         {
           "linkId": "7.10",
           "text": "Does leaning forward while walking, such as in a shopping-cart position, relieve your symptoms?",
           "type": "choice",
+          "required": true,
           "answerOption": [
             {
               "valueCoding": {
@@ -1243,13 +1649,13 @@
                 "display": "No"
               }
             }
-          ],
-          "required": true
+          ]
         },
         {
           "linkId": "7.11",
           "text": "How much does pain limit your walking?",
           "type": "choice",
+          "required": true,
           "answerOption": [
             {
               "valueCoding": {
@@ -1293,13 +1699,26 @@
                 "display": "I am in bed most of the time"
               }
             }
-          ],
-          "required": true
+          ]
         },
         {
           "linkId": "7.12",
           "text": "Have you ever been told you have any of these conditions?",
           "type": "choice",
+          "repeats": true,
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "system": "http://hl7.org/fhir/ValueSet/questionnaire-item-control",
+                    "code": "check-box"
+                  }
+                ]
+              }
+            }
+          ],
           "answerOption": [
             {
               "valueCoding": {
@@ -1342,18 +1761,48 @@
                 }
               ]
             }
-          ],
-          "repeats": true,
-          "extension": [
+          ]
+        }
+      ]
+    },
+    {
+      "linkId": "8",
+      "text": "Please Have Your Symptoms Checked",
+      "type": "group",
+      "extension": [
+        {
+          "url": "https://spineai.stanford.edu/fhir/StructureDefinition/pathway-priority",
+          "valueInteger": 1
+        },
+        {
+          "url": "https://spineai.stanford.edu/fhir/StructureDefinition/pathway-terminal",
+          "valueBoolean": true
+        },
+        {
+          "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-enableWhenExpression",
+          "valueExpression": {
+            "language": "text/fhirpath",
+            "expression": "%legWeakness"
+          }
+        }
+      ],
+      "item": [
+        {
+          "linkId": "8.1",
+          "text": "Your answers describe severe weakness in your leg, which should be checked by a clinician today. Please tell the study coordinator about these symptoms now, and do not continue with the study for the moment. If the weakness is getting worse, or you develop trouble passing urine, loss of bladder or bowel control, or numbness around the groin, call 911 or your local emergency number, or go to the nearest emergency department. Otherwise the study coordinator will help you find care and tell you how to proceed.",
+          "type": "display"
+        },
+        {
+          "linkId": "8.2",
+          "text": "Acknowledgement",
+          "type": "choice",
+          "required": true,
+          "answerOption": [
             {
-              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
-              "valueCodeableConcept": {
-                "coding": [
-                  {
-                    "system": "http://hl7.org/fhir/ValueSet/questionnaire-item-control",
-                    "code": "check-box"
-                  }
-                ]
+              "valueCoding": {
+                "system": "https://spineai.stanford.edu/CodeSystem/acknowledgement",
+                "code": "acknowledged",
+                "display": "I have read this"
               }
             }
           ]

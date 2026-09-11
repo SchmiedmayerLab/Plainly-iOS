@@ -112,9 +112,6 @@ final class StudyChatViewModel: Sendable {
     private var interpreter: FHIRMultipleResourceInterpreter {
         interpretationModule.multipleResourceInterpreter
     }
-    private var resourceSummarizer: FHIRResourceSummarizer {
-        interpretationModule.resourceSummarizer
-    }
     
     private(set) var processingState: ProcessingState = .processingSystemPrompts
     
@@ -588,71 +585,19 @@ extension StudyChatViewModel {
     ///
     /// - returns: a flag indicating whether the upload was successful.
     private func uploadReport() async -> Bool {
-        guard let uploader else {
-            return false
-        }
+        let reportFile: URL
         do {
-            guard let reportFile = try await generateStudyReportFile() else {
-                AppDiagnostics.report.error("Study report generation returned no file")
-                return false
-            }
-            do {
-                try await uploader.uploadReport(at: reportFile, for: study)
-                try? FileManager.default.removeItem(at: reportFile)
-                return true
-            } catch {
-                AppDiagnostics.report.logError(error, context: "Study report upload")
-                do {
-                    // Retaining moves the file. If that fails the report stays where it is rather than
-                    // being deleted, because it holds the only copy of the session's answers.
-                    try pendingReports?.retainForRetry(reportAt: reportFile, for: study)
-                } catch {
-                    AppDiagnostics.report.logError(error, context: "Retaining study report for a later upload")
-                }
-                return false
-            }
+            reportFile = try await StudyReportBuilder(interpretationModule: interpretationModule).writeReport(
+                for: inProgressStudy,
+                initialQuestionnaireResponse: initialQuestionnaireResponse,
+                startTime: studyStartTime,
+                timeline: generateTimeline()
+            )
         } catch {
             AppDiagnostics.report.logError(error, context: "Study report generation")
             return false
         }
-    }
-    
-    /// Generates a temporary file URL containing the study report
-    ///
-    /// - Returns: The URL of the generated report file, or nil if generation fails
-    func generateStudyReportFile() async throws -> URL? {
-        guard let studyReport = await generateStudyReport() else {
-            return nil
-        }
-        let tempDir = FileManager.default.temporaryDirectory
-        let reportURL = tempDir.appendingPathComponent("survey_report_\(study.id.lowercased()).json")
-        try studyReport.write(to: reportURL)
-        return reportURL
-    }
-    
-    private func generateStudyReport() async -> Data? {
-        let report = StudyReport(
-            metadata: .init(
-                studyID: study.id,
-                startTime: studyStartTime,
-                endTime: .now,
-                userInfo: inProgressStudy.userInfo,
-                llmConfig: .init(model: study.llmModel)
-            ),
-            initialQuestionnaireResponse: initialQuestionnaireResponse,
-            fhirResources: await getFHIRResources(),
-            timeline: generateTimeline()
-        )
-        do {
-            let encoder = JSONEncoder()
-            encoder.dateEncodingStrategy = .iso8601
-            encoder.outputFormatting = [.prettyPrinted, .withoutEscapingSlashes]
-            let data = try encoder.encode(report)
-            return data
-        } catch {
-            AppDiagnostics.report.logError(error, context: "Study report encoding")
-            return nil
-        }
+        return await StudyReportDelivery(uploader: uploader, pendingReports: pendingReports).deliver(reportAt: reportFile, for: study)
     }
 
     private func generateTimeline() -> [StudyReport.TimelineEvent] {
@@ -688,26 +633,5 @@ extension StudyChatViewModel {
                 isOptional: question.isOptional
             )
         }
-    }
-
-    private func getFHIRResources() async -> StudyReport.FHIRResources {
-        let llmRelevantResources = interpreter.fhirStore.llmRelevantResources
-            .map { resource in
-                StudyReport.FullFHIRResource(resource.versionedResource)
-            }
-        let allResources = await interpreter.fhirStore.allResources.mapAsync { resource in
-            let summary = await resourceSummarizer.cachedSummary(forResource: resource)
-            return StudyReport.PartialFHIRResource(
-                id: resource.id,
-                resourceType: resource.resourceType,
-                displayName: resource.displayName,
-                dateDescription: resource.date?.description,
-                summary: summary?.description
-            )
-        }
-        return StudyReport.FHIRResources(
-            llmRelevantResources: FeatureFlags.exportRawJSONFHIRResources ? llmRelevantResources : [],
-            allResources: allResources
-        )
     }
 }

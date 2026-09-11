@@ -27,14 +27,24 @@ During a study session, participants complete study surveys and can ask question
 
 <table style="width: 80%">
   <tr>
-    <td align="center" width="33.33333%"><img src="fastlane/screenshots/en-US/iPhone%2017%20Pro%20Max-00_Welcome.jpg" alt="Plainly welcome screen" width="80%"/></td>
-    <td align="center" width="33.33333%"><img src="fastlane/screenshots/en-US/iPhone%2017%20Pro%20Max-01_Disclaimer.jpg" alt="Plainly research disclaimer screen" width="80%"/></td>
-    <td align="center" width="33.33333%"><img src="fastlane/screenshots/en-US/iPhone%2017%20Pro%20Max-02_Study.jpg" alt="Plainly study screen" width="80%"/></td>
+    <td align="center" width="33.33333%"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/Welcome~dark.png"><img src="docs/screenshots/Welcome.png" alt="Plainly welcome screen" width="80%"/></picture></td>
+    <td align="center" width="33.33333%"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/Disclaimer~dark.png"><img src="docs/screenshots/Disclaimer.png" alt="Plainly research disclaimer screen" width="80%"/></picture></td>
+    <td align="center" width="33.33333%"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/Study~dark.png"><img src="docs/screenshots/Study.png" alt="Plainly study home" width="80%"/></picture></td>
   </tr>
   <tr>
     <td align="center">Welcome</td>
     <td align="center">Research Disclaimer</td>
     <td align="center">Study</td>
+  </tr>
+  <tr>
+    <td align="center" width="33.33333%"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/Questionnaire~dark.png"><img src="docs/screenshots/Questionnaire.png" alt="Plainly intake questionnaire" width="80%"/></picture></td>
+    <td align="center" width="33.33333%"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/Instructions~dark.png"><img src="docs/screenshots/Instructions.png" alt="Task instructions over the study chat" width="80%"/></picture></td>
+    <td align="center" width="33.33333%"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/Chat~dark.png"><img src="docs/screenshots/Chat.png" alt="Plainly study chat with a health summary" width="80%"/></picture></td>
+  </tr>
+  <tr>
+    <td align="center">Questionnaire</td>
+    <td align="center">Task Instructions</td>
+    <td align="center">Chat</td>
   </tr>
 </table>
 
@@ -50,6 +60,14 @@ When running Plainly via Xcode, you can use the `--mode` CLI flag to control the
 - `--mode test` loads the bundled synthetic patients instead of health records;
 - `--mode study:<study-id>` launches Plainly into its study mode, loads the study with the specified ID from `PlainlyStudyDefinitions`, and automatically opens it;
 - `--mode study` launches Plainly into its study mode, showing a "Scan QR Code" button to select and open a study.
+
+### Screenshots
+
+The App Store pictures come from `fastlane screenshots`, which walks the first row on an iPhone and an iPad and checks sizes and count; a production deployment takes them again from the build it ships. The README pictures add the questionnaire, the task instructions and the chat, with the Firebase emulator answering, framed through [RocketSim](https://www.rocketsim.app) in light and dark appearance:
+
+```bash
+scripts/readme-screenshots.sh
+```
 
 ### Firebase End-to-End Test
 
@@ -80,6 +98,12 @@ swift run PlainlyCLI export-config -f ~/GoogleService-Info.plist ../Plainly/Supp
 ```
 
 Study reports are uploaded to Firebase Storage. A report that cannot be uploaded is kept in Application Support, surfaced on the study home screen, and retried when the participant returns to that screen or relaunches the app.
+
+### Screening
+
+A study's initial questionnaire can decide on its own whether the study goes on. It computes one of three codes from Plainly's `screening-outcome` code system, `eligible`, `ineligible` or `needs-attention`, into a hidden item tagged with the `screening-outcome` item code, using an SDC `calculatedExpression`; the pages that follow are gated with `enableWhenExpression`s on the same rules, so the questionnaire ends on the page that tells the participant what to do. The SpineAI intake is the reference: its rules are declared once as FHIRPath `variable`s on the questionnaire. A cauda equina symptom or severe leg weakness needs attention and stops the questionnaire; trouble walking because of the legs opens the leg module, so that weakness is asked about; an injury, a cancer or an infection flag only adds a page of advice, the most urgent one when several apply, and the study goes on.
+
+The app reads the outcome once the questionnaire completes. `eligible` continues into the chat. Anything else uploads the answers as the session's report, records the decision with the `Screening` module so it survives relaunches, and replaces the study home with a page that puts medical help first and points to the study coordinator.
 
 ### Study Uploads
 
