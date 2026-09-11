@@ -4,6 +4,7 @@ version = 1
 path = [
     "fastlane/metadata/**",
     "fastlane/screenshots/**",
+    "docs/screenshots/**",
     "Figures/**",
     "Plainly.xcodeproj/**",
     "Plainly/Resources/**",

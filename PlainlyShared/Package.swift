@@ -72,7 +72,13 @@ let package = Package(
         ),
         .testTarget(
             name: "PlainlySharedTests",
-            dependencies: ["PlainlyShared", "PlainlyStudyDefinitions", "PlainlyCLI"]
+            dependencies: [
+                "PlainlyShared",
+                "PlainlyStudyDefinitions",
+                "PlainlyCLI",
+                .product(name: "GroveQuestionnaireFHIR", package: "Grove"),
+                .product(name: "ModelsR4", package: "FHIRModels")
+            ]
         )
     ]
 )

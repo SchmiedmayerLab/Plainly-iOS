@@ -15,6 +15,7 @@
 		3A3B67343023ACCB00C229B0 /* GroveFirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 3A3B67333023ACCB00C229B0 /* GroveFirebaseStorage */; };
 		3AE46E1030239C0B00295027 /* XCTHealthKit in Frameworks */ = {isa = PBXBuildFile; productRef = 3AE46E1130239C0B00295027 /* XCTHealthKit */; };
 		3AE46E1230239C0B00295027 /* XCTestExtensions in Frameworks */ = {isa = PBXBuildFile; productRef = 3AE46E1330239C0B00295027 /* XCTestExtensions */; };
+		80E0A0032FAB000100000002 /* XCTGroveQuestionnaire in Frameworks */ = {isa = PBXBuildFile; productRef = 80E0A0042FAB000100000002 /* XCTGroveQuestionnaire */; };
 		803D16682F30DA3C0060B931 /* PlainlyStudyDefinitions in Frameworks */ = {isa = PBXBuildFile; productRef = 803D16672F30DA3C0060B931 /* PlainlyStudyDefinitions */; };
 		80525CBB2F8CFC410046D600 /* GroveLLM in Frameworks */ = {isa = PBXBuildFile; productRef = 44E18E872CEBEC9500829A26 /* GroveLLM */; };
 		80525CBC2F8CFC410046D600 /* GroveLLMOpenAI in Frameworks */ = {isa = PBXBuildFile; productRef = 44E18E8F2CEBEC9500829A26 /* GroveLLMOpenAI */; };
@@ -107,6 +108,7 @@
 			files = (
 				3AE46E1030239C0B00295027 /* XCTHealthKit in Frameworks */,
 				3AE46E1230239C0B00295027 /* XCTestExtensions in Frameworks */,
+				80E0A0032FAB000100000002 /* XCTGroveQuestionnaire in Frameworks */,
 			);
 		};
 /* End PBXFrameworksBuildPhase section */
@@ -208,6 +210,7 @@
 			packageProductDependencies = (
 				3AE46E1130239C0B00295027 /* XCTHealthKit */,
 				3AE46E1330239C0B00295027 /* XCTestExtensions */,
+				80E0A0042FAB000100000002 /* XCTGroveQuestionnaire */,
 			);
 			productName = PlainlyUITests;
 			productReference = 653A256728338800005D4D48 /* PlainlyUITests.xctest */;
@@ -634,6 +637,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 3A3B67223023ABD400C229B0 /* XCRemoteSwiftPackageReference "Grove" */;
 			productName = XCTHealthKit;
+		};
+		80E0A0042FAB000100000002 /* XCTGroveQuestionnaire */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3A3B67223023ABD400C229B0 /* XCRemoteSwiftPackageReference "Grove" */;
+			productName = XCTGroveQuestionnaire;
 		};
 		3AE46E1330239C0B00295027 /* XCTestExtensions */ = {
 			isa = XCSwiftPackageProductDependency;

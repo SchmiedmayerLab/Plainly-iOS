@@ -23,6 +23,7 @@ struct StudyHomeView: View {
     @Environment(FHIRInterpretationModule.self) private var fhirInterpretationModule
     @Environment(FirebaseUpload.self) private var uploader: FirebaseUpload?
     @Environment(PendingReportStore.self) private var pendingReports: PendingReportStore?
+    @Environment(Screening.self) private var screening
     @WaitingState private var waitingState
     
     @State private var isPresentingQuestionnaire = false
@@ -35,6 +36,9 @@ struct StudyHomeView: View {
     @State private var isPresentingQRCodeScanner = false
     
     @State private var isPresentingStudyChatView = false
+    /// What the intake questionnaire decided, when it stopped the study; ``Screening`` keeps it from then on.
+    @State private var screeningOutcome: ScreeningOutcome?
+    private let sessionStartTime = Date.now
     
     var body: some View {
         NavigationStack {
@@ -81,6 +85,14 @@ struct StudyHomeView: View {
                 }
                 pendingReports?.retryPendingUploads()
             }
+            .onChange(of: screeningOutcome) { _, outcome in
+                guard let outcome, outcome.stopsTheStudy else {
+                    return
+                }
+                Task {
+                    await stopStudy(with: outcome)
+                }
+            }
     }
 
     private var observedContent: some View {
@@ -97,7 +109,8 @@ struct StudyHomeView: View {
         if let currentStudy = fhirInterpretationModule.currentStudy {
             IntakeQuestionnaireSheet(
                 inProgressStudy: currentStudy,
-                response: $questionnaireResponse
+                response: $questionnaireResponse,
+                screeningOutcome: $screeningOutcome
             )
         } else {
             ContentUnavailableView("Study not selected", systemImage: "document.badge.gearshape")
@@ -129,14 +142,28 @@ struct StudyHomeView: View {
     }
 
 
-    private var mainContent: some View {
-        VStack {
-            Spacer()
-            studyLogo
-            studyInformation
-            Spacer()
-            bottomSection
+    @ViewBuilder private var mainContent: some View {
+        if let stoppedOutcome {
+            ScreeningStopView(outcome: stoppedOutcome)
+        } else {
+            VStack {
+                Spacer()
+                studyLogo
+                studyInformation
+                Spacer()
+                bottomSection
+            }
         }
+    }
+
+    /// The outcome that keeps the study from going on, once screening has recorded one.
+    private var stoppedOutcome: ScreeningOutcome? {
+        guard let study = fhirInterpretationModule.currentStudy?.study,
+              let outcome = screening.decision(for: study.id)?.outcome,
+              outcome.stopsTheStudy else {
+            return nil
+        }
+        return outcome
     }
 
     private var studyLogo: some View {
@@ -309,6 +336,32 @@ extension StudyHomeView {
             await standard.fetchRecordsFromHealthKit()
         }
         await fhirInterpretationModule.updateSchemas()
+    }
+
+    /// Ends the study on this device: the decision is kept, and the answers go out as the session's report.
+    ///
+    /// The report carries the questionnaire alone; there is no chat to add. A failed upload is retained like
+    /// any other report and retried from the study home, which stays reachable behind the stop page.
+    @MainActor
+    private func stopStudy(with outcome: ScreeningOutcome) async {
+        guard let inProgressStudy = fhirInterpretationModule.currentStudy else {
+            return
+        }
+        do {
+            try screening.record(outcome, for: inProgressStudy.study.id)
+        } catch {
+            AppDiagnostics.study.logError(error, context: "Recording the screening decision")
+        }
+        do {
+            let report = try await StudyReportBuilder(interpretationModule: fhirInterpretationModule).writeReport(
+                for: inProgressStudy,
+                initialQuestionnaireResponse: questionnaireResponse,
+                startTime: sessionStartTime
+            )
+            _ = await StudyReportDelivery(uploader: uploader, pendingReports: pendingReports).deliver(reportAt: report, for: inProgressStudy.study)
+        } catch {
+            AppDiagnostics.report.logError(error, context: "Study report generation after screening")
+        }
     }
 
     private func preloadInitialQuestionnaire() async {
