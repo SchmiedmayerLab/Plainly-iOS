@@ -50,7 +50,7 @@
       "valueExpression": {
         "name": "legWeakness",
         "language": "text/fhirpath",
-        "expression": "%caudaEquina.not() and %resource.descendants().where(linkId='1.1').answer.value.where(code='leg-pain' or code='mixed').exists() and %resource.descendants().where(linkId='7.5').answer.value.where(code='severe').exists()"
+        "expression": "%caudaEquina.not() and %resource.descendants().where(linkId='1.1').answer.value.where(code='leg-pain' or code='trouble-walking' or code='mixed').exists() and %resource.descendants().where(linkId='7.5').answer.value.where(code='severe').exists()"
       }
     }
   ],
@@ -1300,7 +1300,7 @@
           "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-enableWhenExpression",
           "valueExpression": {
             "language": "text/fhirpath",
-            "expression": "%caudaEquina.not() and %resource.descendants().where(linkId='1.1').answer.value.where(code='leg-pain' or code='mixed').exists()"
+            "expression": "%caudaEquina.not() and %resource.descendants().where(linkId='1.1').answer.value.where(code='leg-pain' or code='trouble-walking' or code='mixed').exists()"
           }
         }
       ],

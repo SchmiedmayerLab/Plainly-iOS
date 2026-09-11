@@ -131,6 +131,14 @@ struct SpineAIScreeningTests {
         try Self.expectShown(["6"], hidden: [pathway, "5"], in: responses)
     }
 
+    /// Trouble walking because of the legs is a leg presentation: the leg module asks, and its weakness question counts.
+    @Test
+    func troubleWalkingOpensTheLegModule() throws {
+        let responses = try Self.responses(["1.1": ["\(Self.symptoms)|trouble-walking"], "7.5": ["\(Self.weakness)|severe"]])
+        #expect(try responses.screeningOutcome() == .needsAttention)
+        try Self.expectShown(["7", "8"], hidden: ["5", "6"], in: responses)
+    }
+
     /// Severe leg weakness counts only where the leg module asked about it.
     @Test
     func legWeaknessOnAPageNotShownIsNoStop() throws {
