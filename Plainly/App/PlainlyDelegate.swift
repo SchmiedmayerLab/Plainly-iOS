@@ -34,6 +34,7 @@ final class PlainlyDelegate: GroveAppDelegate {
             let chatInterceptor = FirebaseChatInterceptor()
             chatInterceptor
             FHIRInterpretationModule()
+            Screening()
             HealthKit {
                 if !FeatureFlags.disableHealthRecords, HKHealthStore().supportsHealthRecords() {
                     RequestReadAccess(other: PlainlyStandard.recordTypes)

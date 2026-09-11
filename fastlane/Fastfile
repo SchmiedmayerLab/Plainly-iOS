@@ -276,6 +276,8 @@ platform :ios do
     commit = last_git_commit
 
     if environment == "production"
+      # The store listing shows the app as it ships: the pictures are taken from this build, not from the repository.
+      screenshots unless options[:skip_screenshots]
       deliver(
         app_identifier: appidentifier,
         release_notes: {
