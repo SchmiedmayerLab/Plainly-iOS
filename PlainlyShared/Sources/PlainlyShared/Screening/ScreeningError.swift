@@ -17,4 +17,6 @@ public enum ScreeningError: Error, Hashable, Sendable {
     case unknownOutcome(optionId: String)
     /// The outcome item selected more than one option.
     case severalOutcomes
+    /// The questionnaire was completed, but its outcome item never produced a value.
+    case undecided(taskId: Questionnaire.Task.ID)
 }

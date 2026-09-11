@@ -118,6 +118,11 @@ struct IntakeQuestionnaireSheet: View {
                 screeningOutcome = outcome
                 return
             }
+            // A questionnaire that screens has to have decided by now; going on without a decision would let a
+            // broken expression wave everyone through.
+            if outcome == nil, let task = groveResponses.questionnaire.screeningOutcomeTask {
+                throw ScreeningError.undecided(taskId: task.id)
+            }
             inProgressStudy.questionnaireSummary = try await groveResponses.summarize(
                 using: llmRunner,
                 model: study.inferenceModel

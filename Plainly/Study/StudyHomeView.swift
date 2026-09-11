@@ -157,9 +157,10 @@ struct StudyHomeView: View {
     }
 
     /// The outcome that keeps the study from going on, once screening has recorded one.
+    /// The decision on record, or the one just made when recording it failed: a stop holds either way.
     private var stoppedOutcome: ScreeningOutcome? {
         guard let study = fhirInterpretationModule.currentStudy?.study,
-              let outcome = screening.decision(for: study.id)?.outcome,
+              let outcome = screening.decision(for: study.id)?.outcome ?? screeningOutcome,
               outcome.stopsTheStudy else {
             return nil
         }

@@ -80,8 +80,7 @@ if [[ -z ${PLAINLY_README_SCREENSHOTS_EMULATED:-} ]]; then
 log "building"
 xcodebuild build-for-testing -project "$ROOT/Plainly.xcodeproj" -scheme Plainly \
   -destination "platform=iOS Simulator,id=$UDID" -derivedDataPath "$DERIVED_DATA" \
-  -skipPackagePluginValidation -skipMacroValidation -quiet 2>&1 | grep -E "error:" || true
-[[ -d "$DERIVED_DATA/Build/Products/Debug-iphonesimulator/Plainly.app" ]] || fail "build failed"
+  -skipPackagePluginValidation -skipMacroValidation -quiet || fail "build failed"
 fi
 
 shoot() {
@@ -128,12 +127,12 @@ capture() {
   xcrun simctl ui "$UDID" appearance "$appearance"
   xcrun simctl status_bar "$UDID" override --time 9:41 --batteryState charged --batteryLevel 100 --wifiBars 3 --cellularBars 4 --operatorName ''
   log "capturing $appearance"
-  local test_log=$(mktemp)
+  local test_log=$(mktemp) test_status=$(mktemp)
   (TEST_RUNNER_PLAINLY_README_SCREENSHOTS=1 TEST_RUNNER_PLAINLY_MOCK_CHAT_RESPONSE="$PLAINLY_MOCK_CHAT_RESPONSE" \
     xcodebuild test-without-building -project "$ROOT/Plainly.xcodeproj" -scheme Plainly \
     -only-testing:PlainlyUITests/ReadmeScreenshotTests \
     -destination "platform=iOS Simulator,id=$UDID" -derivedDataPath "$DERIVED_DATA" \
-    -parallel-testing-enabled NO > "$test_log" 2>&1 || true) &
+    -parallel-testing-enabled NO > "$test_log" 2>&1; echo $? > "$test_status") &
   local test_pid=$!
   watchdog "$test_pid" "$test_log" &
   local watchdog_pid=$!
@@ -153,9 +152,12 @@ capture() {
   sleep 8
   pkill -f "tail -n \+1 -f $test_log" 2>/dev/null || true
   wait "$reader_pid" 2>/dev/null || true
-  rm -f "$test_log"
+  local status=$(cat "$test_status" 2>/dev/null || echo 1)
+  rm -f "$test_log" "$test_status"
   xcrun simctl status_bar "$UDID" clear
   xcrun simctl shutdown "$UDID" >/dev/null 2>&1 || true
+  # A walk that failed leaves the set incomplete or stale; the pictures it did take are kept, the run is not called done.
+  [[ $status -eq 0 ]] || fail "the $appearance walk failed; see the lines above"
 }
 
 mkdir -p "$OUTPUT"
