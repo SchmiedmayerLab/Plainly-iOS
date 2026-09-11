@@ -26,7 +26,7 @@
       "valueExpression": {
         "name": "injury",
         "language": "text/fhirpath",
-        "expression": "%resource.descendants().where(linkId='1.3a' or linkId='1.3b' or linkId='1.3c').answer.value.where(code='373066001').exists()"
+        "expression": "%resource.descendants().where(linkId='1.3').answer.value.where(code='373066001').exists() and %resource.descendants().where(linkId='1.3a' or linkId='1.3b' or linkId='1.3c').answer.value.where(code='373066001').exists()"
       }
     },
     {
@@ -34,7 +34,7 @@
       "valueExpression": {
         "name": "cancer",
         "language": "text/fhirpath",
-        "expression": "%resource.descendants().where(linkId='1.4a' or linkId='1.4b' or linkId='1.4c' or linkId='1.4d').answer.value.where(code='373066001').exists()"
+        "expression": "%resource.descendants().where(linkId='1.4').answer.value.where(code='373066001').exists() and %resource.descendants().where(linkId='1.4a' or linkId='1.4b' or linkId='1.4c' or linkId='1.4d').answer.value.where(code='373066001').exists()"
       }
     },
     {
@@ -42,7 +42,7 @@
       "valueExpression": {
         "name": "infection",
         "language": "text/fhirpath",
-        "expression": "%resource.descendants().where(linkId='1.5a' or linkId='1.5b' or linkId='1.5c').answer.value.where(code='373066001').exists()"
+        "expression": "%resource.descendants().where(linkId='1.5').answer.value.where(code='373066001').exists() and %resource.descendants().where(linkId='1.5a' or linkId='1.5b' or linkId='1.5c').answer.value.where(code='373066001').exists()"
       }
     },
     {
@@ -50,7 +50,7 @@
       "valueExpression": {
         "name": "legWeakness",
         "language": "text/fhirpath",
-        "expression": "%resource.descendants().where(linkId='7.5').answer.value.where(code='severe').exists()"
+        "expression": "%caudaEquina.not() and %resource.descendants().where(linkId='1.1').answer.value.where(code='leg-pain' or code='mixed').exists() and %resource.descendants().where(linkId='7.5').answer.value.where(code='severe').exists()"
       }
     }
   ],

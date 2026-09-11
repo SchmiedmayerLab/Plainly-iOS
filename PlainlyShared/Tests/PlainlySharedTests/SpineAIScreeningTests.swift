@@ -118,6 +118,31 @@ struct SpineAIScreeningTests {
         try Self.expectShown(["6"], hidden: ["2", "3", "4", "5"], in: responses)
     }
 
+    /// A follow-up answered and then closed again, by a change of mind on its question, no longer counts:
+    /// the answers to a question the page does not ask stay on record.
+    @Test(arguments: [
+        ("1.3", "1.3a", "2"),
+        ("1.4", "1.4b", "3"),
+        ("1.5", "1.5c", "4")
+    ])
+    func aFollowUpBehindAnAnsweredNoIsNoFlag(question: String, followUp: String, pathway: String) throws {
+        let responses = try Self.responses([question: [Self.answeredNo], followUp: [Self.yes]])
+        #expect(try responses.screeningOutcome() == .eligible)
+        try Self.expectShown(["6"], hidden: [pathway, "5"], in: responses)
+    }
+
+    /// Severe leg weakness counts only where the leg module asked about it.
+    @Test
+    func legWeaknessOnAPageNotShownIsNoStop() throws {
+        let backOnly = try Self.responses(["7.5": ["\(Self.weakness)|severe"]])
+        #expect(try backOnly.screeningOutcome() == .eligible)
+        try Self.expectShown(["6"], hidden: ["7", "8"], in: backOnly)
+        let caudaEquina = try Self.responses([
+            "1.1": ["\(Self.symptoms)|leg-pain"], "1.6": ["\(Self.emergencies)|retention"], "7.5": ["\(Self.weakness)|severe"]
+        ])
+        try Self.expectShown(["5"], hidden: ["7", "8"], in: caudaEquina)
+    }
+
     @Test
     func onlyTheMostUrgentAdviceIsShown() throws {
         let allThree = try Self.responses([
