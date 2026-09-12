@@ -58,6 +58,9 @@ enum ScreeningAnswers {
         case .expression(let expression):
             let engine = try #require(responses.questionnaire.expressionEngine)
             return try engine.evaluateBoolean(expression, scope: .item(task.id), in: responses) == .true
+        case let .responseValueComparison(taskId, .equal, .bool(expected)):
+            // The gate on a hidden flag, which its expression computed into the responses.
+            return responses.responses[taskId].value == .bool(expected)
         default:
             throw UnsupportedCondition()
         }
