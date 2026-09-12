@@ -572,7 +572,7 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/SchmiedmayerLab/Grove.git";
 			requirement = {
-				branch = "consent-and-documentation-grid";
+				branch = "expression-engine-performance";
 				kind = branch;
 			};
 		};
