@@ -735,6 +735,132 @@
           ]
         },
         {
+          "linkId": "cauda-equina",
+          "text": "Cauda equina symptoms",
+          "type": "boolean",
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-hidden",
+              "valueBoolean": true
+            },
+            {
+              "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-calculatedExpression",
+              "valueExpression": {
+                "language": "text/fhirpath",
+                "expression": "%caudaEquina"
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "injury-advice",
+          "text": "Injury advice",
+          "type": "boolean",
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-hidden",
+              "valueBoolean": true
+            },
+            {
+              "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-calculatedExpression",
+              "valueExpression": {
+                "language": "text/fhirpath",
+                "expression": "%injury and %caudaEquina.not()"
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "cancer-advice",
+          "text": "Cancer advice",
+          "type": "boolean",
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-hidden",
+              "valueBoolean": true
+            },
+            {
+              "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-calculatedExpression",
+              "valueExpression": {
+                "language": "text/fhirpath",
+                "expression": "%cancer and %injury.not() and %caudaEquina.not()"
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "infection-advice",
+          "text": "Infection advice",
+          "type": "boolean",
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-hidden",
+              "valueBoolean": true
+            },
+            {
+              "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-calculatedExpression",
+              "valueExpression": {
+                "language": "text/fhirpath",
+                "expression": "%infection and %cancer.not() and %injury.not() and %caudaEquina.not()"
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "back-module",
+          "text": "Back pain module",
+          "type": "boolean",
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-hidden",
+              "valueBoolean": true
+            },
+            {
+              "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-calculatedExpression",
+              "valueExpression": {
+                "language": "text/fhirpath",
+                "expression": "%caudaEquina.not() and %resource.descendants().where(linkId='1.1').answer.value.where(code='low-back-only' or code='mixed').exists()"
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "leg-module",
+          "text": "Leg symptoms module",
+          "type": "boolean",
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-hidden",
+              "valueBoolean": true
+            },
+            {
+              "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-calculatedExpression",
+              "valueExpression": {
+                "language": "text/fhirpath",
+                "expression": "%caudaEquina.not() and %resource.descendants().where(linkId='1.1').answer.value.where(code='leg-pain' or code='trouble-walking' or code='mixed').exists()"
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "leg-weakness",
+          "text": "Severe leg weakness",
+          "type": "boolean",
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-hidden",
+              "valueBoolean": true
+            },
+            {
+              "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-calculatedExpression",
+              "valueExpression": {
+                "language": "text/fhirpath",
+                "expression": "%legWeakness"
+              }
+            }
+          ]
+        },
+        {
           "linkId": "screening-outcome",
           "code": [
             {
@@ -792,15 +918,16 @@
         {
           "url": "https://spineai.stanford.edu/fhir/StructureDefinition/pathway-priority",
           "valueInteger": 3
-        },
-        {
-          "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-enableWhenExpression",
-          "valueExpression": {
-            "language": "text/fhirpath",
-            "expression": "%injury and %caudaEquina.not()"
-          }
         }
       ],
+      "enableWhen": [
+        {
+          "question": "injury-advice",
+          "operator": "=",
+          "answerBoolean": true
+        }
+      ],
+      "enableBehavior": "all",
       "item": [
         {
           "linkId": "2.1",
@@ -817,15 +944,16 @@
         {
           "url": "https://spineai.stanford.edu/fhir/StructureDefinition/pathway-priority",
           "valueInteger": 4
-        },
-        {
-          "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-enableWhenExpression",
-          "valueExpression": {
-            "language": "text/fhirpath",
-            "expression": "%cancer and %injury.not() and %caudaEquina.not()"
-          }
         }
       ],
+      "enableWhen": [
+        {
+          "question": "cancer-advice",
+          "operator": "=",
+          "answerBoolean": true
+        }
+      ],
+      "enableBehavior": "all",
       "item": [
         {
           "linkId": "3.1",
@@ -842,15 +970,16 @@
         {
           "url": "https://spineai.stanford.edu/fhir/StructureDefinition/pathway-priority",
           "valueInteger": 5
-        },
-        {
-          "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-enableWhenExpression",
-          "valueExpression": {
-            "language": "text/fhirpath",
-            "expression": "%infection and %cancer.not() and %injury.not() and %caudaEquina.not()"
-          }
         }
       ],
+      "enableWhen": [
+        {
+          "question": "infection-advice",
+          "operator": "=",
+          "answerBoolean": true
+        }
+      ],
+      "enableBehavior": "all",
       "item": [
         {
           "linkId": "4.1",
@@ -871,15 +1000,16 @@
         {
           "url": "https://spineai.stanford.edu/fhir/StructureDefinition/pathway-terminal",
           "valueBoolean": true
-        },
-        {
-          "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-enableWhenExpression",
-          "valueExpression": {
-            "language": "text/fhirpath",
-            "expression": "%caudaEquina"
-          }
         }
       ],
+      "enableWhen": [
+        {
+          "question": "cauda-equina",
+          "operator": "=",
+          "answerBoolean": true
+        }
+      ],
+      "enableBehavior": "all",
       "item": [
         {
           "linkId": "5.1",
@@ -907,15 +1037,14 @@
       "linkId": "6",
       "text": "Axial Lumbar Back Pain Module",
       "type": "group",
-      "extension": [
+      "enableWhen": [
         {
-          "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-enableWhenExpression",
-          "valueExpression": {
-            "language": "text/fhirpath",
-            "expression": "%caudaEquina.not() and %resource.descendants().where(linkId='1.1').answer.value.where(code='low-back-only' or code='mixed').exists()"
-          }
+          "question": "back-module",
+          "operator": "=",
+          "answerBoolean": true
         }
       ],
+      "enableBehavior": "all",
       "item": [
         {
           "linkId": "6.1",
@@ -1295,15 +1424,14 @@
       "linkId": "7",
       "text": "Lumbar Radiculopathy Module",
       "type": "group",
-      "extension": [
+      "enableWhen": [
         {
-          "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-enableWhenExpression",
-          "valueExpression": {
-            "language": "text/fhirpath",
-            "expression": "%caudaEquina.not() and %resource.descendants().where(linkId='1.1').answer.value.where(code='leg-pain' or code='trouble-walking' or code='mixed').exists()"
-          }
+          "question": "leg-module",
+          "operator": "=",
+          "answerBoolean": true
         }
       ],
+      "enableBehavior": "all",
       "item": [
         {
           "linkId": "7.1",
@@ -1777,15 +1905,16 @@
         {
           "url": "https://spineai.stanford.edu/fhir/StructureDefinition/pathway-terminal",
           "valueBoolean": true
-        },
-        {
-          "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-enableWhenExpression",
-          "valueExpression": {
-            "language": "text/fhirpath",
-            "expression": "%legWeakness"
-          }
         }
       ],
+      "enableWhen": [
+        {
+          "question": "leg-weakness",
+          "operator": "=",
+          "answerBoolean": true
+        }
+      ],
+      "enableBehavior": "all",
       "item": [
         {
           "linkId": "8.1",
