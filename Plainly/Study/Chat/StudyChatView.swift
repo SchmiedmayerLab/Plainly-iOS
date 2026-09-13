@@ -31,7 +31,7 @@ struct StudyChatView: View {
     var body: some View {
         @Bindable var model = model
         NavigationStack { // swiftlint:disable:this closure_body_length
-            chatView
+            conversationView
                 .applyTitleConfig(model.navigationState.titleConfig(in: model.study))
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
@@ -91,6 +91,15 @@ struct StudyChatView: View {
         }
     }
     
+    /// Tasks, instructions, surveys, and the toolbar are the same in both modes; only how the participant converses differs.
+    @ViewBuilder private var conversationView: some View {
+        if model.usesVoice {
+            StudyVoiceView(model: model)
+        } else {
+            chatView
+        }
+    }
+
     @ViewBuilder private var chatView: some View {
         @Bindable var llmSession = model.llmSession
 

@@ -93,6 +93,36 @@ enum ScreenshotWalk {
         app.terminate()
     }
 
+    /// The voice conversation in its listening, thinking, and speaking states, played by the demo presenter.
+    static func voiceConversation() throws {
+        let app = launch(arguments: [
+            "-onboardingFlow.complete", "YES", "--skipOnboarding", "--resetRetainedReports", "--useFirebaseEmulator",
+            "--mode", "study:edu.stanford.plainly.usabilityStudy", "--interactionMode", "voice", "--voiceDemo"
+        ])
+        let startSession = app.buttons["Start Session"]
+        XCTAssertTrue(startSession.waitForExistence(timeout: 10))
+        startSession.tap()
+        XCTAssertTrue(app.staticTexts["Welcome"].waitForExistence(timeout: 30))
+        let closeButtons = app.buttons.matching(identifier: "Close").allElementsBoundByIndex
+        let sheetClose = try XCTUnwrap(closeButtons.max { $0.frame.minY < $1.frame.minY })
+        sheetClose.tap()
+        // The captions read as "You said: …" and "Assistant: …" to VoiceOver, so they are found by content.
+        let question = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "MRI report")).firstMatch
+        let answer = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "disc bulge")).firstMatch
+        for (name, phase, precondition) in [
+            ("06_Voice_Listening", "Listening", question),
+            ("07_Voice_Thinking", "Thinking…", question),
+            ("08_Voice_Speaking", "Speaking", answer)
+        ] {
+            XCTAssertTrue(app.staticTexts[phase].waitForExistence(timeout: 20), "The demo never reached \(phase).")
+            XCTAssertTrue(precondition.waitForExistence(timeout: 5))
+            // The captions slide in; the shot should show them settled.
+            usleep(400_000)
+            snapshot(name)
+        }
+        app.terminate()
+    }
+
     private static func launch(arguments: [String]) -> XCUIApplication {
         let app = XCUIApplication()
         setupSnapshot(app)

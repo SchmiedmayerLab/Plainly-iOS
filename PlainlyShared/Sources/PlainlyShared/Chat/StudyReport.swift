@@ -49,18 +49,49 @@ extension StudyReport {
             }
         }
         
+        /// Which build of the app produced the report, so the prompts and behaviour it ran with can be traced.
+        public struct App: Codable, Sendable {
+            public let version: String
+            public let build: String
+
+            public init(version: String, build: String) {
+                self.version = version
+                self.build = build
+            }
+
+            /// The running app, as its bundle describes it.
+            public static func current(bundle: Bundle = .main) -> App {
+                App(
+                    version: bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown",
+                    build: bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "unknown"
+                )
+            }
+        }
+
         private let studyID: String
         private let startTime: Date
         private let endTime: Date
         private let userInfo: [String: String]
         private let llmConfig: LLMConfig
+        private let app: App
+        private let interactionMode: Study.InteractionMode
         
-        public init(studyID: String, startTime: Date, endTime: Date, userInfo: [String: String], llmConfig: LLMConfig) {
+        public init(
+            studyID: String,
+            startTime: Date,
+            endTime: Date,
+            userInfo: [String: String],
+            llmConfig: LLMConfig,
+            app: App,
+            interactionMode: Study.InteractionMode
+        ) {
             self.studyID = studyID
             self.startTime = startTime
             self.endTime = endTime
             self.userInfo = userInfo
             self.llmConfig = llmConfig
+            self.app = app
+            self.interactionMode = interactionMode
         }
     }
 
@@ -114,6 +145,7 @@ extension StudyReport {
     public enum TimelineEvent: Hashable, Encodable, Sendable {
         case chatMessage(ChatMessage)
         case surveyTask(SurveyTask)
+        case voiceTurn(VoiceTurn)
 
         private enum CodingKeys: String, CodingKey {
             case type
@@ -123,6 +155,7 @@ extension StudyReport {
         private enum EventType: String, Hashable, Sendable {
             case chatMessage
             case surveyTask
+            case voiceTurn
         }
 
         public struct ChatMessage: Hashable, Codable, Sendable {
@@ -179,6 +212,43 @@ extension StudyReport {
             }
         }
 
+        public struct VoiceToolCall: Hashable, Encodable, Sendable {
+            private let name: String
+            private let arguments: String
+
+            public init(name: String, arguments: String) {
+                self.name = name
+                self.arguments = arguments
+            }
+        }
+
+        /// One spoken participant turn: what was heard, what the realtime model asked for, and what came back.
+        public struct VoiceTurn: Hashable, Encodable, Sendable {
+            fileprivate let startedAt: Date
+            private let transcript: String
+            /// `transcript` when the words are the participant's own, `paraphrase` when only the model's rendering arrived.
+            private let transcriptSource: String
+            private let toolCall: VoiceToolCall
+            private let answer: String?
+            private let spokenTranscript: String?
+
+            public init(
+                startedAt: Date,
+                transcript: String,
+                transcriptSource: String,
+                toolCall: VoiceToolCall,
+                answer: String?,
+                spokenTranscript: String?
+            ) {
+                self.startedAt = startedAt
+                self.transcript = transcript
+                self.transcriptSource = transcriptSource
+                self.toolCall = toolCall
+                self.answer = answer
+                self.spokenTranscript = spokenTranscript
+            }
+        }
+
         public struct SurveyQuestion: Hashable, Encodable, Sendable {
             private let questionText: String
             private let answer: String
@@ -197,6 +267,8 @@ extension StudyReport {
                 message.timestamp
             case .surveyTask(let task):
                 task.completedAt
+            case .voiceTurn(let turn):
+                turn.startedAt
             }
         }
 
@@ -209,6 +281,9 @@ extension StudyReport {
             case .surveyTask(let task):
                 try container.encode(EventType.surveyTask.rawValue, forKey: .type)
                 try container.encode(task, forKey: .data)
+            case .voiceTurn(let turn):
+                try container.encode(EventType.voiceTurn.rawValue, forKey: .type)
+                try container.encode(turn, forKey: .data)
             }
         }
     }

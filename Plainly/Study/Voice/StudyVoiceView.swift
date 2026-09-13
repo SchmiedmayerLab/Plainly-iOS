@@ -1,0 +1,53 @@
+//
+// This source file is part of the Plainly iOS open-source project
+//
+// SPDX-FileCopyrightText: 2026 Stanford University
+//
+// SPDX-License-Identifier: MIT
+//
+
+import GroveLLM
+import PlainlyVoice
+import SwiftUI
+
+
+/// The voice-mode conversation, where the chat would otherwise be; the surrounding study screen is unchanged.
+struct StudyVoiceView: View {
+    @Environment(LLMRunner.self) private var llmRunner
+    @Environment(\.scenePhase) private var scenePhase
+
+    let model: StudyChatViewModel
+
+    private var voice: any VoicePresenter {
+        model.voice(using: llmRunner)
+    }
+
+    var body: some View {
+        VoiceConversationView(presenter: voice)
+            .background(Color(.systemBackground))
+            .task {
+                // A sheet can already be up when the conversation begins; the change hook below only sees later ones.
+                voice.isPaused = model.presentedSheet != nil
+                await voice.start()
+            }
+            .onDisappear {
+                voice.stop()
+            }
+            // Instructions and surveys take the participant away from the conversation; it waits for them.
+            .onChange(of: model.presentedSheet) { _, sheet in
+                voice.isPaused = sheet != nil
+            }
+            .onChange(of: scenePhase) { _, phase in
+                switch phase {
+                case .background:
+                    voice.stop()
+                case .active:
+                    Task {
+                        await voice.start()
+                    }
+                default:
+                    break
+                }
+            }
+    }
+}

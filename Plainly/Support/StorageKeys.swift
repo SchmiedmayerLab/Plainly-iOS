@@ -25,6 +25,8 @@ extension LocalPreferenceKeys {
     ///
     /// Off by default: a study reads what its own instructions ask for until someone decides otherwise.
     static let explanationLevelEnabled = LocalPreferenceKey<Bool>("chat.explanationLevel.enabled", default: false)
+    /// Experimental: a chat study run as a voice conversation; the participant's own choice, kept across sessions.
+    static let voiceModeEnabled = LocalPreferenceKey<Bool>("chat.voiceMode.enabled", default: false)
     /// The level the participant chose, kept between sessions so the chat opens the way they left it.
     static let explanationLevel = LocalPreferenceKey<String?>("chat.explanationLevel.selection", default: nil)
 }

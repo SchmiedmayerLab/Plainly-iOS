@@ -22,6 +22,8 @@ Plainly is an experimental iOS app for a consented Stanford research study. It e
 
 During a study session, participants complete study surveys and can ask questions about health records made available through Apple Health. Plainly generates summaries and explanations using language models; it does not provide medical advice, diagnosis, or treatment.
 
+A study runs in one of two interaction modes. In the chat mode participants type; in the voice mode the chat is replaced by a realtime voice session that listens, hands every turn to the same study chat, and reads the answer back. Tasks, instructions, and surveys are the same in both. A development build can try a study in the other mode with the `--interactionMode voice` launch argument.
+
 > [!IMPORTANT]
 > Plainly is only for invited participants who have completed the study consent process. Do not install or use the app outside the study. The signed consent form, HIPAA authorization, and other study information govern participation and the handling of participant information.
 

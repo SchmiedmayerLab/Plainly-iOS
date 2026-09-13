@@ -1,0 +1,23 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "Voice is off": {},
+    "Connecting…": {},
+    "Listening": {},
+    "Thinking…": {},
+    "Speaking": {},
+    "Try again": {},
+    "You said: %@": {},
+    "Assistant: %@": {},
+    "The device does not support the audio format the voice session needs.": {},
+    "Go ahead, I'm listening.": {},
+    "Paused. Tap the orb to resume.": {},
+    "Voice conversation": {},
+    "Resumes the conversation.": {},
+    "Pauses the conversation.": {},
+    "Muted": {},
+    "Mute": {},
+    "Unmute": {}
+  },
+  "version": "1.0"
+}

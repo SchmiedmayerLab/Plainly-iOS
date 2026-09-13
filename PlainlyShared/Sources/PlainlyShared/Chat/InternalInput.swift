@@ -23,6 +23,13 @@ public enum InternalInput {
     public static let conversationStarter = "Follow the study instructions to begin the conversation."
     /// Asks for the one summary the surrounding instructions describe.
     public static let resourceSummaryRequest = "Produce the requested resource summary now."
+    /// Identifies the voice note in the context, so setting it again replaces it rather than adding another.
+    public static let voiceModeNoteID = UUID(uuidString: "5D3E2B6A-1F4C-4C7E-9B2A-7A0C1E5F8D21") ?? UUID()
+    /// Spoken answers are read aloud as they are, so they have to be short and free of anything only a screen can show.
+    public static let voiceModeNote = """
+        The participant is talking to you by voice and your answer will be read aloud. Answer in plain spoken language \
+        in at most 80 words, without markdown, lists, headings, or citations.
+        """
 }
 
 

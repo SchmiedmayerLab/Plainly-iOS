@@ -20,10 +20,11 @@ let package = Package(
     products: [
         .library(name: "PlainlyShared", targets: ["PlainlyShared"]),
         .library(name: "PlainlyStudyDefinitions", targets: ["PlainlyStudyDefinitions"]),
+        .library(name: "PlainlyVoice", targets: ["PlainlyVoice"]),
         .executable(name: "PlainlyCLI", targets: ["PlainlyCLI"])
     ],
     dependencies: [
-        .package(url: "https://github.com/SchmiedmayerLab/Grove.git", branch: "chat-input-and-dictation"),
+        .package(url: "https://github.com/SchmiedmayerLab/Grove.git", branch: "realtime-server-sessions"),
         .package(url: "https://github.com/SchmiedmayerLab/FHIRModels.git", .upToNextMinor(from: "0.9.3")),
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.7.0")
     ],
@@ -41,6 +42,21 @@ let package = Package(
             ],
             resources: [
                 .copy("Resources/Synthetic Patients")
+            ],
+            swiftSettings: [
+                .enableUpcomingFeature("ExistentialAny"),
+                .enableUpcomingFeature("InternalImportsByDefault")
+            ]
+        ),
+        .target(
+            name: "PlainlyVoice",
+            dependencies: [
+                .product(name: "GroveLLM", package: "Grove"),
+                .product(name: "GroveLLMOpenAI", package: "Grove"),
+                .product(name: "GroveLLMOpenAIRealtime", package: "Grove")
+            ],
+            resources: [
+                .process("Resources")
             ],
             swiftSettings: [
                 .enableUpcomingFeature("ExistentialAny"),
@@ -69,6 +85,10 @@ let package = Package(
             swiftSettings: [
                 .enableUpcomingFeature("ExistentialAny")
             ]
+        ),
+        .testTarget(
+            name: "PlainlyVoiceTests",
+            dependencies: ["PlainlyVoice"]
         ),
         .testTarget(
             name: "PlainlySharedTests",

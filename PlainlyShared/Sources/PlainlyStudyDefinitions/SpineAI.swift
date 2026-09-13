@@ -101,6 +101,17 @@ extension Study {
                     questions: confidenceQuestions
                 )
             ],
+            voicePrompts: .amending(
+                instructions: """
+                    This is the SpineAI study. The assistant is called SpineAI, so call yourself SpineAI's voice. \
+                    Participants have a spine or back problem, answered a symptom questionnaire before this session, and \
+                    work through tasks such as understanding an MRI or X-ray report, comparing treatment options, \
+                    surgery and its risks, pain and medication, recovery, and second opinions. Use everyday words for \
+                    spine terms when you acknowledge a question, and never add medical judgement of your own.
+                    """,
+                greeting: "Say that questions about their spine problem, imaging report, or treatment options are welcome.",
+                handoff: "Using only the conversation below, mention in a few words what it was about last, so they know you are up to date."
+            ),
             // Tried out in simulators and development deployments; participants see neither yet.
             previews: .init(defaultExplanationLevel: .balanced, generatesImages: true, allowsAttachments: true)
         )

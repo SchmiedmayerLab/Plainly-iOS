@@ -8,6 +8,7 @@
 
 import Foundation
 import GroveFoundation
+import PlainlyShared
 
 
 /// A behaviour the Firebase emulator stands in for, so an end-to-end test can drive a path the deployed
@@ -55,6 +56,12 @@ enum FeatureFlags {
     /// development gateway key is rarely entitled to every model a deployment uses, and this is what lets
     /// a study be exercised locally against one it can reach.
     static let llmModelOverride: String? = useFirebaseEmulator ? value(following: "--llmModel") : nil
+    /// Shows the voice screen with a scripted conversation instead of a session, for screenshots and UI tests.
+    static let voiceDemo = Deployment.isDevelopment && CommandLine.arguments.contains("--voiceDemo")
+    /// Lets a development build try a study in the other conversation mode, e.g. `--interactionMode voice`.
+    static let interactionModeOverride: Study.InteractionMode? = Deployment.isDevelopment
+        ? value(following: "--interactionMode").flatMap(Study.InteractionMode.init(rawValue:))
+        : nil
 
     /// Fails study report uploads so end-to-end tests can exercise the retry on a later launch.
     static let useFirebaseMockUploadError =

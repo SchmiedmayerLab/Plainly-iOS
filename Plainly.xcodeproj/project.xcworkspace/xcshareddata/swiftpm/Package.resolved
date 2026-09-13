@@ -1,5 +1,5 @@
 {
-  "originHash" : "174664e1640f6a7c6221f77238b10530926b174d7351d58612e179c08c10fea4",
+  "originHash" : "90bed50b464d7c678991796b430add520e5b0f7d69452089354331b3da1041bd",
   "pins" : [
     {
       "identity" : "abseil-cpp-binary",
@@ -87,8 +87,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/SchmiedmayerLab/Grove.git",
       "state" : {
-        "branch" : "chat-input-and-dictation",
-        "revision" : "7ee36b81d00c9427976d14602512eaa472a44491"
+        "branch" : "realtime-server-sessions",
+        "revision" : "d3d374b5efeb8058b0aa9477769a176ff02dcc8d"
       }
     },
     {

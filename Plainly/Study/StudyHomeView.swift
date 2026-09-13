@@ -303,11 +303,16 @@ extension StudyHomeView {
     }
 
     init(study: Study, userInfo: [String: String]) {
-        preloadedStudy = InProgressStudy(study: Deployment.isDevelopment ? study.enablingPreviews() : study, userInfo: userInfo)
+        preloadedStudy = Self.inProgress(study, userInfo: userInfo)
     }
     
     init() {
         preloadedStudy = nil
+    }
+
+    /// A study as it runs here: with its previews on a development deployment, however it was chosen.
+    private static func inProgress(_ study: Study, userInfo: [String: String]) -> InProgressStudy {
+        InProgressStudy(study: Deployment.isDevelopment ? study.enablingPreviews() : study, userInfo: userInfo)
     }
 
     @MainActor
@@ -318,7 +323,7 @@ extension StudyHomeView {
         do {
             let scanResult = try StudyQRCodeHandler.processQRCode(payload: payload)
             isPresentingQRCodeScanner = false
-            fhirInterpretationModule.currentStudy = .init(study: scanResult.study, userInfo: scanResult.userInfo)
+            fhirInterpretationModule.currentStudy = Self.inProgress(scanResult.study, userInfo: scanResult.userInfo)
             return .stopScanning
         } catch {
             AppDiagnostics.study.logError(error, context: "Selecting study from QR code")
@@ -357,7 +362,8 @@ extension StudyHomeView {
             let report = try await StudyReportBuilder(interpretationModule: fhirInterpretationModule).writeReport(
                 for: inProgressStudy,
                 initialQuestionnaireResponse: questionnaireResponse,
-                startTime: sessionStartTime
+                startTime: sessionStartTime,
+                interactionMode: inProgressStudy.study.resolvedInteractionMode
             )
             _ = await StudyReportDelivery(uploader: uploader, pendingReports: pendingReports).deliver(reportAt: report, for: inProgressStudy.study)
         } catch {

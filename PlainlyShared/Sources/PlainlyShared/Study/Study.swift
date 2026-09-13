@@ -18,6 +18,12 @@ public struct Study: Identifiable, Hashable, Sendable {
         case studyTitle
     }
 
+    /// How participants talk to the assistant: by typing, or by voice on top of the same chat.
+    public enum InteractionMode: String, Hashable, Codable, Sendable {
+        case chat
+        case voice
+    }
+
     /// The Firebase function that serves chat responses unless a study opts into another one.
     public static let defaultChatFunctionName = "chat"
     
@@ -55,6 +61,10 @@ public struct Study: Identifiable, Hashable, Sendable {
     public let generatesImages: Bool
     /// Whether participants may add photos and files to their messages. Off unless the study asks for it.
     public let allowsAttachments: Bool
+    /// How participants converse: typed chat, or a realtime voice session layered on that same chat.
+    public let interactionMode: InteractionMode
+    /// What the voice says on its own in voice mode.
+    public let voicePrompts: VoicePrompts
     /// What the study tries out before participants see it; applied by ``enablingPreviews()``.
     public let previews: Previews
     
@@ -86,6 +96,8 @@ public struct Study: Identifiable, Hashable, Sendable {
         defaultExplanationLevel: ExplanationLevel? = nil,
         generatesImages: Bool = false,
         allowsAttachments: Bool = false,
+        interactionMode: InteractionMode = .chat,
+        voicePrompts: VoicePrompts = .default,
         previews: Previews = .init(),
         reportFormat: StudyReportFormat = .questionnaireResponse
     ) {
@@ -102,6 +114,8 @@ public struct Study: Identifiable, Hashable, Sendable {
         self.defaultExplanationLevel = defaultExplanationLevel
         self.generatesImages = generatesImages
         self.allowsAttachments = allowsAttachments
+        self.interactionMode = interactionMode
+        self.voicePrompts = voicePrompts
         self.previews = previews
         self._initialQuestionnaire = initialQuestionnaire
         self.tasks = tasks
@@ -125,6 +139,8 @@ public struct Study: Identifiable, Hashable, Sendable {
             defaultExplanationLevel: previews.defaultExplanationLevel ?? defaultExplanationLevel,
             generatesImages: generatesImages || previews.generatesImages,
             allowsAttachments: allowsAttachments || previews.allowsAttachments,
+            interactionMode: previews.interactionMode ?? interactionMode,
+            voicePrompts: voicePrompts,
             previews: previews,
             reportFormat: reportFormat
         )
@@ -161,11 +177,18 @@ extension Study {
         public let defaultExplanationLevel: ExplanationLevel?
         public let generatesImages: Bool
         public let allowsAttachments: Bool
+        public let interactionMode: InteractionMode?
 
-        public init(defaultExplanationLevel: ExplanationLevel? = nil, generatesImages: Bool = false, allowsAttachments: Bool = false) {
+        public init(
+            defaultExplanationLevel: ExplanationLevel? = nil,
+            generatesImages: Bool = false,
+            allowsAttachments: Bool = false,
+            interactionMode: InteractionMode? = nil
+        ) {
             self.defaultExplanationLevel = defaultExplanationLevel
             self.generatesImages = generatesImages
             self.allowsAttachments = allowsAttachments
+            self.interactionMode = interactionMode
         }
     }
 }
