@@ -140,6 +140,8 @@ capture() {
   # The keyboard's spell check would underline typed text in red.
   xcrun simctl spawn "$UDID" defaults write com.apple.keyboard.preferences KeyboardCheckSpelling -bool false >/dev/null 2>&1 || true
   xcrun simctl status_bar "$UDID" override --time 9:41 --batteryState charged --batteryLevel 100 --wifiBars 3 --cellularBars 4 --operatorName ''
+  # Up before the walk starts: starting it on the first marker takes longer than the walk waits for a picture.
+  rocketsim_up
   log "capturing $appearance"
   local test_log=$(mktemp) test_status=$(mktemp)
   (TEST_RUNNER_PLAINLY_README_SCREENSHOTS=1 TEST_RUNNER_PLAINLY_MOCK_CHAT_RESPONSE="$PLAINLY_MOCK_CHAT_RESPONSE" \
