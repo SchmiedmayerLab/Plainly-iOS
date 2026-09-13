@@ -67,6 +67,15 @@ struct ExplanationLevelTests {
         #expect(instructions.count == ExplanationLevel.allCases.count)
     }
 
+    @Test("Only SpineAI tries attachments, and only where previews are on")
+    func onlySpineAIPreviewsAttachments() {
+        #expect(!Study.spineAI.allowsAttachments)
+        #expect(Study.spineAI.enablingPreviews().allowsAttachments)
+        for study in Study.allStudies where study.id != Study.spineAI.id {
+            #expect(!study.enablingPreviews().allowsAttachments, "\(study.id) offers attachments it does not ask for.")
+        }
+    }
+
     @Test("Only the study that measures comprehension offers the control")
     func onlySpineAIOffersTheControl() {
         #expect(Study.spineAI.defaultExplanationLevel == nil)

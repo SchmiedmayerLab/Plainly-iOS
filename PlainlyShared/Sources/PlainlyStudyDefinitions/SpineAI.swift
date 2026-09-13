@@ -102,7 +102,7 @@ extension Study {
                 )
             ],
             // Tried out in simulators and development deployments; participants see neither yet.
-            previews: .init(defaultExplanationLevel: .balanced, generatesImages: true)
+            previews: .init(defaultExplanationLevel: .balanced, generatesImages: true, allowsAttachments: true)
         )
     }
 }
