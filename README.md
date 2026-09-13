@@ -29,24 +29,24 @@ A study runs in one of two interaction modes. In the chat mode participants type
 
 <table style="width: 80%">
   <tr>
-    <td align="center" width="33.33333%"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/Welcome~dark.png"><img src="docs/screenshots/Welcome.png" alt="Plainly welcome screen" width="80%"/></picture></td>
     <td align="center" width="33.33333%"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/Disclaimer~dark.png"><img src="docs/screenshots/Disclaimer.png" alt="Plainly research disclaimer screen" width="80%"/></picture></td>
     <td align="center" width="33.33333%"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/Study~dark.png"><img src="docs/screenshots/Study.png" alt="Plainly study home" width="80%"/></picture></td>
+    <td align="center" width="33.33333%"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/Questionnaire~dark.png"><img src="docs/screenshots/Questionnaire.png" alt="Plainly intake questionnaire" width="80%"/></picture></td>
   </tr>
   <tr>
-    <td align="center">Welcome</td>
     <td align="center">Research Disclaimer</td>
     <td align="center">Study</td>
+    <td align="center">Questionnaire</td>
   </tr>
   <tr>
-    <td align="center" width="33.33333%"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/Questionnaire~dark.png"><img src="docs/screenshots/Questionnaire.png" alt="Plainly intake questionnaire" width="80%"/></picture></td>
     <td align="center" width="33.33333%"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/Instructions~dark.png"><img src="docs/screenshots/Instructions.png" alt="Task instructions over the study chat" width="80%"/></picture></td>
     <td align="center" width="33.33333%"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/Chat~dark.png"><img src="docs/screenshots/Chat.png" alt="Plainly study chat with a health summary" width="80%"/></picture></td>
+    <td align="center" width="33.33333%"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/Voice~dark.png"><img src="docs/screenshots/Voice.png" alt="Plainly reading an answer aloud in a voice conversation" width="80%"/></picture></td>
   </tr>
   <tr>
-    <td align="center">Questionnaire</td>
     <td align="center">Task Instructions</td>
     <td align="center">Chat</td>
+    <td align="center">Voice</td>
   </tr>
 </table>
 
@@ -65,7 +65,7 @@ When running Plainly via Xcode, you can use the `--mode` CLI flag to control the
 
 ### Screenshots
 
-The App Store pictures come from `fastlane screenshots`, which walks the first row on an iPhone and an iPad and checks sizes and count; a production deployment takes them again from the build it ships. The README pictures add the questionnaire, the task instructions and the chat, with the Firebase emulator answering, framed through [RocketSim](https://www.rocketsim.app) in light and dark appearance:
+The App Store pictures come from `fastlane screenshots`, which walks the welcome, the research disclaimer and the study home on an iPhone and an iPad and checks sizes and count; a production deployment takes them again from the build it ships. The README pictures start at the disclaimer and add the questionnaire, the task instructions, the chat with the Firebase emulator answering, and a voice conversation played by the demo, framed through [RocketSim](https://www.rocketsim.app) in light and dark appearance:
 
 ```bash
 scripts/readme-screenshots.sh

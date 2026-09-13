@@ -81,7 +81,7 @@ struct CreateEnrollmentQRCodeSheet: View {
                         .tag(Study.ID?.none)
                         .selectionDisabled()
                     Divider()
-                    ForEach(Study.allStudies) { study in
+                    ForEach(Study.enrollable) { study in
                         Text(study.title)
                             .tag(study.id)
                     }

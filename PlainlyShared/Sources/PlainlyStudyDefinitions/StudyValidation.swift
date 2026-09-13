@@ -40,7 +40,7 @@ extension Study {
         var issues: [ValidationIssue] = []
         var seenStudyIds: Set<Study.ID> = []
 
-        for study in allStudies {
+        for study in allStudies + previewStudies {
             if !seenStudyIds.insert(study.id).inserted {
                 issues.append(.duplicateStudyId(study.id))
             }

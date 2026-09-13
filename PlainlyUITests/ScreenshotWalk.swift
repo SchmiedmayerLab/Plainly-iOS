@@ -17,6 +17,21 @@ import XCTestExtensions
 /// runs the README walk and shoots the simulator through RocketSim on every `CAPTURE` line the same call prints.
 @MainActor
 enum ScreenshotWalk {
+    /// A state of the demo voice conversation worth a picture.
+    enum VoiceMoment {
+        case listening
+        case thinking
+        case speaking
+
+        var label: String {
+            switch self {
+            case .listening: "Listening"
+            case .thinking: "Thinking…"
+            case .speaking: "Speaking"
+            }
+        }
+    }
+
     private static var app: XCUIApplication?
     private static var directory: URL?
 
@@ -26,10 +41,13 @@ enum ScreenshotWalk {
         ProcessInfo.processInfo.environment["PLAINLY_README_SCREENSHOTS"] == "1"
     }
 
-    static func welcomeAndDisclaimer() {
+    /// The welcome and the disclaimer behind it; the README starts at the disclaimer.
+    static func welcomeAndDisclaimer(capturesWelcome: Bool = true) {
         let app = launch(arguments: ["-onboardingFlow.complete", "NO", "--showOnboarding", "--mode", "test"])
         XCTAssertTrue(app.staticTexts["Plainly"].waitForExistence(timeout: 10))
-        snapshot("00_Welcome")
+        if capturesWelcome {
+            snapshot("00_Welcome")
+        }
 
         app.buttons["Learn More"].tap()
         XCTAssertTrue(app.staticTexts["Disclaimer"].waitForExistence(timeout: 5))
@@ -93,8 +111,14 @@ enum ScreenshotWalk {
         app.terminate()
     }
 
-    /// The voice conversation in its listening, thinking, and speaking states, played by the demo presenter.
-    static func voiceConversation() throws {
+    /// The voice conversation played by the demo presenter, taken at each of `shots` as the demo reaches it.
+    static func voiceConversation(
+        shots: [(name: String, moment: VoiceMoment)] = [
+            ("06_Voice_Listening", .listening),
+            ("07_Voice_Thinking", .thinking),
+            ("08_Voice_Speaking", .speaking)
+        ]
+    ) throws {
         let app = launch(arguments: [
             "-onboardingFlow.complete", "YES", "--skipOnboarding", "--resetRetainedReports", "--useFirebaseEmulator",
             "--mode", "study:edu.stanford.plainly.usabilityStudy", "--interactionMode", "voice", "--voiceDemo"
@@ -109,13 +133,13 @@ enum ScreenshotWalk {
         // The captions read as "You said: …" and "Assistant: …" to VoiceOver, so they are found by content.
         let question = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "MRI report")).firstMatch
         let answer = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "disc bulge")).firstMatch
-        for (name, phase, precondition) in [
-            ("06_Voice_Listening", "Listening", question),
-            ("07_Voice_Thinking", "Thinking…", question),
-            ("08_Voice_Speaking", "Speaking", answer)
-        ] {
-            XCTAssertTrue(app.staticTexts[phase].waitForExistence(timeout: 20), "The demo never reached \(phase).")
-            XCTAssertTrue(precondition.waitForExistence(timeout: 5))
+        for (name, moment) in shots {
+            // The answer is only spoken for a few seconds; catching it as it starts leaves time for the picture.
+            if moment == .speaking {
+                XCTAssertTrue(app.staticTexts[VoiceMoment.thinking.label].waitForExistence(timeout: 20))
+            }
+            XCTAssertTrue(app.staticTexts[moment.label].waitForExistence(timeout: 20), "The demo never reached \(moment.label).")
+            XCTAssertTrue((moment == .speaking ? answer : question).waitForExistence(timeout: 5))
             // The captions slide in; the shot should show them settled.
             usleep(400_000)
             snapshot(name)

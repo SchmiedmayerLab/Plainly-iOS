@@ -80,6 +80,13 @@ private final class LevelMeter: Sendable {
 /// One engine carries both directions so the voice-processing input cancels the assistant's own voice.
 /// Both directions report their loudness to ``VoiceAudioLevels`` for the screen to react to.
 final class VoiceAudioEngine: @unchecked Sendable {
+    /// The formats and converters the taps and playback work with, replaced as one when the route changes.
+    private struct Conversion {
+        let outputFormat: AVAudioFormat
+        let output: AVAudioConverter?
+        let input: AVAudioConverter?
+    }
+
     private static let sampleRate = 24_000.0
     // Without echo cancellation the assistant hears itself; the microphone is held while it speaks and shortly after.
     private static let outputHold: TimeInterval = 1.0
@@ -110,9 +117,13 @@ final class VoiceAudioEngine: @unchecked Sendable {
         Date.now.timeIntervalSince(lastOutputActivity.withLock { $0 }) < Self.outputHold
     }
 
+    private var outputSampleRate: Double {
+        conversion.withLockUnchecked { $0?.outputFormat.sampleRate } ?? Self.sampleRate
+    }
+
     /// How much of the assistant's audio has been queued since the queue was last emptied.
     var scheduledSeconds: TimeInterval {
-        TimeInterval(scheduledFrames.withLock { $0 }) / outputFormat.sampleRate
+        TimeInterval(scheduledFrames.withLock { $0 }) / outputSampleRate
     }
 
     /// How much of the assistant's audio has been heard; a caption tied to this position stays in step with the voice.
@@ -127,7 +138,7 @@ final class VoiceAudioEngine: @unchecked Sendable {
             return 0
         }
         let pending = scheduled - playerTime.sampleTime
-        return pending > 0 ? TimeInterval(pending) / outputFormat.sampleRate : 0
+        return pending > 0 ? TimeInterval(pending) / outputSampleRate : 0
     }
 
     private let continuation: AsyncStream<Data>.Continuation
@@ -142,9 +153,9 @@ final class VoiceAudioEngine: @unchecked Sendable {
     private let engine = AVAudioEngine()
     private let player = AVAudioPlayerNode()
     private let pcmFormat: AVAudioFormat
-    private var outputFormat: AVAudioFormat
-    private var inputConverter: AVAudioConverter?
-    private var outputConverter: AVAudioConverter?
+    private let conversion = OSAllocatedUnfairLock<Conversion?>(uncheckedState: nil)
+    // Rebuilding the graph after a route change and tearing it down on stop happen one at a time.
+    private let graphLock = NSRecursiveLock()
     private var observers: [any NSObjectProtocol] = []
     /// Called when the engine cannot go on, e.g. after a route change it could not recover from.
     var onFailure: (@Sendable (any Error) -> Void)?
@@ -164,7 +175,6 @@ final class VoiceAudioEngine: @unchecked Sendable {
         try session.setActive(true)
         #endif
 
-        outputFormat = pcmFormat
         do {
             try engine.inputNode.setVoiceProcessingEnabled(true)
         } catch {
@@ -188,6 +198,10 @@ final class VoiceAudioEngine: @unchecked Sendable {
     }
 
     func stop() {
+        graphLock.lock()
+        defer {
+            graphLock.unlock()
+        }
         for observer in observers {
             NotificationCenter.default.removeObserver(observer)
         }
@@ -223,7 +237,8 @@ final class VoiceAudioEngine: @unchecked Sendable {
                 channel.update(from: base.assumingMemoryBound(to: Int16.self), count: Int(frames))
             }
         }
-        guard let converted = convert(source, with: outputConverter, to: outputFormat) else {
+        guard let current = conversion.withLockUnchecked({ $0 }),
+              let converted = convert(source, with: current.output, to: current.outputFormat) else {
             return
         }
         scheduledFrames.withLock { $0 += AVAudioFramePosition(converted.frameLength) }
@@ -268,6 +283,10 @@ final class VoiceAudioEngine: @unchecked Sendable {
     #endif
 
     private func restart() {
+        graphLock.lock()
+        defer {
+            graphLock.unlock()
+        }
         do {
             // A new route can come with new hardware formats: the graph is wired again for them, and audio already
             // converted for the old ones is dropped.
@@ -289,14 +308,19 @@ final class VoiceAudioEngine: @unchecked Sendable {
         player.removeTap(onBus: 0)
         input.removeTap(onBus: 0)
         engine.disconnectNodeOutput(player)
-        outputFormat = engine.outputNode.outputFormat(forBus: 0)
+        let outputFormat = engine.outputNode.outputFormat(forBus: 0)
+        let inputFormat = input.outputFormat(forBus: 0)
         engine.connect(player, to: engine.mainMixerNode, format: outputFormat)
-        outputConverter = AVAudioConverter(from: pcmFormat, to: outputFormat)
+        // Swapped as one, so playback and capture never pair a new format with an old converter.
+        let conversion = Conversion(
+            outputFormat: outputFormat,
+            output: AVAudioConverter(from: pcmFormat, to: outputFormat),
+            input: AVAudioConverter(from: inputFormat, to: pcmFormat)
+        )
+        self.conversion.withLockUnchecked { $0 = conversion }
         player.installTap(onBus: 0, bufferSize: 1_024, format: outputFormat) { [weak self] buffer, _ in
             self?.meterOutput(buffer)
         }
-        let inputFormat = input.outputFormat(forBus: 0)
-        inputConverter = AVAudioConverter(from: inputFormat, to: pcmFormat)
         input.installTap(onBus: 0, bufferSize: 2_400, format: inputFormat) { [weak self] buffer, _ in
             self?.capture(buffer)
         }
@@ -307,7 +331,7 @@ final class VoiceAudioEngine: @unchecked Sendable {
             Task { @MainActor [levels] in levels.update(input: level) }
         }
         guard !isPaused,
-              let converted = convert(buffer, with: inputConverter, to: pcmFormat),
+              let converted = convert(buffer, with: conversion.withLockUnchecked({ $0?.input }), to: pcmFormat),
               let channel = converted.int16ChannelData?.pointee else {
             return
         }

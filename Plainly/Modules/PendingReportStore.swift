@@ -119,7 +119,7 @@ final class PendingReportStore: Module, EnvironmentAccessible, Sendable {
             return []
         }
         return studyDirectories.flatMap { studyDirectory -> [(study: Study, url: URL)] in
-            guard let study = Study.withId(studyDirectory.lastPathComponent) else {
+            guard let study = Study.enrollable(withId: studyDirectory.lastPathComponent) else {
                 AppDiagnostics.report.error(
                     "Retained reports reference the unknown study '\(studyDirectory.lastPathComponent, privacy: .public)'"
                 )

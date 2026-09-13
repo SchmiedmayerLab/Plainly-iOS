@@ -331,6 +331,7 @@ public struct VoiceConversationView: View {
                 .geometryGroup()
                 .scaleEffect(hasAppeared ? 1 : 0.6)
                 .opacity(hasAppeared ? 1 : 0)
+                .padding(.top, 48)
                 .padding(.bottom, 40)
             VoicePhaseLabel(phase: presenter.phase)
             Spacer(minLength: 16)

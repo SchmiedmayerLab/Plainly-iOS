@@ -38,7 +38,12 @@ struct SpokenCaption {
         if samples.last?.text != text {
             samples.append(Sample(audioMark: queued, text: text, entity: entity))
             if samples.count > Self.sampleLimit {
+                // The sample being heard stays, however far playback lags behind the text.
+                let heard = samples.last { $0.audioMark <= played }
                 samples.removeFirst(samples.count - Self.sampleLimit)
+                if let heard, let first = samples.first, first.audioMark > heard.audioMark {
+                    samples.insert(heard, at: 0)
+                }
             }
         }
         return samples.last { $0.audioMark <= played }?.text ?? ""

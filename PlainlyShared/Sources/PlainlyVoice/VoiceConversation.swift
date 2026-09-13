@@ -322,6 +322,8 @@ extension VoiceConversation {
         let earlier = previousTurn
         let task = Task<String, any Error> {
             await earlier?.value
+            // Stopped while it waited its turn: the question belongs to a session that is gone.
+            try Task.checkCancellation()
             return try await self.forwardTurn(turn)
         }
         turnTasks[turn.id] = task

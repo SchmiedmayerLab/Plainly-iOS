@@ -18,6 +18,8 @@ struct StudyVoiceView: View {
 
     let model: StudyChatViewModel
 
+    @State private var resumeTask: Task<Void, Never>?
+
     private var voice: any VoicePresenter {
         model.voice(using: llmRunner)
     }
@@ -31,6 +33,8 @@ struct StudyVoiceView: View {
                 await voice.start()
             }
             .onDisappear {
+                resumeTask?.cancel()
+                resumeTask = nil
                 voice.stop()
             }
             // Instructions and surveys take the participant away from the conversation; it waits for them.
@@ -40,9 +44,15 @@ struct StudyVoiceView: View {
             .onChange(of: scenePhase) { _, phase in
                 switch phase {
                 case .background:
+                    resumeTask?.cancel()
                     voice.stop()
                 case .active:
-                    Task {
+                    resumeTask?.cancel()
+                    // Kept, so leaving the screen before it runs keeps a session from starting off-screen.
+                    resumeTask = Task {
+                        guard !Task.isCancelled else {
+                            return
+                        }
                         await voice.start()
                     }
                 default:

@@ -53,6 +53,8 @@ public final class VoiceDemoPresenter: VoicePresenter {
 
     private let fixedPhase: VoicePhase?
     private var driver: Task<Void, Never>?
+    @ObservationIgnored private var stepIndex = 0
+    @ObservationIgnored private var stepStart = ContinuousClock.now
 
 
     /// - Parameter phase: A phase to hold, or `nil` to walk through the scripted conversation on a loop.
@@ -66,8 +68,14 @@ public final class VoiceDemoPresenter: VoicePresenter {
     /// Starts the script, or the level animation for a held phase.
     public func start() async {
         driver?.cancel()
+        stepIndex = 0
+        stepStart = .now
+        // Weak between ticks, so a presenter nobody stops, such as one in a preview, can still go away.
         driver = Task { [weak self] in
-            await self?.run()
+            while !Task.isCancelled, self != nil {
+                self?.advance()
+                try? await Task.sleep(for: .milliseconds(40))
+            }
         }
     }
 
@@ -78,24 +86,19 @@ public final class VoiceDemoPresenter: VoicePresenter {
         levels.reset()
     }
 
-    private func run() async {
-        var stepStart = ContinuousClock.now
-        var stepIndex = 0
-        while !Task.isCancelled {
-            if fixedPhase == nil {
-                let step = Self.script[stepIndex]
-                phase = isPaused ? .paused : (isMuted && step.phase == .listening ? .muted : step.phase)
-                transcript = step.lines
-                if ContinuousClock.now - stepStart >= step.duration {
-                    stepIndex = (stepIndex + 1) % Self.script.count
-                    stepStart = .now
-                }
-            } else if let fixedPhase {
-                phase = isPaused ? .paused : (isMuted && fixedPhase == .listening ? .muted : fixedPhase)
+    private func advance() {
+        if let fixedPhase {
+            phase = isPaused ? .paused : (isMuted && fixedPhase == .listening ? .muted : fixedPhase)
+        } else {
+            let step = Self.script[stepIndex]
+            phase = isPaused ? .paused : (isMuted && step.phase == .listening ? .muted : step.phase)
+            transcript = step.lines
+            if ContinuousClock.now - stepStart >= step.duration {
+                stepIndex = (stepIndex + 1) % Self.script.count
+                stepStart = .now
             }
-            synthesizeLevels()
-            try? await Task.sleep(for: .milliseconds(40))
         }
+        synthesizeLevels()
     }
 
     /// A voice-like envelope: syllable-rate pulses under a slower swell, so the orb moves the way it will in use.

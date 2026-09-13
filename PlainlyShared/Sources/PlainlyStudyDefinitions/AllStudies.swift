@@ -10,9 +10,14 @@ public import PlainlyShared
 
 
 extension Study {
-    /// All studies currently available.
+    /// All studies participants can take part in.
     public static var allStudies: [Study] {
-        [.usabilityStudy, .gynStudy, .spineAI, .languageStudy, .pedCardioStudy, .voiceDemo]
+        [.usabilityStudy, .gynStudy, .spineAI, .languageStudy, .pedCardioStudy]
+    }
+
+    /// Studies that only exist to try something out, which development builds offer next to ``allStudies``.
+    public static var previewStudies: [Study] {
+        [.voiceDemo]
     }
 }
 

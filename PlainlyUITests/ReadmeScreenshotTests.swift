@@ -9,8 +9,8 @@
 import XCTest
 
 
-/// The README pictures: the App Store screens plus the questionnaire, the task instructions and the chat, shot by
-/// `scripts/readme-screenshots.sh` with the Firebase emulator standing in for the chat.
+/// The README pictures: the disclaimer and the study home, the questionnaire, the task instructions, the chat, and a
+/// voice conversation, shot by `scripts/readme-screenshots.sh` with the Firebase emulator standing in for the chat.
 @MainActor
 final class ReadmeScreenshotTests: XCTestCase {
     override func setUp() async throws {
@@ -20,9 +20,10 @@ final class ReadmeScreenshotTests: XCTestCase {
     }
 
     func testScreenshots() throws {
-        ScreenshotWalk.welcomeAndDisclaimer()
+        ScreenshotWalk.welcomeAndDisclaimer(capturesWelcome: false)
         ScreenshotWalk.studyHome()
         ScreenshotWalk.questionnaire()
         try ScreenshotWalk.instructionsAndChat()
+        try ScreenshotWalk.voiceConversation(shots: [("06_Voice", .speaking)])
     }
 }

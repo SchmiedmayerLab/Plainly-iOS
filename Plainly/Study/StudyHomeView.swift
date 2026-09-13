@@ -9,6 +9,7 @@
 import GroveFHIRMockPatients
 import GroveFoundation
 import GroveHealthKit
+import GroveViews
 import struct ModelsR4.QuestionnaireResponse
 import PlainlyShared
 import SwiftUI
@@ -36,6 +37,7 @@ struct StudyHomeView: View {
     @State private var isPresentingQRCodeScanner = false
     
     @State private var isPresentingStudyChatView = false
+    @State private var primaryActionState: ViewState = .idle
     /// What the intake questionnaire decided, when it stopped the study; ``Screening`` keeps it from then on.
     @State private var screeningOutcome: ScreeningOutcome?
     private let sessionStartTime = Date.now
@@ -151,7 +153,14 @@ struct StudyHomeView: View {
                 studyLogo
                 studyInformation
                 Spacer()
-                bottomSection
+                pendingReportsView
+                    .padding(.horizontal, 32)
+                recordsStartDateView
+            }
+            .frame(maxWidth: .infinity)
+            // The same floating action the onboarding and the questionnaire end in, so it sits where theirs do.
+            .floatingActions {
+                primaryAction
             }
         }
     }
@@ -219,27 +228,6 @@ struct StudyHomeView: View {
         }
     }
 
-    private var bottomSection: some View {
-        VStack(spacing: 16) {
-            pendingReportsView
-                .padding(.horizontal, 32)
-            primaryActionButton
-                .padding(.horizontal, 32)
-                .transforming { view in
-                    if #available(iOS 26, *) {
-                        view.buttonStyle(.glassProminent)
-                    } else {
-                        view
-                            .background(Color.accent.opacity(waitingState.isWaiting ? 0.5 : 1))
-                            .cornerRadius(16)
-                            .buttonStyle(.borderedProminent)
-                    }
-                }
-            recordsStartDateView
-        }
-        .padding(.bottom, 24)
-    }
-    
     @ViewBuilder private var pendingReportsView: some View {
         if let pendingReports, pendingReports.pendingCount > 0 {
             PendingReportsView(count: pendingReports.pendingCount, isUploading: pendingReports.isUploading) {
@@ -248,42 +236,53 @@ struct StudyHomeView: View {
         }
     }
 
-    private var primaryActionButton: some View {
-        PrimaryActionButton {
-            if fhirInterpretationModule.currentStudy != nil {
-                if isMissingPreChatQuestionnaire {
-                    isPresentingQuestionnaire = true
-                    return
+    private var primaryAction: some View {
+        PageActions(viewState: $primaryActionState) {
+            primaryActionTitle
+        } action: {
+            do {
+                try await waitingState.run { @MainActor in
+                    try await performPrimaryAction()
                 }
-                // the HealthKit permissions should already have been granted via the onboarding, but we re-request them here, just in case,
-                // to make sure everything is in a proper state when the study gets launched.
-                do {
-                    try await healthKit.askForAuthorization()
-                } catch {
-                    AppDiagnostics.healthRecords.logError(
-                        error,
-                        context: "Refreshing Health Records authorization before chat"
-                    )
-                    throw error
-                }
-                await fhirInterpretationModule.updateSchemas()
-                isPresentingStudyChatView = true
-            } else {
-                isPresentingQRCodeScanner = true
-            }
-        } label: {
-            if waitingState.isWaiting {
-                Text("LOADING_HEALTH_RECORDS")
-            } else if fhirInterpretationModule.currentStudy != nil {
-                if isMissingPreChatQuestionnaire {
-                    Text("Start Questionnaire")
-                } else {
-                    Text("START_SESSION")
-                }
-            } else {
-                Label("Scan QR Code", systemImage: "qrcode.viewfinder")
+            } catch {
+                AppDiagnostics.study.logError(error, context: "Primary action")
+                throw error
             }
         }
+        .disabled(waitingState.isWaiting)
+    }
+
+    private var primaryActionTitle: Text {
+        if waitingState.isWaiting {
+            Text("LOADING_HEALTH_RECORDS")
+        } else if fhirInterpretationModule.currentStudy == nil {
+            Text("Scan QR Code")
+        } else if isMissingPreChatQuestionnaire {
+            Text("Start Questionnaire")
+        } else {
+            Text("START_SESSION")
+        }
+    }
+
+    private func performPrimaryAction() async throws {
+        guard fhirInterpretationModule.currentStudy != nil else {
+            isPresentingQRCodeScanner = true
+            return
+        }
+        if isMissingPreChatQuestionnaire {
+            isPresentingQuestionnaire = true
+            return
+        }
+        // the HealthKit permissions should already have been granted via the onboarding, but we re-request them here, just in case,
+        // to make sure everything is in a proper state when the study gets launched.
+        do {
+            try await healthKit.askForAuthorization()
+        } catch {
+            AppDiagnostics.healthRecords.logError(error, context: "Refreshing Health Records authorization before chat")
+            throw error
+        }
+        await fhirInterpretationModule.updateSchemas()
+        isPresentingStudyChatView = true
     }
 }
 

@@ -49,4 +49,17 @@ struct SpokenCaptionTests {
         #expect(spoken.hasSuffix("Say hello. Speak German, and only German."))
         #expect(configuration.unavailableAnswer.isEmpty == false)
     }
+
+    @Test
+    func keepsTheHeardSampleWhenTrimming() {
+        var caption = SpokenCaption()
+        let line = UUID()
+        _ = caption.text(of: line, arrived: "Heard", queued: 1, played: 1)
+        var shown = ""
+        for index in 0..<700 {
+            shown = caption.text(of: line, arrived: "Heard and more \(index)", queued: 2 + Double(index), played: 1)
+        }
+
+        #expect(shown == "Heard")
+    }
 }

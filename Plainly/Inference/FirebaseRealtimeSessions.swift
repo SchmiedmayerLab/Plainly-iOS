@@ -13,13 +13,6 @@ import PlainlyVoice
 
 /// Mints realtime voice sessions through the `realtimeSession` function, so the app never holds inference credentials.
 enum FirebaseRealtimeSessions {
-    private struct Request: Encodable {
-        let model: String
-        let instructions: String
-        let voice: String?
-        let language: String?
-    }
-
     private struct Grant: Decodable {
         struct Session: Decodable {
             let id: String
@@ -45,9 +38,13 @@ enum FirebaseRealtimeSessions {
             requestAs: String.self,
             responseAs: String.self
         )
-        let body = try JSONEncoder().encode(
-            Request(model: request.model, instructions: request.instructions, voice: request.voice, language: request.language)
-        )
+        let fields: [String: String?] = [
+            "model": request.model,
+            "instructions": request.instructions,
+            "voice": request.voice,
+            "language": request.language
+        ]
+        let body = try JSONEncoder().encode(fields.compactMapValues { $0 })
         let response = try await callable.call(String(decoding: body, as: UTF8.self))
         let grant = try JSONDecoder().decode(Grant.self, from: Data(response.utf8))
         return VoiceSessionGrant(clientSecret: grant.value, baseUrl: grant.baseUrl, sessionId: grant.session.id)
