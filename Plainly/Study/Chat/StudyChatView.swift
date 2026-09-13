@@ -105,8 +105,11 @@ struct StudyChatView: View {
             )
         )
         .chatHiddenMessages([InternalInput.conversationStarterID])
-        .chatAttachments([])
+        .chatAttachments(model.study.allowsAttachments ? .all : [])
         .chatMessageActions([.followUp])
+        // Told rather than locked: while the answer arrives the participant can still write, quote and queue the
+        // next message; only the study's message cap closes the composer.
+        .chatGenerating(model.isProcessing)
         // Reported inside the conversation rather than as an alert: the failure belongs to the answer
         // the participant is waiting for, and the retry sits right where they are looking.
         .chatError(generationError) {

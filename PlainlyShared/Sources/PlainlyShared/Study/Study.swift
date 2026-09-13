@@ -53,6 +53,8 @@ public struct Study: Identifiable, Hashable, Sendable {
     public let defaultExplanationLevel: ExplanationLevel?
     /// Whether the model may draw images in its answers. Off unless the study asks for it.
     public let generatesImages: Bool
+    /// Whether participants may add photos and files to their messages. Off unless the study asks for it.
+    public let allowsAttachments: Bool
     /// What the study tries out before participants see it; applied by ``enablingPreviews()``.
     public let previews: Previews
     
@@ -83,6 +85,7 @@ public struct Study: Identifiable, Hashable, Sendable {
         chatFunctionName: String = Study.defaultChatFunctionName,
         defaultExplanationLevel: ExplanationLevel? = nil,
         generatesImages: Bool = false,
+        allowsAttachments: Bool = false,
         previews: Previews = .init(),
         reportFormat: StudyReportFormat = .questionnaireResponse
     ) {
@@ -98,6 +101,7 @@ public struct Study: Identifiable, Hashable, Sendable {
         self.chatTitleConfig = chatTitleConfig
         self.defaultExplanationLevel = defaultExplanationLevel
         self.generatesImages = generatesImages
+        self.allowsAttachments = allowsAttachments
         self.previews = previews
         self._initialQuestionnaire = initialQuestionnaire
         self.tasks = tasks
@@ -120,6 +124,7 @@ public struct Study: Identifiable, Hashable, Sendable {
             chatFunctionName: chatFunctionName,
             defaultExplanationLevel: previews.defaultExplanationLevel ?? defaultExplanationLevel,
             generatesImages: generatesImages || previews.generatesImages,
+            allowsAttachments: allowsAttachments || previews.allowsAttachments,
             previews: previews,
             reportFormat: reportFormat
         )
@@ -155,10 +160,12 @@ extension Study {
     public struct Previews: Hashable, Sendable {
         public let defaultExplanationLevel: ExplanationLevel?
         public let generatesImages: Bool
+        public let allowsAttachments: Bool
 
-        public init(defaultExplanationLevel: ExplanationLevel? = nil, generatesImages: Bool = false) {
+        public init(defaultExplanationLevel: ExplanationLevel? = nil, generatesImages: Bool = false, allowsAttachments: Bool = false) {
             self.defaultExplanationLevel = defaultExplanationLevel
             self.generatesImages = generatesImages
+            self.allowsAttachments = allowsAttachments
         }
     }
 }

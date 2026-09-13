@@ -25,7 +25,7 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Plainly uses the camera to scan study enrollment QR codes.</string>
+	<string>Plainly uses the camera to scan study enrollment QR codes and to photograph documents you want to ask about.</string>
 	<key>NSHealthClinicalHealthRecordsShareUsageDescription</key>
 	<string>Plainly uses your clinical health records to help explain medical concepts in the app.</string>
 	<key>NSHealthShareUsageDescription</key>
@@ -37,11 +37,11 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>This message should never appear. Please adjust this when you start using location information. We have to put this in here as ResearchKit has the possibility to use it and not putting it here returns an error on AppStore Connect.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>This message should never appear. Please adjust this when you start using microphone information. We have to put this in here as ResearchKit has the possibility to use it and not putting it here returns an error on AppStore Connect.</string>
+	<string>Plainly uses the microphone to dictate your messages in the study chat.</string>
 	<key>NSMotionUsageDescription</key>
 	<string>This message should never appear. Please adjust this when you start using motion information. We have to put this in here as ResearchKit has the possibility to use it and not putting it here returns an error on AppStore Connect.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>This message should never appear. Please adjust this when you start using speech information. We have to put this in here as ResearchKit has the possibility to use it and not putting it here returns an error on AppStore Connect.</string>
+	<string>Plainly turns your dictated messages into text in the study chat.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

@@ -322,7 +322,7 @@ extension StudyHomeView {
             return .stopScanning
         } catch {
             AppDiagnostics.study.logError(error, context: "Selecting study from QR code")
-            return .continueScanning
+            return .rejected(reason: error.reason)
         }
     }
 

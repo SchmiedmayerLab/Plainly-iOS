@@ -10,16 +10,14 @@ import PlainlyShared
 import SwiftUI
 
 
-/// The progress of the answer being prepared, drawn as a line under the navigation bar.
-///
-/// A browser's loading line is the model: it sits at the edge of the chrome, fills as the work proceeds, and
-/// leaves once it is done. That keeps the conversation itself undisturbed, which a floating bar over the
-/// messages does not.
+/// The progress of the answer being prepared, drawn as the same hairline under the navigation bar that the
+/// questionnaire fills as its pages pass: tinted, one point tall, and with no track of its own, so the untravelled
+/// part stays clear and the bar's separator shows through.
 struct StudyChatProcessingView: View {
     /// How quickly the line approaches its ceiling; after this many seconds it has covered ~63 % of the way.
     /// An unstreamed answer with an image can take most of a minute; the bar must still be moving when it lands.
     private static let creepTimeConstant: TimeInterval = 20
-    private static let lineHeight: CGFloat = 2.5
+    private static let lineHeight: CGFloat = 1
     /// How long the finished line stays at full width before it fades.
     private static let completionHold: Duration = .milliseconds(400)
 
@@ -32,25 +30,23 @@ struct StudyChatProcessingView: View {
     /// Kept visible after the work ends, so the line finishes its run rather than vanishing part way along.
     @State private var isFinishing = false
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     private var isVisible: Bool {
         model.isProcessing || isFinishing
     }
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 0.25, paused: !isVisible)) { timeline in
-            Rectangle()
-                .fill(.tint)
-                .frame(height: Self.lineHeight)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                // Scaled rather than sized, so the line needs no reader to know the width it fills.
-                .scaleEffect(x: fraction(at: timeline.date), y: 1, anchor: .leading)
-                // The creep already moves in small steps; animating each one carries the line between them
-                // instead of stepping four times a second.
-                .animation(.easeOut(duration: 0.35), value: fraction(at: timeline.date))
+        ZStack {
+            if isVisible {
+                TimelineView(.animation(minimumInterval: 0.25)) { timeline in
+                    line(fraction: fraction(at: timeline.date))
+                }
+                .transition(.opacity)
+            }
         }
         .frame(height: Self.lineHeight)
-        .opacity(isVisible ? 1 : 0)
-        .animation(.easeInOut(duration: 0.25), value: isVisible)
+        .animation(.default, value: isVisible)
         .accessibilityLabel(model.processingState.statusDescription)
         .onChange(of: model.processingState) { previous, current in
             // A turn that starts over reports less progress than the one before it: carrying the old value
@@ -67,6 +63,19 @@ struct StudyChatProcessingView: View {
                 finish()
             }
         }
+    }
+
+    private func line(fraction: Double) -> some View {
+        GeometryReader { proxy in
+            Rectangle()
+                .fill(.tint)
+                .frame(width: proxy.size.width * min(max(fraction, 0), 1))
+        }
+        .frame(height: Self.lineHeight)
+        // Smooth rather than snappy, as in the questionnaire: the line reports, it does not react.
+        .animation(reduceMotion ? nil : .smooth(duration: 0.55), value: fraction)
+        .accessibilityElement()
+        .accessibilityValue(Text(fraction, format: .percent.precision(.fractionLength(0))))
     }
 
     private func fraction(at date: Date) -> Double {

@@ -19,6 +19,18 @@ enum StudyQRCodeHandler {
         case expiredTimestamp
         /// Unable to find a study for the specified id
         case unknownStudy
+
+        /// What the scanner tells the participant, who can act on none of it but should know which it is.
+        var reason: LocalizedStringResource {
+            switch self {
+            case .failedParsingQRCodePayload:
+                "This is not a Plainly enrollment code."
+            case .expiredTimestamp:
+                "This enrollment code has expired. Ask for a new one."
+            case .unknownStudy:
+                "This code belongs to a study this version of Plainly does not know."
+            }
+        }
     }
     
     struct ScanResult: Hashable {
