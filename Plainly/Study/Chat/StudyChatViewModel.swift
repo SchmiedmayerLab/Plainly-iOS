@@ -402,17 +402,9 @@ extension StudyChatViewModel {
     }
     
     // Whether the chat input should currently be enabled, i.e. whether the user should currently be able to write (and submit) chat messages
+    /// Whether the composer takes input: only a task that has reached its message cap closes it.
     var shouldEnableChatInput: Bool {
-        // Always disable during processing
-        if isProcessing {
-            return false
-        }
-        // If no capacity range is configured for this task, enable chat input
-        if !hasConfiguredCapacityForCurrentTask {
-            return true
-        }
-        // Disable when the maximum number of messages is reached
-        return !isMaxAssistantMessagesReached
+        !hasConfiguredCapacityForCurrentTask || !isMaxAssistantMessagesReached
     }
     
     var shouldEnableContinueToNextTaskAction: Bool {
