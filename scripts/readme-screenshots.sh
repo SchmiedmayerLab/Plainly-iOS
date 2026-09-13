@@ -14,9 +14,9 @@
 # starts around the walk with a fixed summary as the model's answer. The App Store pictures come from
 # `fastlane screenshots`.
 #
-# Requirements: Xcode with an iOS simulator runtime, RocketSim (https://www.rocketsim.app) running with its
-# command line tool installed, pngquant (`brew install pngquant`) to keep the pictures small, and Node for the
-# Firebase emulators.
+# Requirements: Xcode with an iOS simulator runtime, RocketSim (https://www.rocketsim.app) with its command line
+# tool installed (the script starts it itself), pngquant (`brew install pngquant`) to keep the pictures small, and
+# Node for the Firebase emulators.
 #
 # Usage:
 #   scripts/readme-screenshots.sh [--device "iPhone 17 Pro"]
@@ -41,8 +41,22 @@ log() { print -u2 -- "[$(date +%H:%M:%S)] $*"; }
 fail() { log "error: $*"; exit 1; }
 
 [[ -x $ROCKETSIM ]] || fail "RocketSim is not installed; its CLI is expected at $ROCKETSIM."
-$ROCKETSIM status >/dev/null 2>&1 || fail "RocketSim.app is not running; open it before regenerating screenshots."
 command -v pngquant >/dev/null || fail "pngquant is not installed (brew install pngquant)."
+
+# The CLI exits 0 whether or not the app is running; only the report says.
+rocketsim_running() { $ROCKETSIM status 2>/dev/null | grep -q '"rocket_sim_running":true'; }
+
+# RocketSim quits when a device it is showing shuts down; whoever needs it next starts it again.
+rocketsim_up() {
+  rocketsim_running && return 0
+  open -g -a RocketSim
+  local attempt
+  for attempt in {1..30}; do
+    sleep 1
+    rocketsim_running && return 0
+  done
+  fail "RocketSim did not start."
+}
 
 device_state() {
   xcrun simctl list devices -j | python3 -c "
@@ -72,8 +86,7 @@ if [[ -z $UDID ]]; then
   log "created $SIMULATOR_NAME; relaunching RocketSim so it knows the device"
   osascript -e 'quit app "RocketSim"' >/dev/null 2>&1 || true
   sleep 3
-  open -a RocketSim
-  until $ROCKETSIM status >/dev/null 2>&1; do sleep 1; done
+  rocketsim_up
 fi
 
 if [[ -z ${PLAINLY_README_SCREENSHOTS_EMULATED:-} ]]; then
@@ -86,6 +99,7 @@ fi
 shoot() {
   local file=$1 attempt capture=$(mktemp)
   for attempt in 1 2 3; do
+    rocketsim_up
     $ROCKETSIM screenshot --udid "$UDID" --bezel device --background transparent > "$capture" 2>/dev/null
     if [[ -s $capture ]]; then
       mv "$capture" "$file"
@@ -122,9 +136,9 @@ capture() {
   until [[ $(device_state "$UDID") == Shutdown ]]; do sleep 1; done
   xcrun simctl boot "$UDID" >/dev/null 2>&1 || true
   xcrun simctl bootstatus "$UDID" -b >/dev/null
-  # RocketSim shoots the window Simulator.app shows for the device.
-  open -a Simulator --args -CurrentDeviceUDID "$UDID"
   xcrun simctl ui "$UDID" appearance "$appearance"
+  # The keyboard's spell check would underline typed text in red.
+  xcrun simctl spawn "$UDID" defaults write com.apple.keyboard.preferences KeyboardCheckSpelling -bool false >/dev/null 2>&1 || true
   xcrun simctl status_bar "$UDID" override --time 9:41 --batteryState charged --batteryLevel 100 --wifiBars 3 --cellularBars 4 --operatorName ''
   log "capturing $appearance"
   local test_log=$(mktemp) test_status=$(mktemp)
