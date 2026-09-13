@@ -25,7 +25,6 @@ enum QRCodeScanningResponse {
 }
 
 
-// periphery:ignore - used only from physical-device builds (the scan indexes a simulator destination)
 /// What the scanner says over the camera: where to point it, or why the code it just read was no use.
 private struct ScanNotice: Equatable {
     static let guidance = ScanNotice(symbol: "qrcode.viewfinder", text: "Point the camera at your study's enrollment code.")
@@ -33,6 +32,7 @@ private struct ScanNotice: Equatable {
     let symbol: String
     let text: LocalizedStringResource
 
+    // periphery:ignore - used only from physical-device builds (the scan indexes a simulator destination)
     static func rejection(_ reason: LocalizedStringResource) -> ScanNotice {
         ScanNotice(symbol: "exclamationmark.triangle", text: reason)
     }
@@ -44,15 +44,14 @@ private struct ScanQRCodeSheet: View {
     /// How long a rejection stays up before the guidance returns.
     private static let rejectionHold: Duration = .seconds(4)
 
-    // periphery:ignore - read only from physical-device builds (the scan indexes a simulator destination)
     let onSuccess: @Sendable @MainActor (_ payload: String) -> QRCodeScanningResponse
 
     @State private var isDeniedCameraAccess = false
     // periphery:ignore - read only from physical-device builds (the scan indexes a simulator destination)
     @State private var isScanning = false
-    // periphery:ignore:next - read only from physical-device builds (the scan indexes a simulator destination)
+    // periphery:ignore - read only from physical-device builds (the scan indexes a simulator destination)
     @State private var notice = ScanNotice.guidance
-    // periphery:ignore:next - read only from physical-device builds (the scan indexes a simulator destination)
+    // periphery:ignore - read only from physical-device builds (the scan indexes a simulator destination)
     @State private var rejections = 0
 
     /// Whether the studies stand in for the camera: a debug build in a simulator.
