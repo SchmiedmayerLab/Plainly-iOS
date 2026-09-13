@@ -25,6 +25,7 @@ enum QRCodeScanningResponse {
 }
 
 
+// periphery:ignore - used only from physical-device builds (the scan indexes a simulator destination)
 /// What the scanner says over the camera: where to point it, or why the code it just read was no use.
 private struct ScanNotice: Equatable {
     static let guidance = ScanNotice(symbol: "qrcode.viewfinder", text: "Point the camera at your study's enrollment code.")
@@ -39,6 +40,7 @@ private struct ScanNotice: Equatable {
 
 
 private struct ScanQRCodeSheet: View {
+    // periphery:ignore - read only from physical-device builds (the scan indexes a simulator destination)
     /// How long a rejection stays up before the guidance returns.
     private static let rejectionHold: Duration = .seconds(4)
 
@@ -48,7 +50,9 @@ private struct ScanQRCodeSheet: View {
     @State private var isDeniedCameraAccess = false
     // periphery:ignore - read only from physical-device builds (the scan indexes a simulator destination)
     @State private var isScanning = false
+    // periphery:ignore:next - read only from physical-device builds (the scan indexes a simulator destination)
     @State private var notice = ScanNotice.guidance
+    // periphery:ignore:next - read only from physical-device builds (the scan indexes a simulator destination)
     @State private var rejections = 0
 
     /// Whether the studies stand in for the camera: a debug build in a simulator.
@@ -129,6 +133,7 @@ private struct ScanQRCodeSheet: View {
         #endif
     }
 
+    // periphery:ignore - used only from physical-device builds (the scan indexes a simulator destination)
     /// The notice on glass over the camera, low enough to leave the code room and high enough to clear the thumb.
     private var noticePanel: some View {
         HStack(spacing: 10) {
@@ -168,6 +173,7 @@ private struct ScanQRCodeSheet: View {
 }
 
 
+// periphery:ignore - used only from physical-device builds (the scan indexes a simulator destination)
 /// A Liquid Glass panel where there is glass, a material where there is not.
 private struct GlassPanel: ViewModifier {
     func body(content: Content) -> some View {
