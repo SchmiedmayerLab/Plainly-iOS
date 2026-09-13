@@ -166,14 +166,15 @@ capture() {
   sleep 8
   pkill -f "tail -n \+1 -f $test_log" 2>/dev/null || true
   wait "$reader_pid" 2>/dev/null || true
-  local status=$(cat "$test_status" 2>/dev/null || echo 1)
-  [[ -e "$test_log.missed" ]] && status=1
+  # Not `status`: zsh keeps that name for the last exit code.
+  local outcome=$(cat "$test_status" 2>/dev/null || echo 1)
+  [[ -e "$test_log.missed" ]] && outcome=1
   rm -f "$test_log" "$test_log.missed" "$test_status"
   xcrun simctl status_bar "$UDID" clear
   xcrun simctl shutdown "$UDID" >/dev/null 2>&1 || true
   # A walk that failed or a picture that was not taken leaves the set incomplete or stale; what was taken is kept,
   # the run is not called done.
-  [[ $status -eq 0 ]] || fail "the $appearance walk is incomplete; see the lines above"
+  [[ $outcome -eq 0 ]] || fail "the $appearance walk is incomplete; see the lines above"
 }
 
 mkdir -p "$OUTPUT"
