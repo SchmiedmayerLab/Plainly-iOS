@@ -21,4 +21,8 @@ extension Study {
         }
         return .init(rawValue: override)
     }
+
+    var resolvedInteractionMode: InteractionMode {
+        FeatureFlags.interactionModeOverride ?? interactionMode
+    }
 }

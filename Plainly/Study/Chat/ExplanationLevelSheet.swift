@@ -16,6 +16,11 @@ struct ExplanationLevelSheet: View {
 
     @Bindable var model: StudyChatViewModel
 
+    /// The experimental voice switch, offered only while trying things out and only where the study is typed.
+    private var showsVoiceMode: Bool {
+        Deployment.isDevelopment && model.study.resolvedInteractionMode == .chat
+    }
+
     var body: some View {
         NavigationStack {
             // Laid out top down with the spacer last: a form in a sheet this short leaves the choice
@@ -34,6 +39,9 @@ struct ExplanationLevelSheet: View {
                     levelSelection
                         .transition(.opacity.combined(with: .move(edge: .top)))
                 }
+                if showsVoiceMode {
+                    voiceMode
+                }
 
                 Spacer(minLength: 0)
             }
@@ -44,24 +52,42 @@ struct ExplanationLevelSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    // The confirm role draws the system's own glyph, so the sheet dismisses the way every
-                    // other one does on this OS rather than with a word of its own.
-                    Group {
-                        if #available(iOS 26.0, *) {
-                            Button(role: .confirm) {
-                                dismiss()
-                            }
-                        } else {
-                            Button("Done") {
-                                dismiss()
-                            }
-                        }
-                    }
-                    .accessibilityIdentifier("ExplanationLevelConfirm")
+                    doneButton
                 }
             }
         }
-        .presentationDetents([.height(model.isExplanationLevelEnabled ? 340 : 200)])
+        .presentationDetents([.height((model.isExplanationLevelEnabled ? 340 : 200) + (showsVoiceMode ? 100 : 0))])
+    }
+
+    /// Experimental: the same chat, spoken. Flipping it swaps the conversation area in place; the record stays one.
+    @ViewBuilder private var voiceMode: some View {
+        Divider()
+            .padding(.vertical, 4)
+        Toggle(isOn: $model.isVoiceModeEnabled.animation(.easeInOut(duration: 0.2))) {
+            Text("Talk instead of typing")
+                .font(.subheadline.weight(.medium))
+        }
+        .accessibilityIdentifier("VoiceModeToggle")
+        Text("Experimental. Plainly listens and answers aloud, on the same conversation. Switch back at any time.")
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+    }
+
+    /// The confirm role draws the system's own glyph, so the sheet dismisses the way every other one does on this OS
+    /// rather than with a word of its own.
+    @ViewBuilder private var doneButton: some View {
+        Group {
+            if #available(iOS 26.0, *) {
+                Button(role: .confirm) {
+                    dismiss()
+                }
+            } else {
+                Button("Done") {
+                    dismiss()
+                }
+            }
+        }
+        .accessibilityIdentifier("ExplanationLevelConfirm")
     }
 
     @ViewBuilder private var levelSelection: some View {

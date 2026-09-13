@@ -45,7 +45,7 @@ enum StudyQRCodeHandler {
         } catch {
             throw .failedParsingQRCodePayload(error)
         }
-        guard let study = Study.withId(payload.studyId) else {
+        guard let study = Study.enrollable(withId: payload.studyId) else {
             throw .unknownStudy
         }
         if let expirationTimestamp = payload.expires, expirationTimestamp < .now {
@@ -142,5 +142,17 @@ extension JSONDecoder.DateDecodingStrategy {
         let container = try decoder.singleValueContainer()
         let timestamp = try container.decode(Int.self)
         return Date(timeIntervalSince1970: TimeInterval(timestamp))
+    }
+}
+
+
+extension Study {
+    /// The studies this build offers: the participant studies, and in development builds the ones for trying things out.
+    static var enrollable: [Study] {
+        Deployment.isDevelopment ? allStudies + previewStudies : allStudies
+    }
+
+    static func enrollable(withId id: Study.ID) -> Study? {
+        enrollable.first { $0.id == id }
     }
 }

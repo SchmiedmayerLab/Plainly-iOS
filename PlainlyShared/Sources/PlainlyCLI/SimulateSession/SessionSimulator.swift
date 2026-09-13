@@ -75,7 +75,9 @@ struct SessionSimulator: ~Copyable {
                 startTime: startTime,
                 endTime: endTime,
                 userInfo: userInfo,
-                llmConfig: .init(model: config.model)
+                llmConfig: .init(model: config.model),
+                app: .current(),
+                interactionMode: .chat
             ),
             initialQuestionnaireResponse: nil, // (obviously) not supported
             fhirResources: await studyReportFHIRResources(),

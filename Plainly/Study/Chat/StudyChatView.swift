@@ -31,7 +31,7 @@ struct StudyChatView: View {
     var body: some View {
         @Bindable var model = model
         NavigationStack { // swiftlint:disable:this closure_body_length
-            chatView
+            conversationView
                 .applyTitleConfig(model.navigationState.titleConfig(in: model.study))
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
@@ -70,7 +70,11 @@ struct StudyChatView: View {
                 // The work itself is an unstructured task, so it still outlives this one.
                 .task {
                     _ = model.startStudy()
-                    scheduleAssistantResponseGeneration()
+                    // A spoken conversation opens with the voice's greeting; an opening answer nobody sees would
+                    // only end up in the report.
+                    if !model.usesVoice {
+                        scheduleAssistantResponseGeneration()
+                    }
                 }
                 .onChange(of: userMessageCount) { _, _ in
                     scheduleAssistantResponseGeneration()
@@ -78,7 +82,15 @@ struct StudyChatView: View {
                 // A schema update that lands after the chat opened starts the conversation over, which
                 // leaves the answer being generated attached to a session nobody is reading any more.
                 .onChange(of: model.conversationGeneration) { _, _ in
-                    scheduleAssistantResponseGeneration()
+                    if !model.usesVoice {
+                        scheduleAssistantResponseGeneration()
+                    }
+                }
+                // Back to typing, the chat needs the opening answer it skipped while spoken.
+                .onChange(of: model.usesVoice) { _, usesVoice in
+                    if !usesVoice {
+                        scheduleAssistantResponseGeneration()
+                    }
                 }
                 .onChange(of: model.llmSession.state) { _, newValue in
                     if case .error(let error) = newValue {
@@ -91,6 +103,15 @@ struct StudyChatView: View {
         }
     }
     
+    /// Tasks, instructions, surveys, and the toolbar are the same in both modes; only how the participant converses differs.
+    @ViewBuilder private var conversationView: some View {
+        if model.usesVoice {
+            StudyVoiceView(model: model)
+        } else {
+            chatView
+        }
+    }
+
     @ViewBuilder private var chatView: some View {
         @Bindable var llmSession = model.llmSession
 

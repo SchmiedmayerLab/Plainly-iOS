@@ -18,6 +18,7 @@ import GroveHealthKit
 import GroveKeychainStorage
 import GroveLLM
 import GroveLLMOpenAI
+import GroveLLMOpenAIRealtime
 import PlainlyShared
 
 
@@ -54,6 +55,9 @@ final class PlainlyDelegate: GroveAppDelegate {
                     retryPolicy: .attempts(3),
                     middlewares: [chatInterceptor]
                 ))
+                // Voice sessions carry their own short-lived secret and endpoint, minted per session by the
+                // `realtimeSession` function, so this platform authenticates nothing either.
+                LLMOpenAIRealtimePlatform(configuration: .init(authToken: .none))
             }
         }
     }

@@ -29,6 +29,7 @@ struct StudyReportBuilder {
         for inProgressStudy: InProgressStudy,
         initialQuestionnaireResponse: QuestionnaireResponse?,
         startTime: Date,
+        interactionMode: Study.InteractionMode,
         endTime: Date = .now,
         timeline: [StudyReport.TimelineEvent] = []
     ) async throws -> URL {
@@ -39,7 +40,9 @@ struct StudyReportBuilder {
                 startTime: startTime,
                 endTime: endTime,
                 userInfo: inProgressStudy.userInfo,
-                llmConfig: .init(model: study.llmModel)
+                llmConfig: .init(model: study.llmModel),
+                app: .current(),
+                interactionMode: interactionMode
             ),
             initialQuestionnaireResponse: initialQuestionnaireResponse,
             fhirResources: await fhirResources(),

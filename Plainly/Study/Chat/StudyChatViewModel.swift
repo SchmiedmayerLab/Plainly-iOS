@@ -13,6 +13,7 @@ import GroveLLMOpenAI
 import GroveQuestionnaire
 import struct ModelsR4.QuestionnaireResponse
 import PlainlyShared
+import PlainlyVoice
 import SwiftUI
 
 // swiftlint:disable file_length
@@ -163,11 +164,21 @@ final class StudyChatViewModel: Sendable {
             LocalPreferencesStore.standard[.explanationLevel] = explanationLevel.rawValue
         }
     }
+    /// Experimental: lets a chat study switch into the voice conversation and back, on the same chat.
+    var isVoiceModeEnabled: Bool {
+        didSet {
+            LocalPreferencesStore.standard[.voiceModeEnabled] = isVoiceModeEnabled
+        }
+    }
 
     private let studyStartTime = Date.now
     private var taskStartTimes: [Study.Task.ID: Date] = [:]
     private var taskEndTimes: [Study.Task.ID: Date] = [:]
     private var assistantMessagesByTask = LimitedCollectionDictionary<Study.Task.ID, String>()
+    @ObservationIgnored private var voicePresenter: (any VoicePresenter)?
+    // How long the chat was when the voice conversation was made; more chat since means a new hand-over.
+    @ObservationIgnored private var voiceContextCount = 0
+    @ObservationIgnored private var retiredVoiceTurns: [VoiceTurn] = []
     
     
     /// Creates a new view model for managing a user study chat session
@@ -187,6 +198,7 @@ final class StudyChatViewModel: Sendable {
         // The participant's own choice outlives the session; the study's default is only where they start.
         let store = LocalPreferencesStore.standard
         self.isExplanationLevelEnabled = store[.explanationLevelEnabled]
+        self.isVoiceModeEnabled = store[.voiceModeEnabled]
         self.explanationLevel = store[.explanationLevel]
             .flatMap(ExplanationLevel.init(rawValue:))
             ?? inProgressStudy.study.defaultExplanationLevel
@@ -203,6 +215,7 @@ final class StudyChatViewModel: Sendable {
     /// - Parameter dismiss: The dismiss action from the environment to close the view
     func handleDismiss(dismiss: DismissAction) {
         interpreter.cancel()
+        voicePresenter?.stop()
         resetStudy()
         dismiss()
     }
@@ -256,6 +269,7 @@ final class StudyChatViewModel: Sendable {
     
     
     func endStudy() {
+        voicePresenter?.stop()
         navigationState = .completed
         Task {
             completionState = .submitting
@@ -514,6 +528,12 @@ extension StudyChatViewModel {
             // and the choice has to survive that without the participant setting it again.
             llmSession.context.setExplanationLevel(explanationLevel)
         }
+        // Spoken answers have to be short and plain; typed ones keep the study's own style, also after switching back.
+        if usesVoice {
+            llmSession.context.set(systemMessage: InternalInput.voiceModeNote, id: InternalInput.voiceModeNoteID)
+        } else {
+            llmSession.context.removeAll { $0.id == InternalInput.voiceModeNoteID }
+        }
         await updateProcessingState()
         processingState = await processingState.calculateNewProcessingState(basedOn: llmSession)
         guard shouldGenerateResponse else {
@@ -570,6 +590,147 @@ extension StudyChatViewModel {
 }
 
 
+// MARK: Voice
+extension StudyChatViewModel {
+    private enum VoiceTurnError: LocalizedError {
+        case noAnswer
+        case answerFailed
+
+        var errorDescription: String? {
+            switch self {
+            case .noAnswer:
+                String(localized: "Plainly did not answer in time.")
+            case .answerFailed:
+                String(localized: "Plainly could not answer that. Please ask again.")
+            }
+        }
+    }
+
+    /// Whether the conversation is spoken: in a voice study, or in a chat study switched over while trying it out.
+    var usesVoice: Bool {
+        study.resolvedInteractionMode == .voice || (Deployment.isDevelopment && isVoiceModeEnabled)
+    }
+
+    /// The mode the conversation ran in, for the report: voice as soon as anything was said by voice.
+    var interactionMode: Study.InteractionMode {
+        usesVoice || !voiceTurns.isEmpty ? .voice : .chat
+    }
+
+    private var voiceTurns: [VoiceTurn] {
+        retiredVoiceTurns + ((voicePresenter as? VoiceConversation)?.turns ?? [])
+    }
+
+    /// The last few exchanges of the text conversation, or `nil` while the participant has not said anything yet.
+    private var conversationSoFar: String? {
+        let exchanges = llmSession.context.filter { ($0.isParticipantInput || $0.role == .assistant) && $0.complete && !$0.content.isEmpty }
+        guard exchanges.contains(where: \.isParticipantInput) else {
+            return nil
+        }
+        return exchanges.suffix(6)
+            .map { "\($0.role == .assistant ? "Assistant" : "Participant"): \($0.content.prefix(600))" }
+            .joined(separator: "\n\n")
+    }
+
+
+    /// The voice conversation for this chat, created when voice is entered so a study without voice never pays for it.
+    ///
+    /// A conversation that went on by text since is handed over afresh: the voice then knows what was said and picks
+    /// up from there instead of greeting the participant as if nothing had happened.
+    func voice(using llmRunner: LLMRunner) -> any VoicePresenter {
+        if let voicePresenter, voicePresenter.phase != .idle || llmSession.context.count == voiceContextCount {
+            return voicePresenter
+        }
+        retiredVoiceTurns += (voicePresenter as? VoiceConversation)?.turns ?? []
+        voiceContextCount = llmSession.context.count
+        let presenter: any VoicePresenter
+        if FeatureFlags.voiceDemo {
+            presenter = VoiceDemoPresenter()
+        } else {
+            let studyId = study.id
+            let prompts = study.voicePrompts
+            let conversationSoFar = conversationSoFar
+            // Greetings are spoken outside the session's instructions, so a hand-over carries the conversation itself.
+            let greeting: String?
+            if let conversationSoFar {
+                greeting = prompts.handoff.map { "\($0)\n\n<conversation>\n\(conversationSoFar)\n</conversation>" }
+            } else {
+                greeting = prompts.greeting
+            }
+            presenter = VoiceConversation(
+                // The study's prompts, with its chat prompt attached as background; the answers still come from the chat.
+                configuration: .init(
+                    instructions: prompts.sessionInstructions(
+                        studyPrompt: study.interpretMultipleResourcesPrompt.promptText,
+                        conversationSoFar: conversationSoFar
+                    ),
+                    toolName: "ask_plainly",
+                    greeting: greeting,
+                    bridge: prompts.bridge,
+                    reassurance: prompts.reassurance
+                ),
+                llmRunner: llmRunner,
+                mint: { request in
+                    try await FirebaseRealtimeSessions.mint(request, studyId: studyId)
+                },
+                forward: { [weak self] transcript in
+                    guard let self else {
+                        throw CancellationError()
+                    }
+                    return try await self.forwardVoiceTurn(transcript)
+                }
+            )
+        }
+        voicePresenter = presenter
+        return presenter
+    }
+
+    /// Types the spoken turn into the chat and waits for the answer the chat pipeline produces for it.
+    private func forwardVoiceTurn(_ transcript: String) async throws -> String {
+        guard shouldEnableChatInput else {
+            return String(localized: "You have reached the message limit for this task. Please continue to the next task.")
+        }
+        let session = llmSession
+        // A failure left over from an earlier answer is not this turn's; only one after this turn started counts.
+        let failedBefore = processingState == .error
+        var hasStarted = false
+        let priorCount = session.context.count
+        session.context.append(userMessage: transcript)
+        defer {
+            // What was said by voice is part of what the voice knows; only typing since calls for a new hand-over.
+            voiceContextCount = session.context.count
+        }
+        let deadline = ContinuousClock.now + .seconds(180)
+        // The pipeline can pause between two assistant messages for one turn; only an answer that is still the
+        // last one a beat later is the answer, so the voice never reads an interim one.
+        var candidate: UUID?
+        while ContinuousClock.now < deadline {
+            try Task.checkCancellation()
+            if case .error(let error) = session.state {
+                throw error
+            }
+            if isProcessing || session.state == .generating {
+                hasStarted = true
+            }
+            // The chat reports a failed answer on its own screen, which voice mode does not show.
+            if processingState == .error, !failedBefore || hasStarted {
+                throw VoiceTurnError.answerFailed
+            }
+            let answered = session.context.dropFirst(priorCount).last { $0.role == .assistant && $0.complete && !$0.content.isEmpty }
+            if let answered, !isProcessing, session.state != .generating {
+                if answered.id == candidate {
+                    return answered.content
+                }
+                candidate = answered.id
+            } else {
+                candidate = nil
+            }
+            try await Task.sleep(for: .milliseconds(200))
+        }
+        throw VoiceTurnError.noAnswer
+    }
+}
+
+
 // MARK: Model + Report
 
 extension StudyChatViewModel {
@@ -583,6 +744,7 @@ extension StudyChatViewModel {
                 for: inProgressStudy,
                 initialQuestionnaireResponse: initialQuestionnaireResponse,
                 startTime: studyStartTime,
+                interactionMode: interactionMode,
                 timeline: generateTimeline()
             )
         } catch {
@@ -599,6 +761,7 @@ extension StudyChatViewModel {
             }
             return .chatMessage(message)
         }
+        timeline.append(contentsOf: voiceTurns.map(\.studyReportEvent))
         timeline.append(contentsOf: study.tasks.compactMap { task -> StudyReport.TimelineEvent? in
             guard let taskStartTime = taskStartTimes[task.id], let taskEndTime = taskEndTimes[task.id] else {
                 return nil

@@ -122,7 +122,9 @@ struct StudyReportUploadTests {
                 startTime: Date(timeIntervalSince1970: 100),
                 endTime: Date(timeIntervalSince1970: 200),
                 userInfo: userInfo,
-                llmConfig: .init(model: .gpt4o)
+                llmConfig: .init(model: .gpt4o),
+                app: .init(version: "1.0", build: "1"),
+                interactionMode: .chat
             ),
             initialQuestionnaireResponse: nil,
             fhirResources: .init(llmRelevantResources: [], allResources: []),

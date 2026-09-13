@@ -193,7 +193,7 @@ private struct SimulatorStudyList: View {
     var body: some View {
         List {
             Section {
-                ForEach(Study.allStudies) { study in
+                ForEach(Study.enrollable) { study in
                     Button {
                         enrol(in: study)
                     } label: {

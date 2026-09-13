@@ -19,6 +19,7 @@
 		803D16682F30DA3C0060B931 /* PlainlyStudyDefinitions in Frameworks */ = {isa = PBXBuildFile; productRef = 803D16672F30DA3C0060B931 /* PlainlyStudyDefinitions */; };
 		80525CBB2F8CFC410046D600 /* GroveLLM in Frameworks */ = {isa = PBXBuildFile; productRef = 44E18E872CEBEC9500829A26 /* GroveLLM */; };
 		80525CBC2F8CFC410046D600 /* GroveLLMOpenAI in Frameworks */ = {isa = PBXBuildFile; productRef = 44E18E8F2CEBEC9500829A26 /* GroveLLMOpenAI */; };
+		80F1E0022FAB000100000010 /* GroveLLMOpenAIRealtime in Frameworks */ = {isa = PBXBuildFile; productRef = 80F1E0012FAB000100000010 /* GroveLLMOpenAIRealtime */; };
 		80E0A0012FAB000100000001 /* GroveOnboarding in Frameworks */ = {isa = PBXBuildFile; productRef = 80E0A0022FAB000100000001 /* GroveOnboarding */; };
 		80525CBD2F8CFC410046D600 /* GroveFHIR in Frameworks */ = {isa = PBXBuildFile; productRef = 806DF5B92EC234AD00A8243C /* GroveFHIR */; };
 		80525CBE2F8CFC410046D600 /* GroveHealthKitFHIR in Frameworks */ = {isa = PBXBuildFile; productRef = 806DF5BB2EC234AD00A8243C /* GroveHealthKitFHIR */; };
@@ -26,6 +27,7 @@
 		80525CC12F8CFC410046D600 /* GroveQuestionnaire in Frameworks */ = {isa = PBXBuildFile; productRef = 802641DB2F638893006A1D76 /* GroveQuestionnaire */; };
 		80525CC22F8CFC410046D600 /* GroveQuestionnaireFHIR in Frameworks */ = {isa = PBXBuildFile; productRef = 802641DD2F638893006A1D76 /* GroveQuestionnaireFHIR */; };
 		805C26312F25171E00769AC1 /* PlainlyShared in Frameworks */ = {isa = PBXBuildFile; productRef = 805C26302F25171E00769AC1 /* PlainlyShared */; };
+		80F1E0042FAB000100000010 /* PlainlyVoice in Frameworks */ = {isa = PBXBuildFile; productRef = 80F1E0032FAB000100000010 /* PlainlyVoice */; };
 		80C7595D2F78076C00DE9DEA /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 80C7595C2F78076C00DE9DEA /* FirebaseStorage */; };
 		80D371B12F7819080081BBA1 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 80D371B02F7819080081BBA1 /* FirebaseCore */; };
 		80D371B32F7819080081BBA1 /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = 80D371B22F7819080081BBA1 /* FirebaseFunctions */; };
@@ -88,6 +90,7 @@
 				80525CBE2F8CFC410046D600 /* GroveHealthKitFHIR in Frameworks */,
 				80525CBD2F8CFC410046D600 /* GroveFHIR in Frameworks */,
 				80525CBC2F8CFC410046D600 /* GroveLLMOpenAI in Frameworks */,
+				80F1E0022FAB000100000010 /* GroveLLMOpenAIRealtime in Frameworks */,
 				80E0A0012FAB000100000001 /* GroveOnboarding in Frameworks */,
 				80525CBB2F8CFC410046D600 /* GroveLLM in Frameworks */,
 				3A3B672E3023AC1300C229B0 /* GroveFirebaseAccount in Frameworks */,
@@ -97,6 +100,7 @@
 				3A3B67283023ABF300C229B0 /* GroveAccount in Frameworks */,
 				2FD8E82C2A1AADDA00357F4E /* ModelsR4 in Frameworks */,
 				805C26312F25171E00769AC1 /* PlainlyShared in Frameworks */,
+				80F1E0042FAB000100000010 /* PlainlyVoice in Frameworks */,
 				80D371B32F7819080081BBA1 /* FirebaseFunctions in Frameworks */,
 				9710D3562B84151F00E0A20F /* GroveChat in Frameworks */,
 				80C7595D2F78076C00DE9DEA /* FirebaseStorage in Frameworks */,
@@ -169,11 +173,13 @@
 				9710D3552B84151F00E0A20F /* GroveChat */,
 				44E18E872CEBEC9500829A26 /* GroveLLM */,
 				44E18E8F2CEBEC9500829A26 /* GroveLLMOpenAI */,
+				80F1E0012FAB000100000010 /* GroveLLMOpenAIRealtime */,
 				80E0A0022FAB000100000001 /* GroveOnboarding */,
 				806DF5B92EC234AD00A8243C /* GroveFHIR */,
 				806DF5BB2EC234AD00A8243C /* GroveHealthKitFHIR */,
 				806DF5BD2EC234AD00A8243C /* GroveFHIRMockPatients */,
 				805C26302F25171E00769AC1 /* PlainlyShared */,
+				80F1E0032FAB000100000010 /* PlainlyVoice */,
 				803D16672F30DA3C0060B931 /* PlainlyStudyDefinitions */,
 				802641DB2F638893006A1D76 /* GroveQuestionnaire */,
 				802641DD2F638893006A1D76 /* GroveQuestionnaireFHIR */,
@@ -572,7 +578,7 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/SchmiedmayerLab/Grove.git";
 			requirement = {
-				branch = "chat-input-and-dictation";
+				branch = "realtime-server-sessions";
 				kind = branch;
 			};
 		};
@@ -663,6 +669,11 @@
 			package = 3A3B67223023ABD400C229B0 /* XCRemoteSwiftPackageReference "Grove" */;
 			productName = GroveLLMOpenAI;
 		};
+		80F1E0012FAB000100000010 /* GroveLLMOpenAIRealtime */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3A3B67223023ABD400C229B0 /* XCRemoteSwiftPackageReference "Grove" */;
+			productName = GroveLLMOpenAIRealtime;
+		};
 		658E102E2E74A16A0038C003 /* SwiftLintBuildToolPlugin */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 658E102D2E74A1380038C003 /* XCRemoteSwiftPackageReference "SwiftLintPlugins" */;
@@ -685,6 +696,10 @@
 		805C26302F25171E00769AC1 /* PlainlyShared */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = PlainlyShared;
+		};
+		80F1E0032FAB000100000010 /* PlainlyVoice */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PlainlyVoice;
 		};
 		806DF5B92EC234AD00A8243C /* GroveFHIR */ = {
 			isa = XCSwiftPackageProductDependency;
