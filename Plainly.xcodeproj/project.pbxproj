@@ -578,7 +578,7 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/SchmiedmayerLab/Grove.git";
 			requirement = {
-				branch = "realtime-server-sessions";
+				branch = "consent-test-stability";
 				kind = branch;
 			};
 		};
