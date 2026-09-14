@@ -9,6 +9,7 @@
 import GroveLLM
 import PlainlyVoice
 import SwiftUI
+import UIKit
 
 
 /// The voice-mode conversation, where the chat would otherwise be; the surrounding study screen is unchanged.
@@ -27,12 +28,17 @@ struct StudyVoiceView: View {
     var body: some View {
         VoiceConversationView(presenter: voice)
             .background(Color(.systemBackground))
+            // Talking gives the screen no touches, so it would lock mid-conversation.
+            .onAppear {
+                UIApplication.shared.isIdleTimerDisabled = true
+            }
             .task {
                 // A sheet can already be up when the conversation begins; the change hook below only sees later ones.
                 voice.isPaused = model.presentedSheet != nil
                 await voice.start()
             }
             .onDisappear {
+                UIApplication.shared.isIdleTimerDisabled = false
                 resumeTask?.cancel()
                 resumeTask = nil
                 voice.stop()
