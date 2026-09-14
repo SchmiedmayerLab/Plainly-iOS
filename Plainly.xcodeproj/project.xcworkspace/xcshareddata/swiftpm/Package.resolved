@@ -87,8 +87,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/SchmiedmayerLab/Grove.git",
       "state" : {
-        "branch" : "realtime-server-sessions",
-        "revision" : "139e8adc9b4842c95a22c95b8af914566dbd9abd"
+        "branch" : "consent-test-stability",
+        "revision" : "fdaa0424037725a88891fe489d23e013b021d612"
       }
     },
     {
