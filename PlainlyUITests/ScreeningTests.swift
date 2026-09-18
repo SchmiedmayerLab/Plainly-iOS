@@ -11,7 +11,7 @@ import XCTestExtensions
 import XCTGroveQuestionnaire
 
 
-/// The SpineAI intake stops the study on a new, severe and unevaluated cauda equina symptom, and the stop outlives the launch.
+/// The SpineAI intake stops the study on a new, unevaluated cauda equina symptom, and the stop outlives the launch.
 final class ScreeningTests: XCTestCase {
     override func setUp() async throws {
         try await super.setUp()
@@ -37,7 +37,7 @@ final class ScreeningTests: XCTestCase {
         questionnaire.question("1.4").select("No")
         questionnaire.question("1.5").select("No")
         questionnaire.question("1.6").select("Loss of bladder or bowel control")
-        // The symptom alone is no stop: it is new and severe, came on with the pain, and has not been evaluated.
+        // The symptom alone is no stop: it is new, came with new severe pain, and has not been evaluated.
         questionnaire.question("1.6a").select("Yes")
         questionnaire.question("1.6b").select("Yes")
         questionnaire.question("1.6c").select("No")
@@ -61,7 +61,7 @@ final class ScreeningTests: XCTestCase {
     @MainActor
     private func assertStopPage(in app: XCUIApplication, line: UInt = #line) {
         XCTAssertTrue(app.staticTexts["Please Have Your Symptoms Checked"].waitForExistence(timeout: 10), line: line)
-        XCTAssertTrue(app.buttons["Call 911"].waitForExistence(timeout: 5), line: line)
+        XCTAssertTrue(app.buttons["Call the Spine Center"].waitForExistence(timeout: 5), line: line)
         XCTAssertTrue(app.buttons["Find Emergency Care Nearby"].exists, line: line)
         XCTAssertFalse(app.buttons["Start Questionnaire"].exists, "the study must not go on", line: line)
         XCTAssertFalse(app.buttons["Start Session"].exists, "the chat must stay closed", line: line)

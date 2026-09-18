@@ -554,6 +554,17 @@
         }
       }
     },
+    "SCREENING_ATTENTION_URGENT_CARE_MESSAGE %@ %@" : {
+      "comment" : "The body of the page shown when the intake questionnaire found symptoms that need a clinician's attention, for a study that names its urgent care; the service's name and phone number.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your answers include symptoms that should be checked by a clinician today. Please do not continue with the study for now. Call the %1$@ at %2$@ to arrange an urgent evaluation. If it is closed or your symptoms are getting worse, go to the nearest emergency department."
+          }
+        }
+      }
+    },
     "SCREENING_CALL_EMERGENCY_SERVICES" : {
       "comment" : "The primary button on the emergency page; dials emergency services.",
       "localizations" : {
@@ -561,6 +572,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Call 911"
+          }
+        }
+      }
+    },
+    "SCREENING_CALL_URGENT_CARE %@" : {
+      "comment" : "The primary button on the emergency page; dials the study's urgent care, named here.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Call the %@"
+          }
+        }
+      }
+    },
+    "SCREENING_COORDINATOR_FOLLOW_UP" : {
+      "comment" : "Shown under the urgent care message; sends the participant to the study coordinator as well.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Please also tell the study coordinator, who will follow up with you."
           }
         }
       }

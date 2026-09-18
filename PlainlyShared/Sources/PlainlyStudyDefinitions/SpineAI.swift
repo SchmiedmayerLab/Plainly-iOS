@@ -113,7 +113,8 @@ extension Study {
                 handoff: "Using only the conversation below, mention in a few words what it was about last, so they know you are up to date."
             ),
             // Tried out in simulators and development deployments; participants see neither yet.
-            previews: .init(defaultExplanationLevel: .balanced, generatesImages: true, allowsAttachments: true)
+            previews: .init(defaultExplanationLevel: .balanced, generatesImages: true, allowsAttachments: true),
+            urgentCare: .init(name: "Spine Center", phoneNumber: "(650) 725-5905")
         )
     }
 }

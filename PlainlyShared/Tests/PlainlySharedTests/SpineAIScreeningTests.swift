@@ -14,10 +14,10 @@ import ModelsR4
 import Testing
 
 
-/// The SpineAI intake decides on its own, in FHIR, whether the study goes on. A cauda equina symptom or severe leg
-/// weakness stops it only when it is new and severe, came on with or after the back or leg pain, and has not yet been
-/// evaluated urgently by a spine physician; on its own it is a symptom. An injury flag, which takes two of its three
-/// follow-ups, a cancer or an infection flag only adds a page of advice.
+/// The SpineAI intake decides on its own, in FHIR, whether the study goes on. A new bladder, bowel or groin symptom that
+/// came with new severe back or leg pain, or new dense weakness or numbness, stops it unless a spine physician has
+/// already evaluated it urgently; on its own it is a symptom. An injury flag, which takes two of its three follow-ups,
+/// a cancer or an infection flag only adds a page of advice.
 @Suite
 struct SpineAIScreeningTests {
     private static let snomed = "http://snomed.info/sct"
@@ -26,12 +26,12 @@ struct SpineAIScreeningTests {
     private static let symptoms = "https://spineai.stanford.edu/CodeSystem/primary-symptom"
     private static let emergencies = "https://spineai.stanford.edu/CodeSystem/neurologic-emergency"
     private static let weakness = "https://spineai.stanford.edu/CodeSystem/radic-weakness"
-    private static let caudaEquinaSymptoms = [
-        "retention", "bladder-bowel", "perineal-numbness", "leg-weakness", "bilateral-weakness", "bilateral-numbness"
-    ]
-    /// New and severe, with or after the pain, and not yet evaluated: the answers that turn a symptom into a stop.
+    private static let bladderSymptoms = ["retention", "bladder-bowel", "perineal-numbness"]
+    private static let denseSymptoms = ["leg-weakness", "bilateral-weakness", "diffuse-numbness"]
+    private static let caudaEquinaSymptoms = bladderSymptoms + denseSymptoms
+    /// New, with or after new severe pain, and not yet evaluated: the answers that turn a symptom into a stop.
     private static let urgentCaudaEquina = ["1.6a": [yes], "1.6b": [yes], "1.6c": [answeredNo]]
-    private static let urgentLegWeakness = ["7.5": ["\(weakness)|severe"], "7.5a": [yes], "7.5b": [yes], "7.5c": [answeredNo]]
+    private static let urgentLegWeakness = ["7.5": ["\(weakness)|severe"], "7.5a": [yes], "7.5b": [answeredNo]]
 
     /// The questionnaire as the app ships it.
     private static func questionnaire() throws -> GroveQuestionnaire.Questionnaire {
@@ -77,6 +77,11 @@ struct SpineAIScreeningTests {
         return try ScreeningAnswers.isEnabled(first, in: responses)
     }
 
+    private static func isAsked(_ linkId: String, in responses: QuestionnaireResponses) throws -> Bool {
+        let task = try #require(responses.questionnaire.sections.flatMap(\.tasks).first { $0.id == linkId })
+        return try ScreeningAnswers.isEnabled(task, in: responses)
+    }
+
     private static func expectShown(_ shown: [String], hidden: [String], in responses: QuestionnaireResponses) throws {
         for linkId in shown {
             #expect(try Self.isShown(linkId, in: responses), "group \(linkId) opens")
@@ -110,7 +115,37 @@ struct SpineAIScreeningTests {
         try Self.expectShown(["5"], hidden: ["2", "3", "4", "6", "7"], in: responses)
     }
 
-    /// Trouble passing urine or numbness around the groin is, in isolation, a symptom and not a stop.
+    /// New dense weakness or numbness needs no link to the pain: the pain question is not asked.
+    @Test(arguments: denseSymptoms)
+    func aNewDenseSymptomStopsTheStudyWithoutThePain(symptom: String) throws {
+        let responses = try Self.responses(["1.6": ["\(Self.emergencies)|\(symptom)"], "1.6a": [Self.yes], "1.6c": [Self.answeredNo]])
+        #expect(try !Self.isAsked("1.6b", in: responses))
+        #expect(try Self.isAsked("1.6c", in: responses))
+        #expect(try responses.screeningOutcome() == .needsAttention)
+        try Self.expectShown(["5"], hidden: ["6"], in: responses)
+    }
+
+    /// A new bladder, bowel or groin symptom stops only with new severe pain; without it, not even the last follow-up is asked.
+    @Test(arguments: bladderSymptoms)
+    func aNewBladderSymptomWithoutNewSeverePainIsNoStop(symptom: String) throws {
+        let responses = try Self.responses(["1.6": ["\(Self.emergencies)|\(symptom)"], "1.6a": [Self.yes], "1.6b": [Self.answeredNo]])
+        #expect(try Self.isAsked("1.6b", in: responses))
+        #expect(try !Self.isAsked("1.6c", in: responses))
+        #expect(try responses.screeningOutcome() == .eligible)
+        try Self.expectShown(["6"], hidden: ["5"], in: responses)
+    }
+
+    /// A dense symptom alongside a bladder symptom stops the study even when the pain question says no.
+    @Test
+    func aDenseSymptomStopsAlongsideABladderSymptomWithoutPain() throws {
+        let responses = try Self.responses([
+            "1.6": ["\(Self.emergencies)|retention", "\(Self.emergencies)|leg-weakness"],
+            "1.6a": [Self.yes], "1.6b": [Self.answeredNo], "1.6c": [Self.answeredNo]
+        ])
+        #expect(try responses.screeningOutcome() == .needsAttention)
+    }
+
+    /// Any of these symptoms, when it is not new, is a symptom and not a stop.
     @Test(arguments: caudaEquinaSymptoms)
     func aCaudaEquinaSymptomAloneIsNoStop(symptom: String) throws {
         let responses = try Self.responses(["1.6": ["\(Self.emergencies)|\(symptom)"], "1.6a": [Self.answeredNo]])
@@ -118,8 +153,8 @@ struct SpineAIScreeningTests {
         try Self.expectShown(["6"], hidden: ["5"], in: responses)
     }
 
-    /// Every one of the follow-ups has to point to an urgent evaluation: old or mild, unrelated to the pain, or
-    /// already seen by a spine physician, and the study goes on.
+    /// Every one of the follow-ups has to point to an urgent evaluation: old, without new severe pain, or already
+    /// seen by a spine physician, and the study goes on.
     @Test(arguments: [
         ["1.6a": "no"],
         ["1.6a": "yes", "1.6b": "no"],
@@ -152,11 +187,10 @@ struct SpineAIScreeningTests {
         try Self.expectShown(["7", "8"], hidden: ["5", "6"], in: responses)
     }
 
-    /// Severe weakness that is old, unrelated to the pain or already evaluated is recorded and the study goes on.
+    /// Severe weakness that is old or already evaluated is recorded and the study goes on.
     @Test(arguments: [
         ["7.5a": "no"],
-        ["7.5a": "yes", "7.5b": "no"],
-        ["7.5a": "yes", "7.5b": "yes", "7.5c": "yes"]
+        ["7.5a": "yes", "7.5b": "yes"]
     ])
     func severeLegWeaknessAgainstUrgencyIsNoStop(followUps: [String: String]) throws {
         var answers = ["1.1": ["\(Self.symptoms)|leg-pain"], "7.5": ["\(Self.weakness)|severe"]]

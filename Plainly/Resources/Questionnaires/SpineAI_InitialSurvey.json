@@ -16,9 +16,41 @@
     {
       "url": "http://hl7.org/fhir/StructureDefinition/variable",
       "valueExpression": {
+        "name": "bladderSymptom",
+        "language": "text/fhirpath",
+        "expression": "%resource.descendants().where(linkId='1.6').answer.value.where(code='retention' or code='bladder-bowel' or code='perineal-numbness').exists()"
+      }
+    },
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/variable",
+      "valueExpression": {
+        "name": "denseSymptom",
+        "language": "text/fhirpath",
+        "expression": "%resource.descendants().where(linkId='1.6').answer.value.where(code='leg-weakness' or code='bilateral-weakness' or code='diffuse-numbness').exists()"
+      }
+    },
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/variable",
+      "valueExpression": {
+        "name": "newSymptom",
+        "language": "text/fhirpath",
+        "expression": "(%bladderSymptom or %denseSymptom) and %resource.descendants().where(linkId='1.6a').answer.value.where(code='373066001').exists()"
+      }
+    },
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/variable",
+      "valueExpression": {
+        "name": "urgentSymptom",
+        "language": "text/fhirpath",
+        "expression": "%newSymptom and (%denseSymptom or (%bladderSymptom and %resource.descendants().where(linkId='1.6b').answer.value.where(code='373066001').exists()))"
+      }
+    },
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/variable",
+      "valueExpression": {
         "name": "caudaEquina",
         "language": "text/fhirpath",
-        "expression": "%resource.descendants().where(linkId='1.6').answer.value.where(code='retention' or code='bladder-bowel' or code='perineal-numbness' or code='leg-weakness' or code='bilateral-weakness' or code='bilateral-numbness').exists() and %resource.descendants().where(linkId='1.6a').answer.value.where(code='373066001').exists() and %resource.descendants().where(linkId='1.6b').answer.value.where(code='373066001').exists() and %resource.descendants().where(linkId='1.6c').answer.value.where(code='373067005').exists()"
+        "expression": "%urgentSymptom and %resource.descendants().where(linkId='1.6c').answer.value.where(code='373067005').exists()"
       }
     },
     {
@@ -50,7 +82,7 @@
       "valueExpression": {
         "name": "legWeakness",
         "language": "text/fhirpath",
-        "expression": "%caudaEquina.not() and %resource.descendants().where(linkId='1.1').answer.value.where(code='leg-pain' or code='trouble-walking' or code='mixed').exists() and %resource.descendants().where(linkId='7.5').answer.value.where(code='severe').exists() and %resource.descendants().where(linkId='7.5a').answer.value.where(code='373066001').exists() and %resource.descendants().where(linkId='7.5b').answer.value.where(code='373066001').exists() and %resource.descendants().where(linkId='7.5c').answer.value.where(code='373067005').exists()"
+        "expression": "%caudaEquina.not() and %resource.descendants().where(linkId='1.1').answer.value.where(code='leg-pain' or code='trouble-walking' or code='mixed').exists() and %resource.descendants().where(linkId='7.5').answer.value.where(code='severe').exists() and %resource.descendants().where(linkId='7.5a').answer.value.where(code='373066001').exists() and %resource.descendants().where(linkId='7.5b').answer.value.where(code='373067005').exists()"
       }
     }
   ],
@@ -580,21 +612,21 @@
               "valueCoding": {
                 "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
                 "code": "leg-weakness",
-                "display": "Dense (severe) weakness in a leg"
+                "display": "Severe weakness in one leg"
               }
             },
             {
               "valueCoding": {
                 "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
                 "code": "bilateral-weakness",
-                "display": "Dense (severe) weakness in both legs"
+                "display": "Severe weakness in both legs"
               }
             },
             {
               "valueCoding": {
                 "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
-                "code": "bilateral-numbness",
-                "display": "Dense, widespread numbness in the legs"
+                "code": "diffuse-numbness",
+                "display": "Severe, widespread numbness in the legs"
               }
             },
             {
@@ -662,7 +694,7 @@
               "operator": "=",
               "answerCoding": {
                 "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
-                "code": "bilateral-numbness"
+                "code": "diffuse-numbness"
               }
             }
           ],
@@ -670,7 +702,7 @@
         },
         {
           "linkId": "1.6a",
-          "text": "Is any symptom you selected above new and severe?",
+          "text": "Is any symptom you selected above new?",
           "type": "choice",
           "required": true,
           "enableWhen": [
@@ -719,7 +751,7 @@
               "operator": "=",
               "answerCoding": {
                 "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
-                "code": "bilateral-numbness"
+                "code": "diffuse-numbness"
               }
             }
           ],
@@ -743,17 +775,14 @@
         },
         {
           "linkId": "1.6b",
-          "text": "Did it come on at the same time as, or after, the new onset of your back and/or leg pain?",
+          "text": "Did the bladder, bowel or groin symptom come on at the same time as, or after, a new onset of severe back and/or leg pain?",
           "type": "choice",
           "required": true,
           "enableWhen": [
             {
-              "question": "1.6a",
+              "question": "bladder-follow-up",
               "operator": "=",
-              "answerCoding": {
-                "system": "http://snomed.info/sct",
-                "code": "373066001"
-              }
+              "answerBoolean": true
             }
           ],
           "enableBehavior": "all",
@@ -781,12 +810,9 @@
           "required": true,
           "enableWhen": [
             {
-              "question": "1.6b",
+              "question": "urgent-follow-up",
               "operator": "=",
-              "answerCoding": {
-                "system": "http://snomed.info/sct",
-                "code": "373066001"
-              }
+              "answerBoolean": true
             }
           ],
           "enableBehavior": "all",
@@ -925,6 +951,42 @@
                 "system": "http://snomed.info/sct",
                 "code": "261665006",
                 "display": "Not sure"
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "bladder-follow-up",
+          "text": "Bladder, bowel or groin follow-up",
+          "type": "boolean",
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-hidden",
+              "valueBoolean": true
+            },
+            {
+              "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-calculatedExpression",
+              "valueExpression": {
+                "language": "text/fhirpath",
+                "expression": "%newSymptom and %bladderSymptom"
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "urgent-follow-up",
+          "text": "Urgent symptom follow-up",
+          "type": "boolean",
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-hidden",
+              "valueBoolean": true
+            },
+            {
+              "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-calculatedExpression",
+              "valueExpression": {
+                "language": "text/fhirpath",
+                "expression": "%urgentSymptom"
               }
             }
           ]
@@ -1208,7 +1270,7 @@
       "item": [
         {
           "linkId": "5.1",
-          "text": "Your answers describe new, severe symptoms that came on with your back or leg pain and have not yet been evaluated. They should be checked by a clinician today, because they can point to pressure on the nerves at the base of the spine. Please tell the study coordinator about these symptoms now, and do not continue with the study for the moment. If your symptoms are severe or getting worse, call 911 or your local emergency number, or go to the nearest emergency department. Otherwise call the Spine Center at (650) 725-5905 to arrange an urgent evaluation; the study coordinator will help you and tell you how to proceed.",
+          "text": "Your answers describe new symptoms that can point to pressure on the nerves at the base of the spine. They should be checked by a clinician today, so please do not continue with the study for the moment. Call the Spine Center at (650) 725-5905 to arrange an urgent evaluation, and tell the study coordinator, who will follow up with you. If the Spine Center is closed or your symptoms are getting worse, go to the nearest emergency department.",
           "type": "display"
         },
         {
@@ -1854,45 +1916,12 @@
         },
         {
           "linkId": "7.5b",
-          "text": "Did it come on at the same time as, or after, the new onset of your back and/or leg pain?",
-          "type": "choice",
-          "required": true,
-          "enableWhen": [
-            {
-              "question": "7.5a",
-              "operator": "=",
-              "answerCoding": {
-                "system": "http://snomed.info/sct",
-                "code": "373066001"
-              }
-            }
-          ],
-          "enableBehavior": "all",
-          "answerOption": [
-            {
-              "valueCoding": {
-                "system": "http://snomed.info/sct",
-                "code": "373066001",
-                "display": "Yes"
-              }
-            },
-            {
-              "valueCoding": {
-                "system": "http://snomed.info/sct",
-                "code": "373067005",
-                "display": "No"
-              }
-            }
-          ]
-        },
-        {
-          "linkId": "7.5c",
           "text": "Have you already been evaluated urgently for this by a spine physician?",
           "type": "choice",
           "required": true,
           "enableWhen": [
             {
-              "question": "7.5b",
+              "question": "7.5a",
               "operator": "=",
               "answerCoding": {
                 "system": "http://snomed.info/sct",
@@ -2228,7 +2257,7 @@
       "item": [
         {
           "linkId": "8.1",
-          "text": "Your answers describe new, severe weakness in your leg that came on with your back or leg pain and has not yet been evaluated. It should be checked by a clinician today. Please tell the study coordinator about these symptoms now, and do not continue with the study for the moment. If the weakness is getting worse, or you develop trouble passing urine, loss of bladder or bowel control, or numbness around the groin, call 911 or your local emergency number, or go to the nearest emergency department. Otherwise call the Spine Center at (650) 725-5905 to arrange an urgent evaluation; the study coordinator will help you and tell you how to proceed.",
+          "text": "Your answers describe new, severe weakness in your leg that should be checked by a clinician today, so please do not continue with the study for the moment. Call the Spine Center at (650) 725-5905 to arrange an urgent evaluation, and tell the study coordinator, who will follow up with you. If the Spine Center is closed, the weakness is getting worse, or you develop trouble passing urine, loss of bladder or bowel control, or numbness around the groin, go to the nearest emergency department.",
           "type": "display"
         },
         {
