@@ -650,55 +650,12 @@
           "type": "display",
           "enableWhen": [
             {
-              "question": "1.6",
+              "question": "symptom-follow-up",
               "operator": "=",
-              "answerCoding": {
-                "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
-                "code": "retention"
-              }
-            },
-            {
-              "question": "1.6",
-              "operator": "=",
-              "answerCoding": {
-                "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
-                "code": "bladder-bowel"
-              }
-            },
-            {
-              "question": "1.6",
-              "operator": "=",
-              "answerCoding": {
-                "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
-                "code": "perineal-numbness"
-              }
-            },
-            {
-              "question": "1.6",
-              "operator": "=",
-              "answerCoding": {
-                "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
-                "code": "leg-weakness"
-              }
-            },
-            {
-              "question": "1.6",
-              "operator": "=",
-              "answerCoding": {
-                "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
-                "code": "bilateral-weakness"
-              }
-            },
-            {
-              "question": "1.6",
-              "operator": "=",
-              "answerCoding": {
-                "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
-                "code": "diffuse-numbness"
-              }
+              "answerBoolean": true
             }
           ],
-          "enableBehavior": "any"
+          "enableBehavior": "all"
         },
         {
           "linkId": "1.6a",
@@ -707,55 +664,12 @@
           "required": true,
           "enableWhen": [
             {
-              "question": "1.6",
+              "question": "symptom-follow-up",
               "operator": "=",
-              "answerCoding": {
-                "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
-                "code": "retention"
-              }
-            },
-            {
-              "question": "1.6",
-              "operator": "=",
-              "answerCoding": {
-                "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
-                "code": "bladder-bowel"
-              }
-            },
-            {
-              "question": "1.6",
-              "operator": "=",
-              "answerCoding": {
-                "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
-                "code": "perineal-numbness"
-              }
-            },
-            {
-              "question": "1.6",
-              "operator": "=",
-              "answerCoding": {
-                "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
-                "code": "leg-weakness"
-              }
-            },
-            {
-              "question": "1.6",
-              "operator": "=",
-              "answerCoding": {
-                "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
-                "code": "bilateral-weakness"
-              }
-            },
-            {
-              "question": "1.6",
-              "operator": "=",
-              "answerCoding": {
-                "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
-                "code": "diffuse-numbness"
-              }
+              "answerBoolean": true
             }
           ],
-          "enableBehavior": "any",
+          "enableBehavior": "all",
           "answerOption": [
             {
               "valueCoding": {
@@ -951,6 +865,24 @@
                 "system": "http://snomed.info/sct",
                 "code": "261665006",
                 "display": "Not sure"
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "symptom-follow-up",
+          "text": "Red flag symptom follow-up",
+          "type": "boolean",
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-hidden",
+              "valueBoolean": true
+            },
+            {
+              "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-calculatedExpression",
+              "valueExpression": {
+                "language": "text/fhirpath",
+                "expression": "%bladderSymptom or %denseSymptom"
               }
             }
           ]

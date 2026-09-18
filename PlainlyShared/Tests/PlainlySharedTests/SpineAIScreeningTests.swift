@@ -119,6 +119,7 @@ struct SpineAIScreeningTests {
     @Test(arguments: denseSymptoms)
     func aNewDenseSymptomStopsTheStudyWithoutThePain(symptom: String) throws {
         let responses = try Self.responses(["1.6": ["\(Self.emergencies)|\(symptom)"], "1.6a": [Self.yes], "1.6c": [Self.answeredNo]])
+        #expect(try Self.isAsked("1.6a", in: responses))
         #expect(try !Self.isAsked("1.6b", in: responses))
         #expect(try Self.isAsked("1.6c", in: responses))
         #expect(try responses.screeningOutcome() == .needsAttention)
@@ -174,6 +175,7 @@ struct SpineAIScreeningTests {
     @Test
     func followUpsBehindNoSymptomAreNoStop() throws {
         let responses = try Self.responses(Self.urgentCaudaEquina)
+        #expect(try !Self.isAsked("1.6a", in: responses))
         #expect(try responses.screeningOutcome() == .eligible)
         try Self.expectShown(["6"], hidden: ["5"], in: responses)
     }
