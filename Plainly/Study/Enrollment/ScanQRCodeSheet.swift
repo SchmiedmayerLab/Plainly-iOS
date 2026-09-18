@@ -74,6 +74,7 @@ private struct ScanQRCodeSheet: View {
             }
             .navigationTitle(isSimulatorList ? "Choose a Study" : "Scan QR Code")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackgroundVisibility(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     DismissButton()
@@ -102,7 +103,7 @@ private struct ScanQRCodeSheet: View {
         )
         #endif
         #else
-        // The camera fills the sheet, bar and all: the glass bar and the notice float over it.
+        // The camera fills the sheet, bar and all: the bar and the notice float over it.
         DataScannerView(isScanning: $isScanning, onSuccess: onSuccess) { reason in
             notice = .rejection(reason)
             rejections += 1

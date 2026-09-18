@@ -67,6 +67,8 @@ public struct Study: Identifiable, Hashable, Sendable {
     public let voicePrompts: VoicePrompts
     /// What the study tries out before participants see it; applied by ``enablingPreviews()``.
     public let previews: Previews
+    /// Where screening sends a participant whose symptoms need attention; emergency services when `nil`.
+    public let urgentCare: UrgentCare?
     
     /// Initial Questionnaire that should be asked before the user enters the chat view.
     private let _initialQuestionnaire: String?
@@ -99,6 +101,7 @@ public struct Study: Identifiable, Hashable, Sendable {
         interactionMode: InteractionMode = .chat,
         voicePrompts: VoicePrompts = .default,
         previews: Previews = .init(),
+        urgentCare: UrgentCare? = nil,
         reportFormat: StudyReportFormat = .questionnaireResponse
     ) {
         self.id = id
@@ -117,6 +120,7 @@ public struct Study: Identifiable, Hashable, Sendable {
         self.interactionMode = interactionMode
         self.voicePrompts = voicePrompts
         self.previews = previews
+        self.urgentCare = urgentCare
         self._initialQuestionnaire = initialQuestionnaire
         self.tasks = tasks
     }
@@ -142,6 +146,7 @@ public struct Study: Identifiable, Hashable, Sendable {
             interactionMode: previews.interactionMode ?? interactionMode,
             voicePrompts: voicePrompts,
             previews: previews,
+            urgentCare: urgentCare,
             reportFormat: reportFormat
         )
     }
@@ -189,6 +194,26 @@ extension Study {
             self.generatesImages = generatesImages
             self.allowsAttachments = allowsAttachments
             self.interactionMode = interactionMode
+        }
+    }
+}
+
+
+extension Study {
+    /// A service that evaluates a participant urgently, such as a clinic's line.
+    public struct UrgentCare: Hashable, Sendable {
+        public let name: String
+        /// The number as participants read it, e.g. `(650) 725-5905`.
+        public let phoneNumber: String
+
+        /// The number to dial.
+        public var phoneURL: URL? {
+            URL(string: "tel:" + phoneNumber.filter(\.isNumber))
+        }
+
+        public init(name: String, phoneNumber: String) {
+            self.name = name
+            self.phoneNumber = phoneNumber
         }
     }
 }

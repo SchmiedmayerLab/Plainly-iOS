@@ -146,7 +146,7 @@ struct StudyHomeView: View {
 
     @ViewBuilder private var mainContent: some View {
         if let stoppedOutcome {
-            ScreeningStopView(outcome: stoppedOutcome)
+            ScreeningStopView(outcome: stoppedOutcome, urgentCare: fhirInterpretationModule.currentStudy?.study.urgentCare)
         } else {
             VStack {
                 Spacer()
