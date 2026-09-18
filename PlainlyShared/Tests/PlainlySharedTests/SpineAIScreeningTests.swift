@@ -14,8 +14,10 @@ import ModelsR4
 import Testing
 
 
-/// The SpineAI intake decides on its own, in FHIR, whether the study goes on: a cauda equina symptom or severe
-/// leg weakness stops it, while an injury, a cancer or an infection flag only adds a page of advice.
+/// The SpineAI intake decides on its own, in FHIR, whether the study goes on. A cauda equina symptom or severe leg
+/// weakness stops it only when it is new and severe, came on with or after the back or leg pain, and has not yet been
+/// evaluated urgently by a spine physician; on its own it is a symptom. An injury flag, which takes two of its three
+/// follow-ups, a cancer or an infection flag only adds a page of advice.
 @Suite
 struct SpineAIScreeningTests {
     private static let snomed = "http://snomed.info/sct"
@@ -24,6 +26,12 @@ struct SpineAIScreeningTests {
     private static let symptoms = "https://spineai.stanford.edu/CodeSystem/primary-symptom"
     private static let emergencies = "https://spineai.stanford.edu/CodeSystem/neurologic-emergency"
     private static let weakness = "https://spineai.stanford.edu/CodeSystem/radic-weakness"
+    private static let caudaEquinaSymptoms = [
+        "retention", "bladder-bowel", "perineal-numbness", "leg-weakness", "bilateral-weakness", "bilateral-numbness"
+    ]
+    /// New and severe, with or after the pain, and not yet evaluated: the answers that turn a symptom into a stop.
+    private static let urgentCaudaEquina = ["1.6a": [yes], "1.6b": [yes], "1.6c": [answeredNo]]
+    private static let urgentLegWeakness = ["7.5": ["\(weakness)|severe"], "7.5a": [yes], "7.5b": [yes], "7.5c": [answeredNo]]
 
     /// The questionnaire as the app ships it.
     private static func questionnaire() throws -> GroveQuestionnaire.Questionnaire {
@@ -48,6 +56,15 @@ struct SpineAIScreeningTests {
         ]
         answers.merge(overrides) { _, override in override }
         return try ScreeningAnswers.responses(to: questionnaire(), choosing: answers)
+    }
+
+    /// A question answered as given, with each of its follow-ups answered yes.
+    private static func answers(_ question: String, _ answer: String, followUps: [String]) -> [String: [String]] {
+        var answers = [question: [answer]]
+        for followUp in followUps {
+            answers[followUp] = [yes]
+        }
+        return answers
     }
 
     private static func section(_ linkId: String, in responses: QuestionnaireResponses) throws -> GroveQuestionnaire.Questionnaire.Section {
@@ -84,31 +101,90 @@ struct SpineAIScreeningTests {
         try Self.expectShown(["6"], hidden: ["2", "3", "4", "5", "7"], in: responses)
     }
 
-    @Test(arguments: ["retention", "bladder-bowel", "perineal-numbness", "leg-weakness", "bilateral-weakness", "bilateral-numbness"])
-    func aCaudaEquinaSymptomStopsTheStudy(symptom: String) throws {
+    @Test(arguments: caudaEquinaSymptoms)
+    func aNewSevereUnevaluatedCaudaEquinaSymptomStopsTheStudy(symptom: String) throws {
         // An injury flag alongside it changes nothing: the emergency page is the only one that opens.
-        let responses = try Self.responses(["1.6": ["\(Self.emergencies)|\(symptom)"], "1.3": [Self.yes], "1.3a": [Self.yes]])
+        let answers = ["1.6": ["\(Self.emergencies)|\(symptom)"], "1.3": [Self.yes], "1.3a": [Self.yes], "1.3b": [Self.yes]]
+        let responses = try Self.responses(answers.merging(Self.urgentCaudaEquina) { _, new in new })
         #expect(try responses.screeningOutcome() == .needsAttention)
         try Self.expectShown(["5"], hidden: ["2", "3", "4", "6", "7"], in: responses)
     }
 
+    /// Trouble passing urine or numbness around the groin is, in isolation, a symptom and not a stop.
+    @Test(arguments: caudaEquinaSymptoms)
+    func aCaudaEquinaSymptomAloneIsNoStop(symptom: String) throws {
+        let responses = try Self.responses(["1.6": ["\(Self.emergencies)|\(symptom)"], "1.6a": [Self.answeredNo]])
+        #expect(try responses.screeningOutcome() == .eligible)
+        try Self.expectShown(["6"], hidden: ["5"], in: responses)
+    }
+
+    /// Every one of the follow-ups has to point to an urgent evaluation: old or mild, unrelated to the pain, or
+    /// already seen by a spine physician, and the study goes on.
+    @Test(arguments: [
+        ["1.6a": "no"],
+        ["1.6a": "yes", "1.6b": "no"],
+        ["1.6a": "yes", "1.6b": "yes", "1.6c": "yes"]
+    ])
+    func aFollowUpAgainstUrgencyIsNoStop(followUps: [String: String]) throws {
+        var answers = ["1.6": ["\(Self.emergencies)|retention", "\(Self.emergencies)|perineal-numbness"]]
+        for (linkId, answer) in followUps {
+            answers[linkId] = [answer == "yes" ? Self.yes : Self.answeredNo]
+        }
+        let responses = try Self.responses(answers)
+        #expect(try responses.screeningOutcome() == .eligible)
+        try Self.expectShown(["6"], hidden: ["5"], in: responses)
+    }
+
+    /// Follow-ups answered and then closed again, by "None of the above", no longer count.
+    @Test
+    func followUpsBehindNoSymptomAreNoStop() throws {
+        let responses = try Self.responses(Self.urgentCaudaEquina)
+        #expect(try responses.screeningOutcome() == .eligible)
+        try Self.expectShown(["6"], hidden: ["5"], in: responses)
+    }
+
     @Test
     func severeLegWeaknessStopsTheStudy() throws {
-        let responses = try Self.responses(["1.1": ["\(Self.symptoms)|leg-pain"], "7.5": ["\(Self.weakness)|severe"]])
+        let answers = ["1.1": ["\(Self.symptoms)|leg-pain"]].merging(Self.urgentLegWeakness) { _, new in new }
+        let responses = try Self.responses(answers)
         #expect(try responses.screeningOutcome() == .needsAttention)
         // The leg module stays open: it is where the answer was given.
         try Self.expectShown(["7", "8"], hidden: ["5", "6"], in: responses)
     }
 
+    /// Severe weakness that is old, unrelated to the pain or already evaluated is recorded and the study goes on.
     @Test(arguments: [
-        ("1.3", "1.3a", "2"),
-        ("1.4", "1.4b", "3"),
-        ("1.5", "1.5c", "4")
+        ["7.5a": "no"],
+        ["7.5a": "yes", "7.5b": "no"],
+        ["7.5a": "yes", "7.5b": "yes", "7.5c": "yes"]
     ])
-    func aFlagOnlyAddsAdvice(question: String, followUp: String, pathway: String) throws {
-        let responses = try Self.responses([question: [Self.yes], followUp: [Self.yes]])
+    func severeLegWeaknessAgainstUrgencyIsNoStop(followUps: [String: String]) throws {
+        var answers = ["1.1": ["\(Self.symptoms)|leg-pain"], "7.5": ["\(Self.weakness)|severe"]]
+        for (linkId, answer) in followUps {
+            answers[linkId] = [answer == "yes" ? Self.yes : Self.answeredNo]
+        }
+        let responses = try Self.responses(answers)
+        #expect(try responses.screeningOutcome() == .eligible)
+        try Self.expectShown(["7"], hidden: ["5", "8"], in: responses)
+    }
+
+    @Test(arguments: [
+        ("1.3", ["1.3a", "1.3c"], "2"),
+        ("1.4", ["1.4b"], "3"),
+        ("1.5", ["1.5c"], "4")
+    ])
+    func aFlagOnlyAddsAdvice(question: String, followUps: [String], pathway: String) throws {
+        let responses = try Self.responses(Self.answers(question, Self.yes, followUps: followUps))
         #expect(try responses.screeningOutcome() == .eligible)
         try Self.expectShown([pathway, "6"], hidden: ["5"], in: responses)
+    }
+
+    /// A fracture is suspected on two of the three injury follow-ups; one alone is no flag.
+    @Test(arguments: ["1.3a", "1.3b", "1.3c"])
+    func oneInjuryFollowUpIsNoFlag(followUp: String) throws {
+        let responses = try Self.responses(["1.3": [Self.yes], followUp: [Self.yes]])
+        #expect(try responses.screeningOutcome() == .eligible)
+        try Self.expectShown(["6"], hidden: ["2", "5"], in: responses)
     }
 
     @Test(arguments: ["1.3", "1.4", "1.5"])
@@ -121,12 +197,12 @@ struct SpineAIScreeningTests {
     /// A follow-up answered and then closed again, by a change of mind on its question, no longer counts:
     /// the answers to a question the page does not ask stay on record.
     @Test(arguments: [
-        ("1.3", "1.3a", "2"),
-        ("1.4", "1.4b", "3"),
-        ("1.5", "1.5c", "4")
+        ("1.3", ["1.3a", "1.3c"], "2"),
+        ("1.4", ["1.4b"], "3"),
+        ("1.5", ["1.5c"], "4")
     ])
-    func aFollowUpBehindAnAnsweredNoIsNoFlag(question: String, followUp: String, pathway: String) throws {
-        let responses = try Self.responses([question: [Self.answeredNo], followUp: [Self.yes]])
+    func aFollowUpBehindAnAnsweredNoIsNoFlag(question: String, followUps: [String], pathway: String) throws {
+        let responses = try Self.responses(Self.answers(question, Self.answeredNo, followUps: followUps))
         #expect(try responses.screeningOutcome() == .eligible)
         try Self.expectShown(["6"], hidden: [pathway, "5"], in: responses)
     }
@@ -134,7 +210,11 @@ struct SpineAIScreeningTests {
     /// Trouble walking because of the legs is a leg presentation: the leg module asks, and its weakness question counts.
     @Test
     func troubleWalkingOpensTheLegModule() throws {
-        let responses = try Self.responses(["1.1": ["\(Self.symptoms)|trouble-walking"], "7.5": ["\(Self.weakness)|severe"]])
+        let walking = try Self.responses(["1.1": ["\(Self.symptoms)|trouble-walking"]])
+        #expect(try walking.screeningOutcome() == .eligible, "trouble walking is a symptom, not a red flag")
+        try Self.expectShown(["7"], hidden: ["5", "6", "8"], in: walking)
+        let answers = ["1.1": ["\(Self.symptoms)|trouble-walking"]].merging(Self.urgentLegWeakness) { _, new in new }
+        let responses = try Self.responses(answers)
         #expect(try responses.screeningOutcome() == .needsAttention)
         try Self.expectShown(["7", "8"], hidden: ["5", "6"], in: responses)
     }
@@ -142,19 +222,20 @@ struct SpineAIScreeningTests {
     /// Severe leg weakness counts only where the leg module asked about it.
     @Test
     func legWeaknessOnAPageNotShownIsNoStop() throws {
-        let backOnly = try Self.responses(["7.5": ["\(Self.weakness)|severe"]])
+        let backOnly = try Self.responses(Self.urgentLegWeakness)
         #expect(try backOnly.screeningOutcome() == .eligible)
         try Self.expectShown(["6"], hidden: ["7", "8"], in: backOnly)
-        let caudaEquina = try Self.responses([
-            "1.1": ["\(Self.symptoms)|leg-pain"], "1.6": ["\(Self.emergencies)|retention"], "7.5": ["\(Self.weakness)|severe"]
-        ])
+        let answers = ["1.1": ["\(Self.symptoms)|leg-pain"], "1.6": ["\(Self.emergencies)|retention"]]
+            .merging(Self.urgentCaudaEquina) { _, new in new }
+            .merging(Self.urgentLegWeakness) { _, new in new }
+        let caudaEquina = try Self.responses(answers)
         try Self.expectShown(["5"], hidden: ["7", "8"], in: caudaEquina)
     }
 
     @Test
     func onlyTheMostUrgentAdviceIsShown() throws {
         let allThree = try Self.responses([
-            "1.3": [Self.yes], "1.3b": [Self.yes],
+            "1.3": [Self.yes], "1.3b": [Self.yes], "1.3c": [Self.yes],
             "1.4": [Self.yes], "1.4a": [Self.yes],
             "1.5": [Self.yes], "1.5b": [Self.yes]
         ])

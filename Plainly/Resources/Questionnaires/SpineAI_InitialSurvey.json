@@ -4,13 +4,13 @@
   "name": "LumbarSpineTriageAndPhenotyping",
   "title": "SpineAI Questionnaire",
   "description": "Triage and phenotyping questionnaire for lumbar spine conditions including axial back pain and radiculopathy.",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "status": "active",
   "publisher": "Spine AI Research Team",
   "subjectType": [
     "Patient"
   ],
-  "date": "2026-09-11",
+  "date": "2026-09-18",
   "url": "https://spineai.stanford.edu/fhir/Questionnaire/lumbar-spine-triage",
   "extension": [
     {
@@ -18,7 +18,7 @@
       "valueExpression": {
         "name": "caudaEquina",
         "language": "text/fhirpath",
-        "expression": "%resource.descendants().where(linkId='1.6').answer.value.where(code='retention' or code='bladder-bowel' or code='perineal-numbness' or code='leg-weakness' or code='bilateral-weakness' or code='bilateral-numbness').exists()"
+        "expression": "%resource.descendants().where(linkId='1.6').answer.value.where(code='retention' or code='bladder-bowel' or code='perineal-numbness' or code='leg-weakness' or code='bilateral-weakness' or code='bilateral-numbness').exists() and %resource.descendants().where(linkId='1.6a').answer.value.where(code='373066001').exists() and %resource.descendants().where(linkId='1.6b').answer.value.where(code='373066001').exists() and %resource.descendants().where(linkId='1.6c').answer.value.where(code='373067005').exists()"
       }
     },
     {
@@ -26,7 +26,7 @@
       "valueExpression": {
         "name": "injury",
         "language": "text/fhirpath",
-        "expression": "%resource.descendants().where(linkId='1.3').answer.value.where(code='373066001').exists() and %resource.descendants().where(linkId='1.3a' or linkId='1.3b' or linkId='1.3c').answer.value.where(code='373066001').exists()"
+        "expression": "%resource.descendants().where(linkId='1.3').answer.value.where(code='373066001').exists() and %resource.descendants().where(linkId='1.3a' or linkId='1.3b' or linkId='1.3c').answer.value.where(code='373066001').count() >= 2"
       }
     },
     {
@@ -50,7 +50,7 @@
       "valueExpression": {
         "name": "legWeakness",
         "language": "text/fhirpath",
-        "expression": "%caudaEquina.not() and %resource.descendants().where(linkId='1.1').answer.value.where(code='leg-pain' or code='trouble-walking' or code='mixed').exists() and %resource.descendants().where(linkId='7.5').answer.value.where(code='severe').exists()"
+        "expression": "%caudaEquina.not() and %resource.descendants().where(linkId='1.1').answer.value.where(code='leg-pain' or code='trouble-walking' or code='mixed').exists() and %resource.descendants().where(linkId='7.5').answer.value.where(code='severe').exists() and %resource.descendants().where(linkId='7.5a').answer.value.where(code='373066001').exists() and %resource.descendants().where(linkId='7.5b').answer.value.where(code='373066001').exists() and %resource.descendants().where(linkId='7.5c').answer.value.where(code='373067005').exists()"
       }
     }
   ],
@@ -537,7 +537,7 @@
         },
         {
           "linkId": "1.6",
-          "text": "Do you currently have any of the following new symptoms?",
+          "text": "Do you currently have any of the following symptoms?",
           "type": "choice",
           "required": true,
           "repeats": true,
@@ -573,28 +573,28 @@
               "valueCoding": {
                 "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
                 "code": "perineal-numbness",
-                "display": "New numbness around the groin, buttocks or inner thighs"
+                "display": "Numbness around the groin, buttocks or inner thighs"
               }
             },
             {
               "valueCoding": {
                 "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
                 "code": "leg-weakness",
-                "display": "Severe leg weakness"
+                "display": "Dense (severe) weakness in a leg"
               }
             },
             {
               "valueCoding": {
                 "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
                 "code": "bilateral-weakness",
-                "display": "New weakness in both legs"
+                "display": "Dense (severe) weakness in both legs"
               }
             },
             {
               "valueCoding": {
                 "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
                 "code": "bilateral-numbness",
-                "display": "New dense numbness in both legs"
+                "display": "Dense, widespread numbness in the legs"
               }
             },
             {
@@ -609,6 +609,201 @@
                   "valueBoolean": true
                 }
               ]
+            }
+          ]
+        },
+        {
+          "linkId": "1.6-intro",
+          "text": "The next few questions are about the symptoms you selected above. \"New\" means it came on suddenly or recently, not something you have had for months or years.",
+          "type": "display",
+          "enableWhen": [
+            {
+              "question": "1.6",
+              "operator": "=",
+              "answerCoding": {
+                "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
+                "code": "retention"
+              }
+            },
+            {
+              "question": "1.6",
+              "operator": "=",
+              "answerCoding": {
+                "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
+                "code": "bladder-bowel"
+              }
+            },
+            {
+              "question": "1.6",
+              "operator": "=",
+              "answerCoding": {
+                "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
+                "code": "perineal-numbness"
+              }
+            },
+            {
+              "question": "1.6",
+              "operator": "=",
+              "answerCoding": {
+                "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
+                "code": "leg-weakness"
+              }
+            },
+            {
+              "question": "1.6",
+              "operator": "=",
+              "answerCoding": {
+                "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
+                "code": "bilateral-weakness"
+              }
+            },
+            {
+              "question": "1.6",
+              "operator": "=",
+              "answerCoding": {
+                "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
+                "code": "bilateral-numbness"
+              }
+            }
+          ],
+          "enableBehavior": "any"
+        },
+        {
+          "linkId": "1.6a",
+          "text": "Is any symptom you selected above new and severe?",
+          "type": "choice",
+          "required": true,
+          "enableWhen": [
+            {
+              "question": "1.6",
+              "operator": "=",
+              "answerCoding": {
+                "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
+                "code": "retention"
+              }
+            },
+            {
+              "question": "1.6",
+              "operator": "=",
+              "answerCoding": {
+                "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
+                "code": "bladder-bowel"
+              }
+            },
+            {
+              "question": "1.6",
+              "operator": "=",
+              "answerCoding": {
+                "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
+                "code": "perineal-numbness"
+              }
+            },
+            {
+              "question": "1.6",
+              "operator": "=",
+              "answerCoding": {
+                "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
+                "code": "leg-weakness"
+              }
+            },
+            {
+              "question": "1.6",
+              "operator": "=",
+              "answerCoding": {
+                "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
+                "code": "bilateral-weakness"
+              }
+            },
+            {
+              "question": "1.6",
+              "operator": "=",
+              "answerCoding": {
+                "system": "https://spineai.stanford.edu/CodeSystem/neurologic-emergency",
+                "code": "bilateral-numbness"
+              }
+            }
+          ],
+          "enableBehavior": "any",
+          "answerOption": [
+            {
+              "valueCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373066001",
+                "display": "Yes"
+              }
+            },
+            {
+              "valueCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373067005",
+                "display": "No"
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "1.6b",
+          "text": "Did it come on at the same time as, or after, the new onset of your back and/or leg pain?",
+          "type": "choice",
+          "required": true,
+          "enableWhen": [
+            {
+              "question": "1.6a",
+              "operator": "=",
+              "answerCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373066001"
+              }
+            }
+          ],
+          "enableBehavior": "all",
+          "answerOption": [
+            {
+              "valueCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373066001",
+                "display": "Yes"
+              }
+            },
+            {
+              "valueCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373067005",
+                "display": "No"
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "1.6c",
+          "text": "Have you already been evaluated urgently for this by a spine physician?",
+          "type": "choice",
+          "required": true,
+          "enableWhen": [
+            {
+              "question": "1.6b",
+              "operator": "=",
+              "answerCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373066001"
+              }
+            }
+          ],
+          "enableBehavior": "all",
+          "answerOption": [
+            {
+              "valueCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373066001",
+                "display": "Yes"
+              }
+            },
+            {
+              "valueCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373067005",
+                "display": "No"
+              }
             }
           ]
         },
@@ -1013,7 +1208,7 @@
       "item": [
         {
           "linkId": "5.1",
-          "text": "Your answers include symptoms that should be checked by a clinician today, because they can point to pressure on the nerves at the base of the spine. Please tell the study coordinator about these symptoms now, and do not continue with the study for the moment. If your symptoms are severe or getting worse, call 911 or your local emergency number, or go to the nearest emergency department. Otherwise the study coordinator will help you find care and tell you how to proceed.",
+          "text": "Your answers describe new, severe symptoms that came on with your back or leg pain and have not yet been evaluated. They should be checked by a clinician today, because they can point to pressure on the nerves at the base of the spine. Please tell the study coordinator about these symptoms now, and do not continue with the study for the moment. If your symptoms are severe or getting worse, call 911 or your local emergency number, or go to the nearest emergency department. Otherwise call the Spine Center at (650) 725-5905 to arrange an urgent evaluation; the study coordinator will help you and tell you how to proceed.",
           "type": "display"
         },
         {
@@ -1609,6 +1804,121 @@
           ]
         },
         {
+          "linkId": "7.5-intro",
+          "text": "The next few questions are about this severe weakness. \"New\" means it came on suddenly or recently, not something you have had for months or years.",
+          "type": "display",
+          "enableWhen": [
+            {
+              "question": "7.5",
+              "operator": "=",
+              "answerCoding": {
+                "system": "https://spineai.stanford.edu/CodeSystem/radic-weakness",
+                "code": "severe"
+              }
+            }
+          ],
+          "enableBehavior": "all"
+        },
+        {
+          "linkId": "7.5a",
+          "text": "Is this severe weakness new?",
+          "type": "choice",
+          "required": true,
+          "enableWhen": [
+            {
+              "question": "7.5",
+              "operator": "=",
+              "answerCoding": {
+                "system": "https://spineai.stanford.edu/CodeSystem/radic-weakness",
+                "code": "severe"
+              }
+            }
+          ],
+          "enableBehavior": "all",
+          "answerOption": [
+            {
+              "valueCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373066001",
+                "display": "Yes"
+              }
+            },
+            {
+              "valueCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373067005",
+                "display": "No"
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "7.5b",
+          "text": "Did it come on at the same time as, or after, the new onset of your back and/or leg pain?",
+          "type": "choice",
+          "required": true,
+          "enableWhen": [
+            {
+              "question": "7.5a",
+              "operator": "=",
+              "answerCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373066001"
+              }
+            }
+          ],
+          "enableBehavior": "all",
+          "answerOption": [
+            {
+              "valueCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373066001",
+                "display": "Yes"
+              }
+            },
+            {
+              "valueCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373067005",
+                "display": "No"
+              }
+            }
+          ]
+        },
+        {
+          "linkId": "7.5c",
+          "text": "Have you already been evaluated urgently for this by a spine physician?",
+          "type": "choice",
+          "required": true,
+          "enableWhen": [
+            {
+              "question": "7.5b",
+              "operator": "=",
+              "answerCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373066001"
+              }
+            }
+          ],
+          "enableBehavior": "all",
+          "answerOption": [
+            {
+              "valueCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373066001",
+                "display": "Yes"
+              }
+            },
+            {
+              "valueCoding": {
+                "system": "http://snomed.info/sct",
+                "code": "373067005",
+                "display": "No"
+              }
+            }
+          ]
+        },
+        {
           "linkId": "7.6",
           "text": "Have you experienced any of the following motor difficulties?",
           "type": "choice",
@@ -1918,7 +2228,7 @@
       "item": [
         {
           "linkId": "8.1",
-          "text": "Your answers describe severe weakness in your leg, which should be checked by a clinician today. Please tell the study coordinator about these symptoms now, and do not continue with the study for the moment. If the weakness is getting worse, or you develop trouble passing urine, loss of bladder or bowel control, or numbness around the groin, call 911 or your local emergency number, or go to the nearest emergency department. Otherwise the study coordinator will help you find care and tell you how to proceed.",
+          "text": "Your answers describe new, severe weakness in your leg that came on with your back or leg pain and has not yet been evaluated. It should be checked by a clinician today. Please tell the study coordinator about these symptoms now, and do not continue with the study for the moment. If the weakness is getting worse, or you develop trouble passing urine, loss of bladder or bowel control, or numbness around the groin, call 911 or your local emergency number, or go to the nearest emergency department. Otherwise call the Spine Center at (650) 725-5905 to arrange an urgent evaluation; the study coordinator will help you and tell you how to proceed.",
           "type": "display"
         },
         {

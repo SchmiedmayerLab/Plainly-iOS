@@ -11,7 +11,7 @@ import XCTestExtensions
 import XCTGroveQuestionnaire
 
 
-/// The SpineAI intake stops the study on a cauda equina symptom, and the stop outlives the launch.
+/// The SpineAI intake stops the study on a new, severe and unevaluated cauda equina symptom, and the stop outlives the launch.
 final class ScreeningTests: XCTestCase {
     override func setUp() async throws {
         try await super.setUp()
@@ -37,6 +37,10 @@ final class ScreeningTests: XCTestCase {
         questionnaire.question("1.4").select("No")
         questionnaire.question("1.5").select("No")
         questionnaire.question("1.6").select("Loss of bladder or bowel control")
+        // The symptom alone is no stop: it is new and severe, came on with the pain, and has not been evaluated.
+        questionnaire.question("1.6a").select("Yes")
+        questionnaire.question("1.6b").select("Yes")
+        questionnaire.question("1.6c").select("No")
         questionnaire.question("1.7").select("None / not sure")
         questionnaire.question("1.9").select("No")
         questionnaire.advance()
