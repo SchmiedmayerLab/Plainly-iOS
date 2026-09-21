@@ -47,37 +47,49 @@ extension Study {
                     assistantMessagesLimit: 1...5,
                     questions: [effectivenessQuestion]
                 ),
-                // The protocol gates this task and the recovery task below on baseline gate
-                // question G1 ("Is surgery currently one of the options being discussed for your
-                // spine condition?"), answered before the session. Tasks cannot branch, so both
-                // are always shown and their prompts carry the condition instead.
+                // The REDCap baseline shows its procedure and recovery items only when baseline
+                // gate question G1 ("Is surgery currently one of the options being discussed for
+                // your spine condition?") is answered "Yes" or "I am not sure". Tasks cannot
+                // branch or be skipped, and each needs a reply from SpineAI, so both tasks are
+                // always shown: the first carries a fallback, and the recovery task follows up on
+                // whichever treatment was asked about. They say "surgery" like those items, and
+                // do not assume that a procedure has been recommended.
                 Task(
                     id: "2",
                     title: nil,
-                    instructions: "If surgery is one of your options, ask SpineAI what the recommended procedure would involve and what the risks and complications would be for someone with your profile.",
+                    instructions: "Ask SpineAI what surgery for your condition would involve and what the risks would be for someone like you. If surgery is not being considered for you, ask about the treatment you are most likely to have, such as an injection or physical therapy.",
                     assistantMessagesLimit: 1...5,
                     questions: [effectivenessQuestion]
                 ),
                 Task(
                     id: "3",
                     title: nil,
-                    instructions: "Ask SpineAI how to manage your current pain and medications — how to take them, what side effects to watch for, and what to do if the pain isn’t improving as expected.",
+                    instructions: "Ask SpineAI what recovery could look like week by week after the treatment you just asked about, and when you could return to the activities that matter to you.",
                     assistantMessagesLimit: 1...5,
                     questions: [effectivenessQuestion]
                 ),
                 Task(
                     id: "4",
                     title: nil,
-                    instructions: "Ask SpineAI what recovery would realistically look like if you had the recommended procedure — week by week, and when you could return to work, driving, and the activities that matter most to you.",
+                    instructions: "Ask SpineAI how to manage your current pain and medications — how to take them, what side effects to watch for, and what to do if the pain isn’t improving as expected.",
                     assistantMessagesLimit: 1...5,
                     questions: [effectivenessQuestion]
                 ),
+                // The study asks about neither insurance nor second opinions, in a task or in the
+                // confidence items: SpineAI has no coverage data to ground an insurance answer in,
+                // and the chat goes to the participant's own surgeon.
                 Task(
                     id: "5",
                     title: nil,
-                    instructions: "Ask SpineAI how to get a second opinion and what your insurance is likely to cover, and tell it about any fears you have about your condition or a possible operation and ask what can help you cope.",
+                    instructions: "Tell SpineAI about anything that worries you about your condition or a possible operation, and ask what could help you cope.",
                     assistantMessagesLimit: 1...5,
-                    questions: [effectivenessQuestion]
+                    // The effectiveness question asks about a health question, which fits a
+                    // conversation about worries poorly, so this task also rates the acknowledgement.
+                    questions: [
+                        effectivenessQuestion,
+                        .scale("How well did SpineAI’s answer acknowledge what worries you?", options: acknowledgementOptions),
+                        .freeText("What, if anything, did SpineAI say that helped, or that felt off?", isOptional: true)
+                    ]
                 ),
                 Task(
                     id: "6",
@@ -106,8 +118,9 @@ extension Study {
                     This is the SpineAI study. The assistant is called SpineAI, so call yourself SpineAI's voice. \
                     Participants have a spine or back problem, answered a symptom questionnaire before this session, and \
                     work through tasks such as understanding an MRI or X-ray report, comparing treatment options, \
-                    surgery and its risks, pain and medication, recovery, and second opinions. Use everyday words for \
-                    spine terms when you acknowledge a question, and never add medical judgement of your own.
+                    surgery, its risks and recovery, pain and medication, and their \
+                    worries. Use everyday words for spine terms when you acknowledge a question, and never add \
+                    medical judgement of your own.
                     """,
                 greeting: "Say that questions about their spine problem, imaging report, or treatment options are welcome.",
                 handoff: "Using only the conversation below, mention in a few words what it was about last, so they know you are up to date."
@@ -129,6 +142,14 @@ private let effectivenessOptions: Study.Task.AnswerOptions = [
     "Neither effective nor ineffective",
     "Somewhat ineffective",
     "Very ineffective"
+]
+
+private let acknowledgementOptions: Study.Task.AnswerOptions = [
+    "Very well",
+    "Somewhat well",
+    "Neither well nor poorly",
+    "Somewhat poorly",
+    "Very poorly"
 ]
 
 private let websiteComparisonOptions: Study.Task.AnswerOptions = [
@@ -230,42 +251,43 @@ private let postInterventionQuestions: [Questionnaire.Task] = [
 ]
 
 
-// Clusters follow the session-task order of the document. The document gates Cluster 3 and
-// Cluster 5 on G1 like their session tasks and marks that in their headers; without branching
-// support every cluster is always shown, so the headers drop the gate annotation and N/A plus
-// skippable questions stand in for it. The document's per-cluster "Session task." reminders are
-// staff-facing context and are not rendered.
+// Clusters follow the order of the document, which the REDCap baseline pairs with, rather than
+// the session-task order. Their headers drop the document's cluster numbers, which mean nothing
+// to a participant. The document gates Cluster 3 (procedure) and Cluster 5 (recovery) on G1 like
+// their session tasks and marks that in their headers; without branching support every cluster
+// is always shown, so the headers drop the gate annotation too, and N/A plus skippable questions
+// stand in for it. The document's per-cluster "Session task." reminders are
+// staff-facing context and are not rendered. The baseline's optional free-text follow-ups are
+// not asked again: eighteen text boxes at the end of a session are more than participants answer.
 private let confidenceClusters: [(header: String, questions: [String])] = [
-    ("Cluster 1 — Diagnosis & imaging", [
+    ("Diagnosis & imaging", [
         "How confident are you that you could explain what your MRI or X-ray report says, in your own words?",
         "How confident are you that you could describe what exactly is wrong with your spine, and how severe it is?",
         "How confident are you that you know what is causing your pain, and whether anything else could be causing your symptoms?",
         "How confident are you that you know what is likely to happen to your spine if you do nothing right now?"
     ]),
-    ("Cluster 2 — Treatment options & decision-making", [
+    ("Treatment options & decision-making", [
         "How confident are you that you could list all of your treatment options, including the non-surgical ones?",
         "How confident are you that you know the pros and cons of physical therapy, injections and surgery for your condition?",
         "How confident are you that you could explain the difference between a decompression, a fusion and a disc replacement, and which would fit your situation?",
         "How confident are you that you know the specific things you need to do at home to treat your spine condition?",
         "How confident are you that you know whether it would be better to operate sooner or to wait, and what the risks of waiting would be?"
     ]),
-    ("Cluster 3 — Procedure, risks & surgeon", [
+    ("Procedure, risks & surgeon", [
         "How confident are you that you know what the operation would involve, if surgery were recommended for you?",
         "How confident are you that you know what complications could happen, and how likely they would be for someone like you?",
         "How confident are you that you know what anaesthesia options you would have, and what you should know about them?",
         "How confident are you that you know how to find out how experienced a surgeon is with this procedure, and what their outcomes are?"
     ]),
-    ("Cluster 8 — Pain & medication", [
+    ("Pain & medication", [
         "How confident are you that you know how to take your pain medication — whether with food, whether you can stop it suddenly or need to taper, and what to do about side effects?",
         "How confident are you that you know what to do if your pain is not improving as fast as you expected, and whether that is a bad sign?"
     ]),
-    ("Cluster 5 — Recovery expectations", [
+    ("Recovery expectations", [
         "How confident are you that you know what recovery would look like week by week, if you had surgery for your spine condition?",
         "How confident are you that you know when you could go back to work, drive, and return to the activities that matter to you?"
     ]),
-    ("Cluster 9 — System, insurance & emotions", [
-        "How confident are you that you know whether your insurance would cover the treatments you are considering, and what to ask your insurer before deciding?",
-        "How confident are you that you know how to get a second opinion, and which records to bring?",
+    ("Worries & coping", [
         "How confident are you that you know what can help you cope with worries about your condition or about a possible operation?"
     ])
 ]
@@ -274,7 +296,7 @@ private let confidenceQuestions: [Questionnaire.Task] = {
     var questions: [Questionnaire.Task] = [
         .instructional(
             """
-            Below are the same statements you answered in the online questionnaire before this session. Now that you have used the app, please rate again how confident you feel about your own situation, and — if you can — briefly write what you would say. If a statement does not apply to you, select N/A.
+            Below are the same statements you answered in the online questionnaire before this session. Now that you have used the app, please rate again how confident you feel about your own situation. If a statement does not apply to you, select N/A.
 
             Some questions ask you to think about treatments, including surgery, that you may or may not need. Some people find this uncomfortable. You may skip any question, and you may stop at any time.
             """
@@ -283,10 +305,8 @@ private let confidenceQuestions: [Questionnaire.Task] = {
     for (header, clusterQuestions) in confidenceClusters {
         questions.append(.instructional(header))
         for question in clusterQuestions {
-            // The introduction promises that any question can be skipped, so the scales are
-            // optional like the free-text answers.
+            // The introduction promises that any question can be skipped, so the scales are optional.
             questions.append(.scale(question, options: confidenceOptions, isOptional: true))
-            questions.append(.freeText("In a sentence, what would you say?", isOptional: true))
         }
     }
     return questions
