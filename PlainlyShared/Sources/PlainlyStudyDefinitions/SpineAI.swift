@@ -33,7 +33,7 @@ extension Study {
                 Task(
                     id: "0",
                     title: nil,
-                    instructions: "Ask SpineAI to explain your most recent MRI or X-ray of your back in plain language, then ask any follow-up questions about what the findings mean for your pain and function.",
+                    instructions: "Ask SpineAI to explain your most recent MRI or X-ray report in plain language, then ask any follow-up questions about what the findings mean for your pain and function.",
                     assistantMessagesLimit: 2...5,
                     questions: [
                         effectivenessQuestion,
