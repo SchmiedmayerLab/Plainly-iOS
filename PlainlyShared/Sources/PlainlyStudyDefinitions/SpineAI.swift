@@ -257,92 +257,38 @@ private let postInterventionQuestions: [Questionnaire.Task] = [
 // their session tasks and marks that in their headers; without branching support every cluster
 // is always shown, so the headers drop the gate annotation too, and N/A plus skippable questions
 // stand in for it. The document's per-cluster "Session task." reminders are
-// staff-facing context and are not rendered. Each item carries the baseline's own follow-up
-// question, so what participants write before and after the session answers the same prompt.
-private let confidenceClusters: [(header: String, questions: [(question: String, followUp: String)])] = [
+// staff-facing context and are not rendered. The baseline's optional free-text follow-ups are
+// not asked again: eighteen text boxes at the end of a session are more than participants answer.
+private let confidenceClusters: [(header: String, questions: [String])] = [
     ("Diagnosis & imaging", [
-        (
-            "How confident are you that you could explain what your MRI or X-ray report says, in your own words?",
-            "In a sentence, how would you explain what your most recent MRI or X-ray report says?"
-        ),
-        (
-            "How confident are you that you could describe what exactly is wrong with your spine, and how severe it is?",
-            "In a sentence, how would you describe what is wrong with your spine, and how severe it is?"
-        ),
-        (
-            "How confident are you that you know what is causing your pain, and whether anything else could be causing your symptoms?",
-            "In a sentence, what do you think is causing your pain?"
-        ),
-        (
-            "How confident are you that you know what is likely to happen to your spine if you do nothing right now?",
-            "In a sentence, what do you think would happen to your spine if you did nothing right now?"
-        )
+        "How confident are you that you could explain what your MRI or X-ray report says, in your own words?",
+        "How confident are you that you could describe what exactly is wrong with your spine, and how severe it is?",
+        "How confident are you that you know what is causing your pain, and whether anything else could be causing your symptoms?",
+        "How confident are you that you know what is likely to happen to your spine if you do nothing right now?"
     ]),
     ("Treatment options & decision-making", [
-        (
-            "How confident are you that you could list all of your treatment options, including the non-surgical ones?",
-            "In a sentence, which treatment options do you think you have?"
-        ),
-        (
-            "How confident are you that you know the pros and cons of physical therapy, injections and surgery for your condition?",
-            "In a sentence, what are the main pros and cons as you understand them?"
-        ),
-        (
-            "How confident are you that you could explain the difference between a decompression, a fusion and a disc replacement, and which would fit your situation?",
-            "In a sentence, how would you explain the difference between a decompression, a fusion and a disc replacement?"
-        ),
-        (
-            "How confident are you that you know the specific things you need to do at home to treat your spine condition?",
-            "In a sentence, what do you currently do at home to treat your spine condition?"
-        ),
-        (
-            "How confident are you that you know whether it would be better to operate sooner or to wait, and what the risks of waiting would be?",
-            "In a sentence, what do you understand about the risks of waiting?"
-        )
+        "How confident are you that you could list all of your treatment options, including the non-surgical ones?",
+        "How confident are you that you know the pros and cons of physical therapy, injections and surgery for your condition?",
+        "How confident are you that you could explain the difference between a decompression, a fusion and a disc replacement, and which would fit your situation?",
+        "How confident are you that you know the specific things you need to do at home to treat your spine condition?",
+        "How confident are you that you know whether it would be better to operate sooner or to wait, and what the risks of waiting would be?"
     ]),
     ("Procedure, risks & surgeon", [
-        (
-            "How confident are you that you know what the operation would involve, if surgery were recommended for you?",
-            "In a sentence, what do you understand the operation would involve?"
-        ),
-        (
-            "How confident are you that you know what complications could happen, and how likely they would be for someone like you?",
-            "In a sentence, which complications are you aware of?"
-        ),
-        (
-            "How confident are you that you know what anaesthesia options you would have, and what you should know about them?",
-            "In a sentence, what do you know about the anaesthesia options?"
-        ),
-        (
-            "How confident are you that you know how to find out how experienced a surgeon is with this procedure, and what their outcomes are?",
-            "In a sentence, how would you find out how experienced a surgeon is?"
-        )
+        "How confident are you that you know what the operation would involve, if surgery were recommended for you?",
+        "How confident are you that you know what complications could happen, and how likely they would be for someone like you?",
+        "How confident are you that you know what anaesthesia options you would have, and what you should know about them?",
+        "How confident are you that you know how to find out how experienced a surgeon is with this procedure, and what their outcomes are?"
     ]),
     ("Pain & medication", [
-        (
-            "How confident are you that you know how to take your pain medication — whether with food, whether you can stop it suddenly or need to taper, and what to do about side effects?",
-            "In a sentence, how do you take your pain medication?"
-        ),
-        (
-            "How confident are you that you know what to do if your pain is not improving as fast as you expected, and whether that is a bad sign?",
-            "In a sentence, what would you do if your pain was not improving as expected?"
-        )
+        "How confident are you that you know how to take your pain medication — whether with food, whether you can stop it suddenly or need to taper, and what to do about side effects?",
+        "How confident are you that you know what to do if your pain is not improving as fast as you expected, and whether that is a bad sign?"
     ]),
     ("Recovery expectations", [
-        (
-            "How confident are you that you know what recovery would look like week by week, if you had surgery for your spine condition?",
-            "In a sentence, what do you expect recovery would look like?"
-        ),
-        (
-            "How confident are you that you know when you could go back to work, drive, and return to the activities that matter to you?",
-            "In a sentence, when do you expect you could return to work, driving and your usual activities?"
-        )
+        "How confident are you that you know what recovery would look like week by week, if you had surgery for your spine condition?",
+        "How confident are you that you know when you could go back to work, drive, and return to the activities that matter to you?"
     ]),
     ("Worries & coping", [
-        (
-            "How confident are you that you know what can help you cope with worries about your condition or about a possible operation?",
-            "In a sentence, what helps you cope with worries about your condition?"
-        )
+        "How confident are you that you know what can help you cope with worries about your condition or about a possible operation?"
     ])
 ]
 
@@ -350,7 +296,7 @@ private let confidenceQuestions: [Questionnaire.Task] = {
     var questions: [Questionnaire.Task] = [
         .instructional(
             """
-            Below are the same statements you answered in the online questionnaire before this session. Now that you have used the app, please rate again how confident you feel about your own situation, and — if you can — briefly write what you would say. If a statement does not apply to you, select N/A.
+            Below are the same statements you answered in the online questionnaire before this session. Now that you have used the app, please rate again how confident you feel about your own situation. If a statement does not apply to you, select N/A.
 
             Some questions ask you to think about treatments, including surgery, that you may or may not need. Some people find this uncomfortable. You may skip any question, and you may stop at any time.
             """
@@ -358,11 +304,9 @@ private let confidenceQuestions: [Questionnaire.Task] = {
     ]
     for (header, clusterQuestions) in confidenceClusters {
         questions.append(.instructional(header))
-        for (question, followUp) in clusterQuestions {
-            // The introduction promises that any question can be skipped, so the scales are
-            // optional like the free-text answers.
+        for question in clusterQuestions {
+            // The introduction promises that any question can be skipped, so the scales are optional.
             questions.append(.scale(question, options: confidenceOptions, isOptional: true))
-            questions.append(.freeText(followUp, isOptional: true))
         }
     }
     return questions
