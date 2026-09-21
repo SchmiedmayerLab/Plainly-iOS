@@ -90,10 +90,10 @@ struct StudyTests {
         let chatlessTasks = tasks.filter { !$0.hasChat }
         let chatlessWithoutQuestions = chatlessTasks.filter(\.questions.isEmpty)
 
-        #expect(chatlessTasks.map(\.id) == ["7", "8"])
+        #expect(chatlessTasks.map(\.id) == ["6", "7"])
         // A chatless task with no questions would leave the participant on an empty chat.
         #expect(chatlessWithoutQuestions.isEmpty)
-        #expect(tasks.filter(\.hasChat).map(\.id) == ["0", "1", "2", "3", "4", "5", "6"])
+        #expect(tasks.filter(\.hasChat).map(\.id) == ["0", "1", "2", "3", "4", "5"])
     }
 
     /// A task that limits the chat to no messages is not a chat task either.

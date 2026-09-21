@@ -33,7 +33,7 @@ extension Study {
                 Task(
                     id: "0",
                     title: nil,
-                    instructions: "Ask SpineAI to explain your most recent MRI or X-ray report in plain language, then ask any follow-up questions about what the findings mean for your pain and function.",
+                    instructions: "Ask SpineAI to explain your most recent MRI or X-ray of your back in plain language, then ask any follow-up questions about what the findings mean for your pain and function.",
                     assistantMessagesLimit: 2...5,
                     questions: [
                         effectivenessQuestion,
@@ -47,15 +47,19 @@ extension Study {
                     assistantMessagesLimit: 1...5,
                     questions: [effectivenessQuestion]
                 ),
-                // The protocol gates this task and the recovery task below on baseline gate
-                // question G1 ("Is surgery currently one of the options being discussed for your
-                // spine condition?"), answered before the session. Tasks cannot branch, so both
-                // are always shown and their prompts carry the condition instead.
+                // The REDCap baseline shows its procedure and recovery items only when baseline
+                // gate question G1 ("Is surgery currently one of the options being discussed for
+                // your spine condition?") is answered "Yes" or "I am not sure". Tasks cannot
+                // branch or be skipped, and each needs a reply from SpineAI, so one task covers
+                // both clusters and carries a fallback. It says "surgery" like those items, and
+                // does not assume that a procedure has been recommended.
                 Task(
                     id: "2",
                     title: nil,
-                    instructions: "If surgery is one of your options, ask SpineAI what the recommended procedure would involve and what the risks and complications would be for someone with your profile.",
-                    assistantMessagesLimit: 1...5,
+                    instructions: "Ask SpineAI what surgery for your condition would involve and what the risks would be for someone like you. Then ask what recovery could look like week by week, and when you could return to the activities that matter to you. If surgery is not being considered for you, ask about the treatment you are most likely to have, such as an injection or physical therapy.",
+                    // Two questions, so two replies: asked at once, the answer's length ceiling
+                    // would leave the operation, its risks and the recovery a few sentences each.
+                    assistantMessagesLimit: 2...5,
                     questions: [effectivenessQuestion]
                 ),
                 Task(
@@ -65,36 +69,38 @@ extension Study {
                     assistantMessagesLimit: 1...5,
                     questions: [effectivenessQuestion]
                 ),
+                // The study asks about neither insurance nor second opinions, in a task or in the
+                // confidence items: SpineAI has no coverage data to ground an insurance answer in,
+                // and the chat goes to the participant's own surgeon.
                 Task(
                     id: "4",
                     title: nil,
-                    instructions: "Ask SpineAI what recovery would realistically look like if you had the recommended procedure — week by week, and when you could return to work, driving, and the activities that matter most to you.",
+                    instructions: "Tell SpineAI about anything that worries you about your condition or a possible operation, and ask what could help you cope.",
                     assistantMessagesLimit: 1...5,
-                    questions: [effectivenessQuestion]
+                    // The effectiveness question asks about a health question, which fits a
+                    // conversation about worries poorly, so this task also rates the acknowledgement.
+                    questions: [
+                        effectivenessQuestion,
+                        .scale("How well did SpineAI’s answer acknowledge what worries you?", options: acknowledgementOptions),
+                        .freeText("What, if anything, did SpineAI say that helped, or that felt off?", isOptional: true)
+                    ]
                 ),
                 Task(
                     id: "5",
-                    title: nil,
-                    instructions: "Ask SpineAI how to get a second opinion and what your insurance is likely to cover, and tell it about any fears you have about your condition or a possible operation and ask what can help you cope.",
-                    assistantMessagesLimit: 1...5,
-                    questions: [effectivenessQuestion]
-                ),
-                Task(
-                    id: "6",
                     title: nil,
                     instructions: "Before we end our session, feel free to ask the app any medical questions you might have related to your spine problem or symptoms.",
                     assistantMessagesLimit: 1...10,
                     questions: freeExplorationQuestions
                 ),
                 Task(
-                    id: "7",
+                    id: "6",
                     title: nil,
                     instructions: nil,
                     assistantMessagesLimit: nil,
                     questions: postInterventionQuestions
                 ),
                 Task(
-                    id: "8",
+                    id: "7",
                     title: nil,
                     instructions: nil,
                     assistantMessagesLimit: nil,
@@ -106,8 +112,9 @@ extension Study {
                     This is the SpineAI study. The assistant is called SpineAI, so call yourself SpineAI's voice. \
                     Participants have a spine or back problem, answered a symptom questionnaire before this session, and \
                     work through tasks such as understanding an MRI or X-ray report, comparing treatment options, \
-                    surgery and its risks, pain and medication, recovery, and second opinions. Use everyday words for \
-                    spine terms when you acknowledge a question, and never add medical judgement of your own.
+                    surgery, its risks and recovery, pain and medication, and their \
+                    worries. Use everyday words for spine terms when you acknowledge a question, and never add \
+                    medical judgement of your own.
                     """,
                 greeting: "Say that questions about their spine problem, imaging report, or treatment options are welcome.",
                 handoff: "Using only the conversation below, mention in a few words what it was about last, so they know you are up to date."
@@ -129,6 +136,14 @@ private let effectivenessOptions: Study.Task.AnswerOptions = [
     "Neither effective nor ineffective",
     "Somewhat ineffective",
     "Very ineffective"
+]
+
+private let acknowledgementOptions: Study.Task.AnswerOptions = [
+    "Very well",
+    "Somewhat well",
+    "Neither well nor poorly",
+    "Somewhat poorly",
+    "Very poorly"
 ]
 
 private let websiteComparisonOptions: Study.Task.AnswerOptions = [
@@ -230,43 +245,98 @@ private let postInterventionQuestions: [Questionnaire.Task] = [
 ]
 
 
-// Clusters follow the session-task order of the document. The document gates Cluster 3 and
-// Cluster 5 on G1 like their session tasks and marks that in their headers; without branching
-// support every cluster is always shown, so the headers drop the gate annotation and N/A plus
-// skippable questions stand in for it. The document's per-cluster "Session task." reminders are
-// staff-facing context and are not rendered.
-private let confidenceClusters: [(header: String, questions: [String])] = [
-    ("Cluster 1 — Diagnosis & imaging", [
-        "How confident are you that you could explain what your MRI or X-ray report says, in your own words?",
-        "How confident are you that you could describe what exactly is wrong with your spine, and how severe it is?",
-        "How confident are you that you know what is causing your pain, and whether anything else could be causing your symptoms?",
-        "How confident are you that you know what is likely to happen to your spine if you do nothing right now?"
+// Clusters follow the order of the document, which the REDCap baseline pairs with, rather than
+// the session-task order. Their headers drop the document's cluster numbers, which mean nothing
+// to a participant. The document gates Cluster 3 (procedure) and Cluster 5 (recovery) on G1 like
+// their session tasks and marks that in their headers; without branching support every cluster
+// is always shown, so the headers drop the gate annotation too, and N/A plus skippable questions
+// stand in for it. The document's per-cluster "Session task." reminders are
+// staff-facing context and are not rendered. Each item carries the baseline's own follow-up
+// question, so what participants write before and after the session answers the same prompt.
+private let confidenceClusters: [(header: String, questions: [(question: String, followUp: String)])] = [
+    ("Diagnosis & imaging", [
+        (
+            "How confident are you that you could explain what your MRI or X-ray report says, in your own words?",
+            "In a sentence, how would you explain what your most recent MRI or X-ray report says?"
+        ),
+        (
+            "How confident are you that you could describe what exactly is wrong with your spine, and how severe it is?",
+            "In a sentence, how would you describe what is wrong with your spine, and how severe it is?"
+        ),
+        (
+            "How confident are you that you know what is causing your pain, and whether anything else could be causing your symptoms?",
+            "In a sentence, what do you think is causing your pain?"
+        ),
+        (
+            "How confident are you that you know what is likely to happen to your spine if you do nothing right now?",
+            "In a sentence, what do you think would happen to your spine if you did nothing right now?"
+        )
     ]),
-    ("Cluster 2 — Treatment options & decision-making", [
-        "How confident are you that you could list all of your treatment options, including the non-surgical ones?",
-        "How confident are you that you know the pros and cons of physical therapy, injections and surgery for your condition?",
-        "How confident are you that you could explain the difference between a decompression, a fusion and a disc replacement, and which would fit your situation?",
-        "How confident are you that you know the specific things you need to do at home to treat your spine condition?",
-        "How confident are you that you know whether it would be better to operate sooner or to wait, and what the risks of waiting would be?"
+    ("Treatment options & decision-making", [
+        (
+            "How confident are you that you could list all of your treatment options, including the non-surgical ones?",
+            "In a sentence, which treatment options do you think you have?"
+        ),
+        (
+            "How confident are you that you know the pros and cons of physical therapy, injections and surgery for your condition?",
+            "In a sentence, what are the main pros and cons as you understand them?"
+        ),
+        (
+            "How confident are you that you could explain the difference between a decompression, a fusion and a disc replacement, and which would fit your situation?",
+            "In a sentence, how would you explain the difference between a decompression, a fusion and a disc replacement?"
+        ),
+        (
+            "How confident are you that you know the specific things you need to do at home to treat your spine condition?",
+            "In a sentence, what do you currently do at home to treat your spine condition?"
+        ),
+        (
+            "How confident are you that you know whether it would be better to operate sooner or to wait, and what the risks of waiting would be?",
+            "In a sentence, what do you understand about the risks of waiting?"
+        )
     ]),
-    ("Cluster 3 — Procedure, risks & surgeon", [
-        "How confident are you that you know what the operation would involve, if surgery were recommended for you?",
-        "How confident are you that you know what complications could happen, and how likely they would be for someone like you?",
-        "How confident are you that you know what anaesthesia options you would have, and what you should know about them?",
-        "How confident are you that you know how to find out how experienced a surgeon is with this procedure, and what their outcomes are?"
+    ("Procedure, risks & surgeon", [
+        (
+            "How confident are you that you know what the operation would involve, if surgery were recommended for you?",
+            "In a sentence, what do you understand the operation would involve?"
+        ),
+        (
+            "How confident are you that you know what complications could happen, and how likely they would be for someone like you?",
+            "In a sentence, which complications are you aware of?"
+        ),
+        (
+            "How confident are you that you know what anaesthesia options you would have, and what you should know about them?",
+            "In a sentence, what do you know about the anaesthesia options?"
+        ),
+        (
+            "How confident are you that you know how to find out how experienced a surgeon is with this procedure, and what their outcomes are?",
+            "In a sentence, how would you find out how experienced a surgeon is?"
+        )
     ]),
-    ("Cluster 8 — Pain & medication", [
-        "How confident are you that you know how to take your pain medication — whether with food, whether you can stop it suddenly or need to taper, and what to do about side effects?",
-        "How confident are you that you know what to do if your pain is not improving as fast as you expected, and whether that is a bad sign?"
+    ("Pain & medication", [
+        (
+            "How confident are you that you know how to take your pain medication — whether with food, whether you can stop it suddenly or need to taper, and what to do about side effects?",
+            "In a sentence, how do you take your pain medication?"
+        ),
+        (
+            "How confident are you that you know what to do if your pain is not improving as fast as you expected, and whether that is a bad sign?",
+            "In a sentence, what would you do if your pain was not improving as expected?"
+        )
     ]),
-    ("Cluster 5 — Recovery expectations", [
-        "How confident are you that you know what recovery would look like week by week, if you had surgery for your spine condition?",
-        "How confident are you that you know when you could go back to work, drive, and return to the activities that matter to you?"
+    ("Recovery expectations", [
+        (
+            "How confident are you that you know what recovery would look like week by week, if you had surgery for your spine condition?",
+            "In a sentence, what do you expect recovery would look like?"
+        ),
+        (
+            "How confident are you that you know when you could go back to work, drive, and return to the activities that matter to you?",
+            "In a sentence, when do you expect you could return to work, driving and your usual activities?"
+        )
     ]),
-    ("Cluster 9 — System, insurance & emotions", [
-        "How confident are you that you know whether your insurance would cover the treatments you are considering, and what to ask your insurer before deciding?",
-        "How confident are you that you know how to get a second opinion, and which records to bring?",
-        "How confident are you that you know what can help you cope with worries about your condition or about a possible operation?"
+    ("Worries & coping", [
+        (
+            "How confident are you that you know what can help you cope with worries about your condition or about a possible operation?",
+            "In a sentence, what helps you cope with worries about your condition?"
+        )
     ])
 ]
 
@@ -282,11 +352,11 @@ private let confidenceQuestions: [Questionnaire.Task] = {
     ]
     for (header, clusterQuestions) in confidenceClusters {
         questions.append(.instructional(header))
-        for question in clusterQuestions {
+        for (question, followUp) in clusterQuestions {
             // The introduction promises that any question can be skipped, so the scales are
             // optional like the free-text answers.
             questions.append(.scale(question, options: confidenceOptions, isOptional: true))
-            questions.append(.freeText("In a sentence, what would you say?", isOptional: true))
+            questions.append(.freeText(followUp, isOptional: true))
         }
     }
     return questions
