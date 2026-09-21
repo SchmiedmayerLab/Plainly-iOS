@@ -50,20 +50,26 @@ extension Study {
                 // The REDCap baseline shows its procedure and recovery items only when baseline
                 // gate question G1 ("Is surgery currently one of the options being discussed for
                 // your spine condition?") is answered "Yes" or "I am not sure". Tasks cannot
-                // branch or be skipped, and each needs a reply from SpineAI, so one task covers
-                // both clusters and carries a fallback. It says "surgery" like those items, and
-                // does not assume that a procedure has been recommended.
+                // branch or be skipped, and each needs a reply from SpineAI, so both tasks are
+                // always shown: the first carries a fallback, and the recovery task follows up on
+                // whichever treatment was asked about. They say "surgery" like those items, and
+                // do not assume that a procedure has been recommended.
                 Task(
                     id: "2",
                     title: nil,
-                    instructions: "Ask SpineAI what surgery for your condition would involve and what the risks would be for someone like you. Then ask what recovery could look like week by week, and when you could return to the activities that matter to you. If surgery is not being considered for you, ask about the treatment you are most likely to have, such as an injection or physical therapy.",
-                    // Two questions, so two replies: asked at once, the answer's length ceiling
-                    // would leave the operation, its risks and the recovery a few sentences each.
-                    assistantMessagesLimit: 2...5,
+                    instructions: "Ask SpineAI what surgery for your condition would involve and what the risks would be for someone like you. If surgery is not being considered for you, ask about the treatment you are most likely to have, such as an injection or physical therapy.",
+                    assistantMessagesLimit: 1...5,
                     questions: [effectivenessQuestion]
                 ),
                 Task(
                     id: "3",
+                    title: nil,
+                    instructions: "Ask SpineAI what recovery could look like week by week after the treatment you just asked about, and when you could return to the activities that matter to you.",
+                    assistantMessagesLimit: 1...5,
+                    questions: [effectivenessQuestion]
+                ),
+                Task(
+                    id: "4",
                     title: nil,
                     instructions: "Ask SpineAI how to manage your current pain and medications — how to take them, what side effects to watch for, and what to do if the pain isn’t improving as expected.",
                     assistantMessagesLimit: 1...5,
@@ -73,7 +79,7 @@ extension Study {
                 // confidence items: SpineAI has no coverage data to ground an insurance answer in,
                 // and the chat goes to the participant's own surgeon.
                 Task(
-                    id: "4",
+                    id: "5",
                     title: nil,
                     instructions: "Tell SpineAI about anything that worries you about your condition or a possible operation, and ask what could help you cope.",
                     assistantMessagesLimit: 1...5,
@@ -86,21 +92,21 @@ extension Study {
                     ]
                 ),
                 Task(
-                    id: "5",
+                    id: "6",
                     title: nil,
                     instructions: "Before we end our session, feel free to ask the app any medical questions you might have related to your spine problem or symptoms.",
                     assistantMessagesLimit: 1...10,
                     questions: freeExplorationQuestions
                 ),
                 Task(
-                    id: "6",
+                    id: "7",
                     title: nil,
                     instructions: nil,
                     assistantMessagesLimit: nil,
                     questions: postInterventionQuestions
                 ),
                 Task(
-                    id: "7",
+                    id: "8",
                     title: nil,
                     instructions: nil,
                     assistantMessagesLimit: nil,
