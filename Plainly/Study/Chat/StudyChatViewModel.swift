@@ -782,8 +782,14 @@ extension StudyChatViewModel {
         let responses = inProgressStudy.responses[task.id]
         return task.questions.enumerated().map { index, question in
             let value = responses?.responses[Study.Task.questionId(at: index) as Questionnaire.Task.ID].value
+            // Instructions have no display title, but their text still belongs in the report.
+            let questionText = if case .instructional(let text) = question.kind.variant {
+                text
+            } else {
+                question.title
+            }
             return StudyReport.TimelineEvent.SurveyQuestion(
-                questionText: question.title,
+                questionText: questionText,
                 answer: value.map { question.legacyAnswer(from: $0) } ?? Questionnaire.Task.legacyUnansweredValue,
                 isOptional: question.isOptional
             )
