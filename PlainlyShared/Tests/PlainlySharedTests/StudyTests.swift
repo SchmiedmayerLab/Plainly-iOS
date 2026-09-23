@@ -70,6 +70,22 @@ struct StudyTests {
         #expect(tasks.filter(\.hasChat).map(\.id) == ["0", "1", "2", "3", "4", "5"])
     }
 
+    /// The Gyn closing survey renders its Markdown instructions as a body, without a duplicate heading.
+    @Test
+    func gynSurveyInstructionsHaveNoDuplicateTitle() throws {
+        let task = try #require(Study.gynStudy.tasks.first { $0.id == "7" })
+        let questionnaire = task.questionnaire(title: "Task 8 of 8")
+        let instruction = try #require(questionnaire.sections.first?.tasks.first)
+
+        #expect(instruction.title.isEmpty)
+        guard case .instructional(let text) = instruction.kind.variant else {
+            Issue.record("The closing survey must begin with its instructions.")
+            return
+        }
+        #expect(text.hasPrefix("Please complete the survey below.\nThank you!\n\n"))
+        #expect(text.contains("**with access to an application**"))
+    }
+
     /// The closing questionnaires have no chat, so the app presents them without returning to it.
     @Test
     func pedCardioStudyClosesWithoutChat() {

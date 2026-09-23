@@ -19,7 +19,8 @@ extension Questionnaire.Task {
 
     /// A question that only presents text and collects no answer.
     public static func instructional(_ text: String) -> Self {
-        Self(id: unassignedId, title: text, kind: .instructional(text), isOptional: true)
+        // The instructional body renders the text; a title would display it a second time.
+        Self(id: unassignedId, title: "", kind: .instructional(text), isOptional: true)
     }
 
     /// A question answered with free text.
