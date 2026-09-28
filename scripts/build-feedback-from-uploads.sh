@@ -10,15 +10,17 @@
 #
 # Pulls the study's reports with download-study-uploads.sh (already downloaded reports are not fetched again),
 # keeps the ones picked by --since and --latest, and bakes them into a single HTML file with
-# tools/conversation-feedback/build.ts. The upload time is read from the report's file name; reports whose
-# upload time is unknown are left out as soon as a filter is given.
+# tools/conversation-feedback/build.ts: the conversation feedback form, or with --clinician the clinician evaluation,
+# filled in per answer or, with --scope conversation, once per conversation. The upload time is read from the report's
+# file name; reports whose upload time is unknown are left out as soon as a filter is given.
 # Usage: build-feedback-from-uploads.sh <study id>|all [-o <output.html>] [--since <YYYY-MM-DD[THH-MM-SS]>]
 #          [--latest <n>] [--project <firebase project>] [--destination <dir>] [--skip-download]
+#          [--clinician] [--scope answer|conversation]
 set -euo pipefail
 
 usage() {
   echo "usage: $(basename "$0") <study id>|all [-o <output.html>] [--since <YYYY-MM-DD[THH-MM-SS]>] [--latest <n>]" >&2
-  echo "         [--project <firebase project>] [--destination <dir>] [--skip-download]" >&2
+  echo "         [--project <firebase project>] [--destination <dir>] [--skip-download] [--clinician] [--scope answer|conversation]" >&2
   exit 1
 }
 
@@ -32,6 +34,7 @@ latest=""
 project="som-rit-phi-lit-ai-dev"
 destination="$here/../study-uploads"
 download=true
+form=()
 while [ $# -gt 0 ]; do
   case "$1" in
     -o|--output) output="$2"; shift 2;;
@@ -40,6 +43,8 @@ while [ $# -gt 0 ]; do
     --project) project="$2"; shift 2;;
     --destination) destination="$2"; shift 2;;
     --skip-download) download=false; shift;;
+    --clinician) form+=(--clinician); shift;;
+    --scope) form+=(--scope "$2"); shift 2;;
     -h|--help) usage;;
     -*) echo "unknown option: $1" >&2; usage;;
     *) [ -z "$study" ] || usage; study="$1"; shift;;
@@ -92,4 +97,4 @@ echo "building the feedback page from ${#reports[@]} reports"
 if [ ! -x "$tool/node_modules/.bin/tsx" ]; then
   (cd "$tool" && npm install --silent)
 fi
-"$tool/node_modules/.bin/tsx" "$tool/build.ts" "${reports[@]}" -o "$output"
+"$tool/node_modules/.bin/tsx" "$tool/build.ts" "${reports[@]}" ${form[@]+"${form[@]}"} -o "$output"
