@@ -1109,7 +1109,7 @@ SPDX-License-Identifier: MIT
     form.appendChild(rubric);
     showProgress();
     form.appendChild(progress);
-    form.appendChild(textFieldRow("Comment", fb, "comment", conv, null, true));
+    form.appendChild(textFieldRow("Comment", fb, "comment", "What was good? What was bad? Which resources should be mentioned?"));
   }
 
   function renderFeedbackForm(conv, turn, fb, bubble) {
@@ -1154,9 +1154,10 @@ SPDX-License-Identifier: MIT
     }
   }
 
-  function textFieldRow(label, fb, key, conv, turn, optional) {
+  /** An optional free-text field, with `hint` as the subtext next to its label. */
+  function textFieldRow(label, fb, key, hint) {
     const row = el("div", { class: "fb-row" });
-    row.appendChild(el("label", { class: "fb-label", html: label + (optional ? ' <span class="opt">(optional)</span>' : "") }));
+    row.appendChild(el("label", { class: "fb-label" }, [label + " ", el("span", { class: "opt", text: "(optional) — " + hint })]));
     const ta = el("textarea", { class: "fb", placeholder: label + "…" });
     ta.value = fb[key] || "";
     ta.addEventListener("input", () => { fb[key] = ta.value; touch(fb); scheduleSave(); onFbInputDebounced(); });
