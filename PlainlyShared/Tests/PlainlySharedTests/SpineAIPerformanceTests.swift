@@ -21,7 +21,6 @@ import Testing
 @Suite
 struct SpineAIPerformanceTests {
     private static let snomed = "http://snomed.info/sct"
-    private static let yes = "\(snomed)|373066001"
     private static let answeredNo = "\(snomed)|373067005"
     /// A frame on a ProMotion display, the shortest the main thread gets between two renders.
     private static let frame = Swift.Duration.milliseconds(1000.0 / 120)
@@ -32,7 +31,7 @@ struct SpineAIPerformanceTests {
         ["1.4": [answeredNo]],
         ["1.5": [answeredNo]],
         ["1.6": ["https://spineai.stanford.edu/CodeSystem/neurologic-emergency|none"]],
-        ["1.9": [yes]]
+        ["1.2": ["https://spineai.stanford.edu/CodeSystem/symptom-duration|lt6w"]]
     ]
 
     private static func questionnaire() throws -> GroveQuestionnaire.Questionnaire {

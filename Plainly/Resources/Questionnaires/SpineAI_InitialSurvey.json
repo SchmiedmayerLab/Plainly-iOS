@@ -4,13 +4,13 @@
   "name": "LumbarSpineTriageAndPhenotyping",
   "title": "SpineAI Questionnaire",
   "description": "Triage and phenotyping questionnaire for lumbar spine conditions including axial back pain and radiculopathy.",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "status": "active",
   "publisher": "Spine AI Research Team",
   "subjectType": [
     "Patient"
   ],
-  "date": "2026-09-18",
+  "date": "2026-10-19",
   "url": "https://spineai.stanford.edu/fhir/Questionnaire/lumbar-spine-triage",
   "extension": [
     {
@@ -94,22 +94,36 @@
       "item": [
         {
           "linkId": "1.1",
-          "text": "Which option best describes your primary symptom?",
+          "text": "Which of these describe your symptoms? Select all that apply.",
           "type": "choice",
           "required": true,
+          "repeats": true,
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "system": "http://hl7.org/fhir/ValueSet/questionnaire-item-control",
+                    "code": "check-box"
+                  }
+                ]
+              }
+            }
+          ],
           "answerOption": [
             {
               "valueCoding": {
                 "system": "https://spineai.stanford.edu/CodeSystem/primary-symptom",
                 "code": "low-back-only",
-                "display": "Low back pain only"
+                "display": "Low back pain"
               }
             },
             {
               "valueCoding": {
                 "system": "https://spineai.stanford.edu/CodeSystem/primary-symptom",
                 "code": "leg-pain",
-                "display": "Leg pain or numbness"
+                "display": "Leg pain, numbness or tingling"
               }
             },
             {
@@ -770,28 +784,28 @@
               "valueCoding": {
                 "system": "https://spineai.stanford.edu/CodeSystem/structural-context",
                 "code": "stenosis",
-                "display": "Lumbar stenosis"
+                "display": "Lumbar stenosis (narrowing of the spinal canal in the low back)"
               }
             },
             {
               "valueCoding": {
                 "system": "https://spineai.stanford.edu/CodeSystem/structural-context",
                 "code": "scoliosis",
-                "display": "Lumbar scoliosis"
+                "display": "Lumbar scoliosis (a sideways curve of the spine)"
               }
             },
             {
               "valueCoding": {
                 "system": "https://spineai.stanford.edu/CodeSystem/structural-context",
                 "code": "spondylolisthesis",
-                "display": "Lumbar spondylolisthesis"
+                "display": "Lumbar spondylolisthesis (one bone of the spine has slipped forward over another)"
               }
             },
             {
               "valueCoding": {
                 "system": "https://spineai.stanford.edu/CodeSystem/structural-context",
                 "code": "disc",
-                "display": "Lumbar disc herniation"
+                "display": "Lumbar disc herniation (a slipped or bulging disc)"
               }
             },
             {
@@ -837,34 +851,6 @@
                 "system": "http://snomed.info/sct",
                 "code": "373067005",
                 "display": "No"
-              }
-            }
-          ]
-        },
-        {
-          "linkId": "1.9",
-          "text": "Have you ever had spinal surgery? If so, when was the surgery and what type of surgery was it? If multiple surgeries, please list with dates and descriptions.",
-          "type": "open-choice",
-          "answerOption": [
-            {
-              "valueCoding": {
-                "system": "http://snomed.info/sct",
-                "code": "373066001",
-                "display": "Yes"
-              }
-            },
-            {
-              "valueCoding": {
-                "system": "http://snomed.info/sct",
-                "code": "373067005",
-                "display": "No"
-              }
-            },
-            {
-              "valueCoding": {
-                "system": "http://snomed.info/sct",
-                "code": "261665006",
-                "display": "Not sure"
               }
             }
           ]
@@ -1236,6 +1222,11 @@
       "enableBehavior": "all",
       "item": [
         {
+          "linkId": "6-intro",
+          "text": "The next questions are about your low back pain. Answer for how it has been on a typical day over the past month. Where you can choose more than one answer, select every one that applies, for example if your pain changes or switches sides.",
+          "type": "display"
+        },
+        {
           "linkId": "6.1",
           "text": "Where do you feel your back pain?",
           "type": "choice",
@@ -1445,9 +1436,23 @@
         },
         {
           "linkId": "6.6",
-          "text": "Is your pain generally worse when you are sitting, standing, walking, or about the same?",
+          "text": "Is your pain generally worse when you are sitting, standing, or walking, or about the same? Select all that apply.",
           "type": "choice",
           "required": true,
+          "repeats": true,
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "system": "http://hl7.org/fhir/ValueSet/questionnaire-item-control",
+                    "code": "check-box"
+                  }
+                ]
+              }
+            }
+          ],
           "answerOption": [
             {
               "valueCoding": {
@@ -1476,7 +1481,13 @@
                 "system": "https://spineai.stanford.edu/CodeSystem/axial-posture-worse",
                 "code": "same",
                 "display": "About the same"
-              }
+              },
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-optionExclusive",
+                  "valueBoolean": true
+                }
+              ]
             }
           ]
         },
@@ -1576,8 +1587,22 @@
         },
         {
           "linkId": "6.10",
-          "text": "Which side has more severe back pain?",
+          "text": "Which side has more severe back pain? If it switches sides, select both.",
           "type": "choice",
+          "repeats": true,
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "system": "http://hl7.org/fhir/ValueSet/questionnaire-item-control",
+                    "code": "check-box"
+                  }
+                ]
+              }
+            }
+          ],
           "enableWhen": [
             {
               "question": "6.9",
@@ -1623,6 +1648,34 @@
       "enableBehavior": "all",
       "item": [
         {
+          "linkId": "7-intro",
+          "text": "The next questions are about your leg symptoms: pain, numbness, tingling or weakness. Answer for how they have been on a typical day over the past month. Where you can choose more than one answer, select every one that applies.",
+          "type": "display"
+        },
+        {
+          "linkId": "7-overlap",
+          "text": "Some of these questions are similar to ones you just answered about your back. This time, answer only about your leg symptoms.",
+          "type": "display",
+          "enableWhen": [
+            {
+              "question": "back-module",
+              "operator": "=",
+              "answerBoolean": true
+            },
+            {
+              "question": "leg-module",
+              "operator": "=",
+              "answerBoolean": true
+            }
+          ],
+          "enableBehavior": "all"
+        },
+        {
+          "linkId": "7.1-intro",
+          "text": "To mark the picture, tap it to open it. Draw with one finger where you feel it, and pinch with two fingers to zoom in. Use the undo arrow to take back a line or the trash can to start over, then tap the checkmark when you are done.",
+          "type": "display"
+        },
+        {
           "linkId": "7.1",
           "text": "In each leg, where do you feel pain?",
           "type": "attachment",
@@ -1659,16 +1712,36 @@
         },
         {
           "linkId": "7.2",
-          "text": "Do you experience numbness or tingling?",
+          "text": "Do you experience numbness or tingling? Select all that apply.",
           "type": "choice",
           "required": true,
+          "repeats": true,
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "system": "http://hl7.org/fhir/ValueSet/questionnaire-item-control",
+                    "code": "check-box"
+                  }
+                ]
+              }
+            }
+          ],
           "answerOption": [
             {
               "valueCoding": {
                 "system": "https://spineai.stanford.edu/CodeSystem/radic-numbness",
                 "code": "no",
                 "display": "No"
-              }
+              },
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-optionExclusive",
+                  "valueBoolean": true
+                }
+              ]
             },
             {
               "valueCoding": {
@@ -1734,7 +1807,7 @@
         },
         {
           "linkId": "7.4",
-          "text": "Does coughing, sneezing, or straining make your leg pain worse?",
+          "text": "Does coughing, sneezing, or straining make your leg symptoms worse?",
           "type": "choice",
           "required": true,
           "answerOption": [
@@ -1943,7 +2016,7 @@
         },
         {
           "linkId": "7.7",
-          "text": "How did your leg pain start?",
+          "text": "How did your leg symptoms start?",
           "type": "choice",
           "required": true,
           "answerOption": [
@@ -2052,7 +2125,7 @@
         },
         {
           "linkId": "7.11",
-          "text": "How much does pain limit your walking?",
+          "text": "How much do your leg symptoms limit your walking?",
           "type": "choice",
           "required": true,
           "answerOption": [
@@ -2123,28 +2196,28 @@
               "valueCoding": {
                 "system": "https://spineai.stanford.edu/CodeSystem/radic-structural-history",
                 "code": "stenosis",
-                "display": "Lumbar stenosis"
+                "display": "Lumbar stenosis (narrowing of the spinal canal in the low back)"
               }
             },
             {
               "valueCoding": {
                 "system": "https://spineai.stanford.edu/CodeSystem/radic-structural-history",
                 "code": "spondylolisthesis",
-                "display": "Spondylolisthesis"
+                "display": "Lumbar spondylolisthesis (one bone of the spine has slipped forward over another)"
               }
             },
             {
               "valueCoding": {
                 "system": "https://spineai.stanford.edu/CodeSystem/radic-structural-history",
                 "code": "scoliosis",
-                "display": "Lumbar scoliosis"
+                "display": "Lumbar scoliosis (a sideways curve of the spine)"
               }
             },
             {
               "valueCoding": {
                 "system": "https://spineai.stanford.edu/CodeSystem/radic-structural-history",
                 "code": "disc",
-                "display": "Disc herniation"
+                "display": "Lumbar disc herniation (a slipped or bulging disc)"
               }
             },
             {

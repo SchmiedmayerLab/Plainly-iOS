@@ -31,7 +31,7 @@ final class ScreeningTests: XCTestCase {
         let questionnaire = QuestionnaireSheetNavigator(app)
         XCTAssertTrue(questionnaire.waitUntilTitled("SpineAI Questionnaire", timeout: 30))
         XCTAssertTrue(app.staticTexts["Triage Questions"].waitForExistence(timeout: 5))
-        questionnaire.question("1.1").select("Low back pain only")
+        questionnaire.question("1.1").select("Low back pain")
         questionnaire.question("1.2").select("Less than 6 weeks")
         questionnaire.question("1.3").select("No")
         questionnaire.question("1.4").select("No")
@@ -42,7 +42,6 @@ final class ScreeningTests: XCTestCase {
         questionnaire.question("1.6b").select("Yes")
         questionnaire.question("1.6c").select("No")
         questionnaire.question("1.7").select("None / not sure")
-        questionnaire.question("1.9").select("No")
         questionnaire.advance()
 
         // The questionnaire ends on the attention page; nothing after it is asked.
