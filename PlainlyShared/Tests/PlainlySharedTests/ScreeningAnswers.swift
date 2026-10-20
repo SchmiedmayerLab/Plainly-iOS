@@ -61,6 +61,9 @@ enum ScreeningAnswers {
         case let .responseValueComparison(taskId, .equal, .bool(expected)):
             // The gate on a hidden flag, which its expression computed into the responses.
             return responses.responses[taskId].value == .bool(expected)
+        case let .responseValueComparison(taskId, .equal, .SCMCOption(option)):
+            // A follow-up on a choice, asked when the option is among those selected.
+            return responses.responses[taskId].value.choiceValue.selectedOptions.contains(option)
         default:
             throw UnsupportedCondition()
         }

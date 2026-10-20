@@ -51,7 +51,8 @@ struct SpineAIScreeningTests {
             "1.3": [answeredNo],
             "1.4": [answeredNo],
             "1.5": [answeredNo],
-            "1.6": ["\(emergencies)|none"]
+            "1.6": ["\(emergencies)|none"],
+            "1.9": [answeredNo]
         ]
         answers.merge(overrides) { _, override in override }
         return try ScreeningAnswers.responses(to: questionnaire(), choosing: answers)
@@ -265,6 +266,14 @@ struct SpineAIScreeningTests {
         let legOnly = try Self.responses(["1.1": ["\(Self.symptoms)|leg-pain"]])
         #expect(try !Self.isAsked("7-overlap", in: legOnly))
         #expect(try !Self.isAsked("7-overlap", in: Self.responses()))
+    }
+
+    /// The surgery details have a free-text box, asked only when the patient had surgery or is not sure.
+    @Test
+    func surgeryDetailsAreAskedOnlyAfterYesOrNotSure() throws {
+        #expect(try Self.isAsked("1.9a", in: Self.responses(["1.9": [Self.yes]])))
+        #expect(try Self.isAsked("1.9a", in: Self.responses(["1.9": ["\(Self.snomed)|261665006"]])))
+        #expect(try !Self.isAsked("1.9a", in: Self.responses()))
     }
 
     /// Severe leg weakness counts only where the leg module asked about it.
