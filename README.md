@@ -115,6 +115,14 @@ scripts/download-study-uploads.sh --project <firebase project> --study edu.stanf
 
 The script uses the [Google Cloud CLI](https://cloud.google.com/sdk/docs/install), `brew install --cask google-cloud-sdk`, and asks you to sign in the first time. Files go to `study-uploads/<study>/`, which git ignores; a second run only fetches what is new. They contain study data.
 
+Builds before the Next Task fix let participants close a task's questions and move on without answering them, which left those tasks out of their reports. [`scripts/find_skipped_surveys.py`](scripts/find_skipped_surveys.py) lists the reports that miss a task's answers, and which tasks, for every study and every build that was deployed:
+
+```bash
+python3 scripts/find_skipped_surveys.py study-uploads --csv skipped.csv
+```
+
+It matches each report to the study definitions of the deployed builds, which [`scripts/find_skipped_surveys.definitions.json`](scripts/find_skipped_surveys.definitions.json) holds. A build deployed before the fix ships adds its definitions with `python3 scripts/find_skipped_surveys.py --refresh-definitions .`, which reads them from this checkout and the deployment runs, through `git` and the [GitHub CLI](https://cli.github.com).
+
 ## Session Simulation
 
 The PlainlyShared subpackage contains a tool that lets you simulate user chat sessions.
