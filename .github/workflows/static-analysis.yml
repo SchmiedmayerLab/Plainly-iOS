@@ -44,14 +44,16 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
-  codeql:
-    name: CodeQL
-    uses: SchmiedmayerLab/.github/.github/workflows/xcodebuild.yml@v0.5
-    permissions:
-      security-events: write
-      actions: read
-      contents: read
-    with:
-      codeql: true
-      scheme: Plainly
-      test: false
+  # CodeQL can't trace Xcode 27 builds or analyze Swift 6.4 (https://github.com/github/codeql/issues/22742).
+  # Bring this back once GitHub's cross-platform Swift scanner ships.
+  # codeql:
+  #   name: CodeQL
+  #   uses: SchmiedmayerLab/.github/.github/workflows/xcodebuild.yml@v0.5
+  #   permissions:
+  #     security-events: write
+  #     actions: read
+  #     contents: read
+  #   with:
+  #     codeql: true
+  #     scheme: Plainly
+  #     test: false
