@@ -33,8 +33,10 @@ class OnboardingTests: XCTestCase, Sendable {
         XCTAssertFalse(app.buttons["Save Model Selection"].exists)
 
         try app.navigateOnboardingFlowHealthKitAccess()
-        handleHealthRecordsAuthorization(systemUnderTest: app, accounts: [.sampleA], requireSheetToAppear: true)
-        XCTAssertTrue(app.staticTexts["Health Records Access"].waitForNonExistence(timeout: 10))
+        expectFailureWhereSampleHealthRecordAccountsAreMissing {
+            handleHealthRecordsAuthorization(systemUnderTest: app, accounts: [.sampleA], requireSheetToAppear: true)
+            XCTAssertTrue(app.staticTexts["Health Records Access"].waitForNonExistence(timeout: 10))
+        }
     }
 
     func testOnboardingContinuesWhenHealthRecordsAuthorizationIsCancelled() throws {
@@ -74,19 +76,40 @@ class OnboardingTests: XCTestCase, Sendable {
         try app.navigateOnboardingFlowWelcome()
         try app.navigateOnboardingFlowDisclaimers()
         try app.navigateOnboardingFlowHealthKitAccess()
-        declineHealthRecordsAuthorization(systemUnderTest: app)
-        XCTAssertTrue(app.staticTexts["Health Records Access"].waitForNonExistence(timeout: 10))
+        // Everything after declining depends on the decision being made, so it stays in the expected failure.
+        try expectFailureWhereSampleHealthRecordAccountsAreMissing {
+            declineHealthRecordsAuthorization(systemUnderTest: app)
+            XCTAssertTrue(app.staticTexts["Health Records Access"].waitForNonExistence(timeout: 10))
 
-        app.terminate()
-        // The first launch already started clean; a second reset would forget what the participant just decided.
-        app.launchArguments = ["--showOnboarding", "--mode", "study"]
-        app.launch()
-        try app.navigateOnboardingFlowWelcome()
-        try app.navigateOnboardingFlowDisclaimers()
-        try app.navigateOnboardingFlowHealthKitAccess()
-        XCTAssertTrue(app.staticTexts["Health Records Access"].waitForNonExistence(timeout: 10))
-        XCTAssertFalse(
-            app.navigationBars["HealthUI.ClinicalAuthorizationAccountsIntroView"].waitForExistence(timeout: 2)
+            app.terminate()
+            // The first launch already started clean; a second reset would forget what the participant just decided.
+            app.launchArguments = ["--showOnboarding", "--mode", "study"]
+            app.launch()
+            try app.navigateOnboardingFlowWelcome()
+            try app.navigateOnboardingFlowDisclaimers()
+            try app.navigateOnboardingFlowHealthKitAccess()
+            XCTAssertTrue(app.staticTexts["Health Records Access"].waitForNonExistence(timeout: 10))
+            XCTAssertFalse(
+                app.navigationBars["HealthUI.ClinicalAuthorizationAccountsIntroView"].waitForExistence(timeout: 2)
+            )
+        }
+    }
+
+    /// The iOS 27.2 simulator runtime no longer ships the Health Records sample accounts (iOS 27.0 still does; 27.1 is
+    /// untested), so the Health app can't offer "Sample Institution A" and the authorization sheet stops at
+    /// "No Accounts Added". Only failures inside `section` are expected: the onboarding steps before the Health Records
+    /// sheet still fail the test as usual. Non-strict, so runtimes that still have the sample accounts keep passing.
+    /// Remove once simulators ship the sample accounts again: https://github.com/SchmiedmayerLab/Plainly-iOS/issues/48
+    private func expectFailureWhereSampleHealthRecordAccountsAreMissing(_ section: () throws -> Void) rethrows {
+        var sampleAccountsAreMissing = false
+        if #available(iOS 27.1, *) {
+            sampleAccountsAreMissing = true
+        }
+        try XCTExpectFailure(
+            "The iOS 27.2 simulator runtime no longer includes the Health Records sample accounts (Plainly-iOS#48)",
+            enabled: sampleAccountsAreMissing,
+            strict: false,
+            failingBlock: section
         )
     }
 

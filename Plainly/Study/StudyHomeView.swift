@@ -37,6 +37,7 @@ struct StudyHomeView: View {
     @State private var isPresentingQRCodeScanner = false
     
     @State private var isPresentingStudyChatView = false
+    // periphery:ignore - read and written by PageActions through its binding, which Periphery does not follow
     @State private var primaryActionState: ViewState = .idle
     /// What the intake questionnaire decided, when it stopped the study; ``Screening`` keeps it from then on.
     @State private var screeningOutcome: ScreeningOutcome?

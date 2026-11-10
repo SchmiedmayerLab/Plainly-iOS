@@ -1,0 +1,1323 @@
+{
+ "repository": "SchmiedmayerLab/Plainly-iOS",
+ "generated": "2026-11-09T17:26:39+00:00",
+ "deployedCommits": 28,
+ "definitions": [
+  {
+   "commits": [
+    "5acd9f18b966cbb7c20d794ed24b82b4b97b3c61",
+    "a7c2d9049534ad577f8b2d3eb7506a199d0bcff7"
+   ],
+   "firstDeployed": "2026-06-21T15:46:02Z",
+   "reportsApp": false,
+   "studies": {
+    "edu.stanford.aihealthliteracy.gynStudy": [
+     [
+      "0",
+      [
+       "How effective was the LLM in helping to answer your health question?"
+      ]
+     ],
+     [
+      "1",
+      [
+       "How effective was the LLM in helping to answer your health question?"
+      ]
+     ],
+     [
+      "2",
+      [
+       "How effective was the LLM in helping to answer your health question?"
+      ]
+     ],
+     [
+      "3",
+      [
+       "How effective was the LLM in helping to answer your health question?"
+      ]
+     ],
+     [
+      "4",
+      [
+       "How effective was the LLM in helping to answer your health question?"
+      ]
+     ],
+     [
+      "5",
+      [
+       "How effective was the LLM in helping to answer your health question?",
+       "What surprised you about the LLM’s answer, either positively or negatively",
+       "Compared to other sources of health information (e.g. websites, informational leaflets, doctors) how do you rate the LLM’s responses?",
+       "What were the most and least useful features of the LLM? Do you have any suggestions to share",
+       "How has the LLM impacted your ability to manage your health?",
+       "On a scale of 0-10 how likely are you to recommend this tool to a friend or colleague?"
+      ]
+     ],
+     [
+      "6",
+      [
+       "In the future if you had a chat bot like AIHealthLiteracy available…",
+       "How easy would it be to access or obtain information about your medical condition?",
+       "How frequently do you anticipate having problems learning about your medical condition because of difficulty understanding written information?",
+       "How confident would you be in filling out medical forms by yourself?",
+       "How often do you think you would have someone help you read hospital materials?",
+       "How often would you turn to AIHealthLiteracy with questions before reaching out to a healthcare professional through myHealth?",
+       "What questions would you feel confident consulting a chatbot like AIHealthLiteracy with access to your personal health record for?",
+       "What questions would you NOT feel confident consulting a chatbot like AIHealthLiteracy with access to your electronic health record for?"
+      ]
+     ],
+     [
+      "7",
+      [
+       null,
+       "When all is said and done, ultimately, I am responsible for managing my reproductive journey",
+       "I know what my next steps at the REI clinic are",
+       "Taking an active role in my health care is the most important thing that affects my reproductive health and ability to function",
+       "I know/ knew what the clinic needs from my partner in order to proceed",
+       "I know what each of my prescribed medications do and how to take them",
+       "I know which supplements and vitamins I need to take",
+       "I know what my hormone levels (e.g. AMH) signify",
+       "I am confident that I can tell my health care provider/ doctor concerns I have even when he or she does not ask",
+       "I am confident that I can tell whether I need to go get medical care or go to the doctor after my medical procedure",
+       "I understand the description of my ultrasound",
+       "I am confident that I know how to interpret bleedings after procedures or during my cycle and when to go see a doctor",
+       "I know the lifestyle changes like diet and exercise that are recommended",
+       "I am confident that I can follow through on medical treatments I may need to do at home",
+       "I am confident that I can follow through on recommendations my health care provider makes, such as changing my diet or doing regular exercise",
+       "I have been able to maintain (keep up with) lifestyle changes that I have made for my health, like eating right or exercising",
+       "I understand the nature and causes of my health condition(s)",
+       "I am aware of the treatment options available throughout my reproductive journey",
+       "I know how to prevent further problems with my reproductive health"
+      ]
+     ]
+    ],
+    "edu.stanford.aihealthliteracy.languageStudy": [],
+    "edu.stanford.aihealthliteracy.spineAI": [],
+    "edu.stanford.aihealthliteracy.usabilityStudy": [
+     [
+      "Welcome",
+      [
+       "How clear and understandable was the summary provided by the app?"
+      ]
+     ],
+     [
+      "2",
+      [
+       "How effective is this feature for interpreting and evaluating your medical information?"
+      ]
+     ],
+     [
+      "3",
+      [
+       "How effective are these recommendations in helping you make decisions about your health?"
+      ]
+     ],
+     [
+      "4",
+      [
+       "How effective was the LLM in helping to answer your health question?",
+       "What surprised you about the LLM's answer, either positively or negatively?"
+      ]
+     ],
+     [
+      "5",
+      [
+       "Compared to other sources of health information (e.g., websites, doctors), how do you rate the LLM's responses?",
+       "What were the most and least useful features of the LLM? Do you have any suggestions to share?",
+       "How has the LLM impacted your ability to manage your health?",
+       "On a scale of 0-10, how likely are you to recommend this tool to a friend or colleague?"
+      ]
+     ],
+     [
+      "6",
+      [
+       "How easy would it be to access or obtain information about your medical condition?",
+       "How frequently do you anticipate having problems learning about your medical condition because of difficulty understanding written information?",
+       "How confident would you be in filling out medical forms by yourself?",
+       "How often do you think you would have someone help you read hospital materials?"
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "commits": [
+    "1472cafdc5eb87ce5940b387ea8b5b9642184fee",
+    "c5e3b1576e3ab80037221b3b5c0ca75ad189a7a6",
+    "e7b99ed2a7412d6c66efc013d8cf0cd3bb8f605f",
+    "17c51e4c1940bcb4b2529a4a6a6486e1d265087c",
+    "78e195ce33c369ee90b7c8f73e8c7821e98133f9",
+    "9f2d88055811d2794f98cd69e2f05ba8815c0b37"
+   ],
+   "firstDeployed": "2026-08-07T05:48:49Z",
+   "reportsApp": false,
+   "studies": {
+    "edu.stanford.plainly.gynStudy": [
+     [
+      "0",
+      [
+       "How effective was the LLM in helping to answer your health question?"
+      ]
+     ],
+     [
+      "1",
+      [
+       "How effective was the LLM in helping to answer your health question?"
+      ]
+     ],
+     [
+      "2",
+      [
+       "How effective was the LLM in helping to answer your health question?"
+      ]
+     ],
+     [
+      "3",
+      [
+       "How effective was the LLM in helping to answer your health question?"
+      ]
+     ],
+     [
+      "4",
+      [
+       "How effective was the LLM in helping to answer your health question?"
+      ]
+     ],
+     [
+      "5",
+      [
+       "How effective was the LLM in helping to answer your health question?",
+       "What surprised you about the LLM’s answer, either positively or negatively",
+       "Compared to other sources of health information (e.g. websites, informational leaflets, doctors) how do you rate the LLM’s responses?",
+       "What were the most and least useful features of the LLM? Do you have any suggestions to share",
+       "How has the LLM impacted your ability to manage your health?",
+       "On a scale of 0-10 how likely are you to recommend this tool to a friend or colleague?"
+      ]
+     ],
+     [
+      "6",
+      [
+       "In the future if you had a chatbot like Plainly available…",
+       "How easy would it be to access or obtain information about your medical condition?",
+       "How frequently do you anticipate having problems learning about your medical condition because of difficulty understanding written information?",
+       "How confident would you be in filling out medical forms by yourself?",
+       "How often do you think you would have someone help you read hospital materials?",
+       "How often would you turn to Plainly with questions before reaching out to a healthcare professional through myHealth?",
+       "What questions would you feel confident consulting a chatbot like Plainly with access to your personal health record for?",
+       "What questions would you NOT feel confident consulting a chatbot like Plainly with access to your electronic health record for?"
+      ]
+     ],
+     [
+      "7",
+      [
+       null,
+       "When all is said and done, ultimately, I am responsible for managing my reproductive journey",
+       "I know what my next steps at the REI clinic are",
+       "Taking an active role in my health care is the most important thing that affects my reproductive health and ability to function",
+       "I know/ knew what the clinic needs from my partner in order to proceed",
+       "I know what each of my prescribed medications do and how to take them",
+       "I know which supplements and vitamins I need to take",
+       "I know what my hormone levels (e.g. AMH) signify",
+       "I am confident that I can tell my health care provider/ doctor concerns I have even when he or she does not ask",
+       "I am confident that I can tell whether I need to go get medical care or go to the doctor after my medical procedure",
+       "I understand the description of my ultrasound",
+       "I am confident that I know how to interpret bleedings after procedures or during my cycle and when to go see a doctor",
+       "I know the lifestyle changes like diet and exercise that are recommended",
+       "I am confident that I can follow through on medical treatments I may need to do at home",
+       "I am confident that I can follow through on recommendations my health care provider makes, such as changing my diet or doing regular exercise",
+       "I have been able to maintain (keep up with) lifestyle changes that I have made for my health, like eating right or exercising",
+       "I understand the nature and causes of my health condition(s)",
+       "I am aware of the treatment options available throughout my reproductive journey",
+       "I know how to prevent further problems with my reproductive health"
+      ]
+     ]
+    ],
+    "edu.stanford.plainly.languageStudy": [],
+    "edu.stanford.plainly.spineAI": [],
+    "edu.stanford.plainly.usabilityStudy": [
+     [
+      "Welcome",
+      [
+       "How clear and understandable was the summary provided by the app?"
+      ]
+     ],
+     [
+      "2",
+      [
+       "How effective is this feature for interpreting and evaluating your medical information?"
+      ]
+     ],
+     [
+      "3",
+      [
+       "How effective are these recommendations in helping you make decisions about your health?"
+      ]
+     ],
+     [
+      "4",
+      [
+       "How effective was the LLM in helping to answer your health question?",
+       "What surprised you about the LLM's answer, either positively or negatively?"
+      ]
+     ],
+     [
+      "5",
+      [
+       "Compared to other sources of health information (e.g., websites, doctors), how do you rate the LLM's responses?",
+       "What were the most and least useful features of the LLM? Do you have any suggestions to share?",
+       "How has the LLM impacted your ability to manage your health?",
+       "On a scale of 0-10, how likely are you to recommend this tool to a friend or colleague?"
+      ]
+     ],
+     [
+      "6",
+      [
+       "How easy would it be to access or obtain information about your medical condition?",
+       "How frequently do you anticipate having problems learning about your medical condition because of difficulty understanding written information?",
+       "How confident would you be in filling out medical forms by yourself?",
+       "How often do you think you would have someone help you read hospital materials?"
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "commits": [
+    "4c5379d6f711849f54140f0902dd2e1b29ee464a",
+    "be0f8ddf6e25254acbc2462ba0877936563eacf5",
+    "4267fa4e56d990d35fe26ec057e09204c4122f83",
+    "7262d37920532c2d9fc4126436c44f47560c03bc",
+    "72cc6421f2853632204754193f284bced671559c",
+    "cc937c5b745f0139930d57242e2b05153e3120d4",
+    "1cebf12bd762044c9c4b5f0031e3c2f613b2f10f"
+   ],
+   "firstDeployed": "2026-08-09T02:37:10Z",
+   "reportsApp": false,
+   "studies": {
+    "edu.stanford.plainly.gynStudy": [
+     [
+      "0",
+      [
+       "How effective was the LLM in helping to answer your health question?"
+      ]
+     ],
+     [
+      "1",
+      [
+       "How effective was the LLM in helping to answer your health question?"
+      ]
+     ],
+     [
+      "2",
+      [
+       "How effective was the LLM in helping to answer your health question?"
+      ]
+     ],
+     [
+      "3",
+      [
+       "How effective was the LLM in helping to answer your health question?"
+      ]
+     ],
+     [
+      "4",
+      [
+       "How effective was the LLM in helping to answer your health question?"
+      ]
+     ],
+     [
+      "5",
+      [
+       "How effective was the LLM in helping to answer your health question?",
+       "What surprised you about the LLM’s answer, either positively or negatively",
+       "Compared to other sources of health information (e.g. websites, informational leaflets, doctors) how do you rate the LLM’s responses?",
+       "What were the most and least useful features of the LLM? Do you have any suggestions to share",
+       "How has the LLM impacted your ability to manage your health?",
+       "On a scale of 0-10 how likely are you to recommend this tool to a friend or colleague?"
+      ]
+     ],
+     [
+      "6",
+      [
+       null,
+       "How easy would it be to access or obtain information about your medical condition?",
+       "How frequently do you anticipate having problems learning about your medical condition because of difficulty understanding written information?",
+       "How confident would you be in filling out medical forms by yourself?",
+       "How often do you think you would have someone help you read hospital materials?",
+       "How often would you turn to Plainly with questions before reaching out to a healthcare professional through myHealth?",
+       "What questions would you feel confident consulting a chatbot like Plainly with access to your personal health record for?",
+       "What questions would you NOT feel confident consulting a chatbot like Plainly with access to your electronic health record for?"
+      ]
+     ],
+     [
+      "7",
+      [
+       null,
+       "When all is said and done, ultimately, I am responsible for managing my reproductive journey",
+       "I know what my next steps at the REI clinic are",
+       "Taking an active role in my health care is the most important thing that affects my reproductive health and ability to function",
+       "I know/ knew what the clinic needs from my partner in order to proceed",
+       "I know what each of my prescribed medications do and how to take them",
+       "I know which supplements and vitamins I need to take",
+       "I know what my hormone levels (e.g. AMH) signify",
+       "I am confident that I can tell my health care provider/ doctor concerns I have even when he or she does not ask",
+       "I am confident that I can tell whether I need to go get medical care or go to the doctor after my medical procedure",
+       "I understand the description of my ultrasound",
+       "I am confident that I know how to interpret bleedings after procedures or during my cycle and when to go see a doctor",
+       "I know the lifestyle changes like diet and exercise that are recommended",
+       "I am confident that I can follow through on medical treatments I may need to do at home",
+       "I am confident that I can follow through on recommendations my health care provider makes, such as changing my diet or doing regular exercise",
+       "I have been able to maintain (keep up with) lifestyle changes that I have made for my health, like eating right or exercising",
+       "I understand the nature and causes of my health condition(s)",
+       "I am aware of the treatment options available throughout my reproductive journey",
+       "I know how to prevent further problems with my reproductive health"
+      ]
+     ]
+    ],
+    "edu.stanford.plainly.languageStudy": [],
+    "edu.stanford.plainly.spineAI": [],
+    "edu.stanford.plainly.usabilityStudy": [
+     [
+      "Welcome",
+      [
+       "How clear and understandable was the summary provided by the app?"
+      ]
+     ],
+     [
+      "2",
+      [
+       "How effective is this feature for interpreting and evaluating your medical information?"
+      ]
+     ],
+     [
+      "3",
+      [
+       "How effective are these recommendations in helping you make decisions about your health?"
+      ]
+     ],
+     [
+      "4",
+      [
+       "How effective was the LLM in helping to answer your health question?",
+       "What surprised you about the LLM's answer, either positively or negatively?"
+      ]
+     ],
+     [
+      "5",
+      [
+       "Compared to other sources of health information (e.g., websites, doctors), how do you rate the LLM's responses?",
+       "What were the most and least useful features of the LLM? Do you have any suggestions to share?",
+       "How has the LLM impacted your ability to manage your health?",
+       "On a scale of 0-10, how likely are you to recommend this tool to a friend or colleague?"
+      ]
+     ],
+     [
+      "6",
+      [
+       "How easy would it be to access or obtain information about your medical condition?",
+       "How frequently do you anticipate having problems learning about your medical condition because of difficulty understanding written information?",
+       "How confident would you be in filling out medical forms by yourself?",
+       "How often do you think you would have someone help you read hospital materials?"
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "commits": [
+    "cf1a4eaba978cbe7b4223a3658315145ede8e8ec",
+    "f0d6aa3c153def0375c489abd22571b6b41bb862",
+    "1ca887048058a589ab7abe988cee961143237e6a",
+    "aa506e04b779d8606ae1c1bc78bbb7fe63466ab7",
+    "6f9c83793ecdc67d2fd49e1b4d198625390a873a",
+    "839d447d5ef332dc60c4eaa8436a0c59fdc6eb79",
+    "f99f449aa2bb96dfc9cfab1ba931ff31f8b56151",
+    "2d9e86b6a17861e0d89115ca7bcb6eb1f53dfe5a"
+   ],
+   "firstDeployed": "2026-08-26T21:03:30Z",
+   "reportsApp": false,
+   "studies": {
+    "edu.stanford.plainly.gynStudy": [
+     [
+      "0",
+      [
+       "How effective was the LLM in helping to answer your health question?"
+      ]
+     ],
+     [
+      "1",
+      [
+       "How effective was the LLM in helping to answer your health question?"
+      ]
+     ],
+     [
+      "2",
+      [
+       "How effective was the LLM in helping to answer your health question?"
+      ]
+     ],
+     [
+      "3",
+      [
+       "How effective was the LLM in helping to answer your health question?"
+      ]
+     ],
+     [
+      "4",
+      [
+       "How effective was the LLM in helping to answer your health question?"
+      ]
+     ],
+     [
+      "5",
+      [
+       "How effective was the LLM in helping to answer your health question?",
+       "What surprised you about the LLM’s answer, either positively or negatively",
+       "Compared to other sources of health information (e.g. websites, informational leaflets, doctors) how do you rate the LLM’s responses?",
+       "What were the most and least useful features of the LLM? Do you have any suggestions to share",
+       "How has the LLM impacted your ability to manage your health?",
+       "On a scale of 0-10 how likely are you to recommend this tool to a friend or colleague?"
+      ]
+     ],
+     [
+      "6",
+      [
+       null,
+       "How easy would it be to access or obtain information about your medical condition?",
+       "How frequently do you anticipate having problems learning about your medical condition because of difficulty understanding written information?",
+       "How confident would you be in filling out medical forms by yourself?",
+       "How often do you think you would have someone help you read hospital materials?",
+       "How often would you turn to Plainly with questions before reaching out to a healthcare professional through myHealth?",
+       "What questions would you feel confident consulting a chatbot like Plainly with access to your personal health record for?",
+       "What questions would you NOT feel confident consulting a chatbot like Plainly with access to your electronic health record for?"
+      ]
+     ],
+     [
+      "7",
+      [
+       null,
+       "When all is said and done, ultimately, I am responsible for managing my reproductive journey",
+       "I know what my next steps at the REI clinic are",
+       "Taking an active role in my health care is the most important thing that affects my reproductive health and ability to function",
+       "I know/ knew what the clinic needs from my partner in order to proceed",
+       "I know what each of my prescribed medications do and how to take them",
+       "I know which supplements and vitamins I need to take",
+       "I know what my hormone levels (e.g. AMH) signify",
+       "I am confident that I can tell my health care provider/ doctor concerns I have even when he or she does not ask",
+       "I am confident that I can tell whether I need to go get medical care or go to the doctor after my medical procedure",
+       "I understand the description of my ultrasound",
+       "I am confident that I know how to interpret bleedings after procedures or during my cycle and when to go see a doctor",
+       "I know the lifestyle changes like diet and exercise that are recommended",
+       "I am confident that I can follow through on medical treatments I may need to do at home",
+       "I am confident that I can follow through on recommendations my health care provider makes, such as changing my diet or doing regular exercise",
+       "I have been able to maintain (keep up with) lifestyle changes that I have made for my health, like eating right or exercising",
+       "I understand the nature and causes of my health condition(s)",
+       "I am aware of the treatment options available throughout my reproductive journey",
+       "I know how to prevent further problems with my reproductive health"
+      ]
+     ]
+    ],
+    "edu.stanford.plainly.languageStudy": [],
+    "edu.stanford.plainly.pedCardioStudy": [
+     [
+      "0",
+      [
+       "How effective was the LLM in helping to answer your questions concerning your child’s health?"
+      ]
+     ],
+     [
+      "1",
+      [
+       "How effective was the LLM in helping to answer your questions concerning your child’s health?"
+      ]
+     ],
+     [
+      "2",
+      [
+       "How effective was the LLM in helping to answer your questions concerning your child’s health?"
+      ]
+     ],
+     [
+      "3",
+      [
+       "How effective was the LLM in helping to answer your questions concerning your child’s health?",
+       "What surprised you about the LLM’s answer, either positively or negatively",
+       "Compared to other sources of health information (e.g. websites, doctors), how do you rate the LLM’s responses?",
+       "What were the most and least useful features of the LLM? Do you have any suggestions to share?",
+       "How has the LLM impacted your ability to manage your child’s health?",
+       "On a scale of 0-10 how likely are you to recommend this tool to a friend, colleague or other parents in general?"
+      ]
+     ],
+     [
+      "4",
+      [
+       null,
+       "How easy would it be to access or obtain information about your child’s medical condition?",
+       "How frequently do you anticipate having problems learning about your child’s medical condition because of difficulty understanding written information?",
+       "How confident would you be in filling out medical forms for your child by yourself?",
+       "How often do you think you would have someone help you read hospital materials?",
+       "How often would you turn to Plainly with small questions before reaching out to a healthcare professional?"
+      ]
+     ],
+     [
+      "5",
+      [
+       null,
+       "When all is said and done, I am the person who is responsible for taking care of my / my child’s health",
+       "Taking an active role in my/ my child’s health care is the most important thing that affects my health and ability to function",
+       "I know what each of my/ my child’s prescribed medications do and what the major or common side effects are",
+       "I am confident that I can tell my/ my child’s health care provider/ doctor concerns I have even when he or she does not ask",
+       "I am confident that I can tell whether I/ my child need to go get medical care to go to the doctor or whether I can take care of a health problem",
+       "I am confident I can help prevent or reduce problems associated with my/ my child’s health",
+       "I know the lifestyle changes like diet and exercise that are recommended for my/ my child’s health condition",
+       "I am confident that I/ my child can follow through on medical treatments I/ my child may need to do at home",
+       "I am confident that I can take actions that will help prevent or minimize some symptoms or problems associated with my/ my child’s health condition",
+       "I am confident that I/ my child can follow through on medical recommendations my/ my child’s health care provider makes, such as changing my diet or doing regular exercise",
+       "I understand the nature and causes of my/ my child’s health condition(s)",
+       "I know the different medical treatment options available for my/ my child’s health condition",
+       "I have / My child has been able to maintain (keep up with) lifestyle changes that I have/ my child has made for my/ my child’s health, like eating right or exercising",
+       "I know how to prevent further problems with my/ my child’s health",
+       "I know about the self-treatments for my/ my child’s health condition",
+       "I have made the changes in my/ my child’s lifestyle like diet and exercise that are recommended for my/ my child’s health condition",
+       "I am confident I can figure out solutions when new problems arise with my/ my child’s health",
+       "I am able to handle symptoms of my/ my child’s health condition on my own at home",
+       "I am confident that I/ my child can maintain lifestyle changes, like eating right and exercising, even during times of stress",
+       "I am able to handle problems of my/ my child’s health condition on my own at home",
+       "I am confident I can keep my/ my child’s health problems from interfering with the things I/ my child want(s) to do",
+       "Maintaining the lifestyle changes that are recommended for my/ my child’s health condition is too hard on a daily basis",
+       "I understand the trajectory of my child’s condition and why they need lifelong cardiology care.",
+       "I know what symptoms for which I should call my child’s cardiologist immediately.",
+       "I understand why my child needs or needed surgery to correct their heart lesion",
+       "I understand what future surgeries/interventions, if any, may be required.",
+       null,
+       "I can confidently describe my child’s heart lesion"
+      ]
+     ]
+    ],
+    "edu.stanford.plainly.spineAI": [
+     [
+      "0",
+      [
+       "How effective was the app in helping to answer your spine-related health question?",
+       "What surprised you about the app’s answer, either positively or negatively?"
+      ]
+     ],
+     [
+      "1",
+      [
+       "How effective was the app in helping to answer your spine-related health question?"
+      ]
+     ],
+     [
+      "2",
+      [
+       "How effective was the app in helping to answer your spine-related health question?"
+      ]
+     ],
+     [
+      "3",
+      [
+       "How effective was the app in helping to answer your spine-related health question?"
+      ]
+     ],
+     [
+      "4",
+      [
+       "How effective was the app in helping to answer your spine-related health question?"
+      ]
+     ],
+     [
+      "5",
+      [
+       "How effective was the app in helping to answer your spine-related health question?"
+      ]
+     ],
+     [
+      "6",
+      [
+       "Compared to health information websites, how do you rate the app’s responses?",
+       "Compared to what your doctor has told you, how do you rate the app’s responses?",
+       "What were the most and least useful features of the app? Do you have any suggestions to share?",
+       "Has using the app changed what you plan to ask or discuss at your upcoming appointment?",
+       "If yes: What will you ask that you would not have asked before?",
+       "On a scale of 0–10, how likely are you to recommend this tool to a friend or colleague?"
+      ]
+     ],
+     [
+      "7",
+      [
+       null,
+       null,
+       "When all is said and done, I am the person who is responsible for managing my spine condition.",
+       "Taking an active role in my spine care affects my back/neck health and ability to function.",
+       "I understand what each of my treatments or medications for my spine condition is for.",
+       "I am confident I can tell my spine care provider concerns I have, even when he or she does not ask.",
+       "I am confident I can tell whether I need to see a doctor for my spine problem or whether I can manage it on my own.",
+       "I am confident I can help prevent or reduce problems associated with my spine condition.",
+       "I know the lifestyle changes — like activity, posture, and exercise — that are recommended for my spine condition.",
+       "I am confident I can follow through on treatments for my spine condition that I may need to do at home (e.g., exercises, stretches).",
+       "I am confident I can take actions that will help prevent or minimize symptoms of my spine condition.",
+       "I am confident I can follow through on recommendations my spine provider makes, such as physical therapy or exercise.",
+       "I understand the nature and causes of my spine condition.",
+       "I know the different treatment options available for my spine condition (e.g., physical therapy, injections, surgery).",
+       "I have been able to keep up with the activity or exercise changes I have made for my spine health.",
+       "I know how to prevent further problems with my spine.",
+       "I know about the self-care and self-treatments for my spine condition.",
+       "I have made the changes in my activity and exercise that are recommended for my spine condition.",
+       "I am confident I can figure out solutions when new problems arise with my spine.",
+       "I am able to handle symptoms of my spine condition on my own at home.",
+       "I am confident I can maintain activity and exercise changes for my spine, even during times of stress.",
+       "I am able to handle flare-ups of my spine condition on my own at home.",
+       "I am confident I can keep my spine problems from interfering with the things I want to do.",
+       "Managing recommendations by my physicians for my spine condition is too hard for me on a daily basis."
+      ]
+     ],
+     [
+      "8",
+      null
+     ]
+    ],
+    "edu.stanford.plainly.usabilityStudy": [
+     [
+      "Welcome",
+      [
+       "How clear and understandable was the summary provided by the app?"
+      ]
+     ],
+     [
+      "2",
+      [
+       "How effective is this feature for interpreting and evaluating your medical information?"
+      ]
+     ],
+     [
+      "3",
+      [
+       "How effective are these recommendations in helping you make decisions about your health?"
+      ]
+     ],
+     [
+      "4",
+      [
+       "How effective was the LLM in helping to answer your health question?",
+       "What surprised you about the LLM's answer, either positively or negatively?"
+      ]
+     ],
+     [
+      "5",
+      [
+       "Compared to other sources of health information (e.g., websites, doctors), how do you rate the LLM's responses?",
+       "What were the most and least useful features of the LLM? Do you have any suggestions to share?",
+       "How has the LLM impacted your ability to manage your health?",
+       "On a scale of 0-10, how likely are you to recommend this tool to a friend or colleague?"
+      ]
+     ],
+     [
+      "6",
+      [
+       "How easy would it be to access or obtain information about your medical condition?",
+       "How frequently do you anticipate having problems learning about your medical condition because of difficulty understanding written information?",
+       "How confident would you be in filling out medical forms by yourself?",
+       "How often do you think you would have someone help you read hospital materials?"
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "commits": [
+    "6320abb79ea0d53a8c995ebd40235dc4d7290ad6",
+    "140841b540b2a08a058d008ab6b252922535435a",
+    "4a839e1220da04894617e1b0f5f377c0ddcbb8d8"
+   ],
+   "firstDeployed": "2026-09-13T22:10:33Z",
+   "reportsApp": true,
+   "studies": {
+    "edu.stanford.plainly.gynStudy": [
+     [
+      "0",
+      [
+       "How effective was the LLM in helping to answer your health question?"
+      ]
+     ],
+     [
+      "1",
+      [
+       "How effective was the LLM in helping to answer your health question?"
+      ]
+     ],
+     [
+      "2",
+      [
+       "How effective was the LLM in helping to answer your health question?"
+      ]
+     ],
+     [
+      "3",
+      [
+       "How effective was the LLM in helping to answer your health question?"
+      ]
+     ],
+     [
+      "4",
+      [
+       "How effective was the LLM in helping to answer your health question?"
+      ]
+     ],
+     [
+      "5",
+      [
+       "How effective was the LLM in helping to answer your health question?",
+       "What surprised you about the LLM’s answer, either positively or negatively",
+       "Compared to other sources of health information (e.g. websites, informational leaflets, doctors) how do you rate the LLM’s responses?",
+       "What were the most and least useful features of the LLM? Do you have any suggestions to share",
+       "How has the LLM impacted your ability to manage your health?",
+       "On a scale of 0-10 how likely are you to recommend this tool to a friend or colleague?"
+      ]
+     ],
+     [
+      "6",
+      [
+       null,
+       "How easy would it be to access or obtain information about your medical condition?",
+       "How frequently do you anticipate having problems learning about your medical condition because of difficulty understanding written information?",
+       "How confident would you be in filling out medical forms by yourself?",
+       "How often do you think you would have someone help you read hospital materials?",
+       "How often would you turn to Plainly with questions before reaching out to a healthcare professional through myHealth?",
+       "What questions would you feel confident consulting a chatbot like Plainly with access to your personal health record for?",
+       "What questions would you NOT feel confident consulting a chatbot like Plainly with access to your electronic health record for?"
+      ]
+     ],
+     [
+      "7",
+      [
+       null,
+       "When all is said and done, ultimately, I am responsible for managing my reproductive journey",
+       "I know what my next steps at the REI clinic are",
+       "Taking an active role in my health care is the most important thing that affects my reproductive health and ability to function",
+       "I know/ knew what the clinic needs from my partner in order to proceed",
+       "I know what each of my prescribed medications do and how to take them",
+       "I know which supplements and vitamins I need to take",
+       "I know what my hormone levels (e.g. AMH) signify",
+       "I am confident that I can tell my health care provider/ doctor concerns I have even when he or she does not ask",
+       "I am confident that I can tell whether I need to go get medical care or go to the doctor after my medical procedure",
+       "I understand the description of my ultrasound",
+       "I am confident that I know how to interpret bleedings after procedures or during my cycle and when to go see a doctor",
+       "I know the lifestyle changes like diet and exercise that are recommended",
+       "I am confident that I can follow through on medical treatments I may need to do at home",
+       "I am confident that I can follow through on recommendations my health care provider makes, such as changing my diet or doing regular exercise",
+       "I have been able to maintain (keep up with) lifestyle changes that I have made for my health, like eating right or exercising",
+       "I understand the nature and causes of my health condition(s)",
+       "I am aware of the treatment options available throughout my reproductive journey",
+       "I know how to prevent further problems with my reproductive health"
+      ]
+     ]
+    ],
+    "edu.stanford.plainly.languageStudy": [],
+    "edu.stanford.plainly.pedCardioStudy": [
+     [
+      "0",
+      [
+       "How effective was the LLM in helping to answer your questions concerning your child’s health?"
+      ]
+     ],
+     [
+      "1",
+      [
+       "How effective was the LLM in helping to answer your questions concerning your child’s health?"
+      ]
+     ],
+     [
+      "2",
+      [
+       "How effective was the LLM in helping to answer your questions concerning your child’s health?"
+      ]
+     ],
+     [
+      "3",
+      [
+       "How effective was the LLM in helping to answer your questions concerning your child’s health?",
+       "What surprised you about the LLM’s answer, either positively or negatively",
+       "Compared to other sources of health information (e.g. websites, doctors), how do you rate the LLM’s responses?",
+       "What were the most and least useful features of the LLM? Do you have any suggestions to share?",
+       "How has the LLM impacted your ability to manage your child’s health?",
+       "On a scale of 0-10 how likely are you to recommend this tool to a friend, colleague or other parents in general?"
+      ]
+     ],
+     [
+      "4",
+      [
+       null,
+       "How easy would it be to access or obtain information about your child’s medical condition?",
+       "How frequently do you anticipate having problems learning about your child’s medical condition because of difficulty understanding written information?",
+       "How confident would you be in filling out medical forms for your child by yourself?",
+       "How often do you think you would have someone help you read hospital materials?",
+       "How often would you turn to Plainly with small questions before reaching out to a healthcare professional?"
+      ]
+     ],
+     [
+      "5",
+      [
+       null,
+       "When all is said and done, I am the person who is responsible for taking care of my / my child’s health",
+       "Taking an active role in my/ my child’s health care is the most important thing that affects my health and ability to function",
+       "I know what each of my/ my child’s prescribed medications do and what the major or common side effects are",
+       "I am confident that I can tell my/ my child’s health care provider/ doctor concerns I have even when he or she does not ask",
+       "I am confident that I can tell whether I/ my child need to go get medical care to go to the doctor or whether I can take care of a health problem",
+       "I am confident I can help prevent or reduce problems associated with my/ my child’s health",
+       "I know the lifestyle changes like diet and exercise that are recommended for my/ my child’s health condition",
+       "I am confident that I/ my child can follow through on medical treatments I/ my child may need to do at home",
+       "I am confident that I can take actions that will help prevent or minimize some symptoms or problems associated with my/ my child’s health condition",
+       "I am confident that I/ my child can follow through on medical recommendations my/ my child’s health care provider makes, such as changing my diet or doing regular exercise",
+       "I understand the nature and causes of my/ my child’s health condition(s)",
+       "I know the different medical treatment options available for my/ my child’s health condition",
+       "I have / My child has been able to maintain (keep up with) lifestyle changes that I have/ my child has made for my/ my child’s health, like eating right or exercising",
+       "I know how to prevent further problems with my/ my child’s health",
+       "I know about the self-treatments for my/ my child’s health condition",
+       "I have made the changes in my/ my child’s lifestyle like diet and exercise that are recommended for my/ my child’s health condition",
+       "I am confident I can figure out solutions when new problems arise with my/ my child’s health",
+       "I am able to handle symptoms of my/ my child’s health condition on my own at home",
+       "I am confident that I/ my child can maintain lifestyle changes, like eating right and exercising, even during times of stress",
+       "I am able to handle problems of my/ my child’s health condition on my own at home",
+       "I am confident I can keep my/ my child’s health problems from interfering with the things I/ my child want(s) to do",
+       "Maintaining the lifestyle changes that are recommended for my/ my child’s health condition is too hard on a daily basis",
+       "I understand the trajectory of my child’s condition and why they need lifelong cardiology care.",
+       "I know what symptoms for which I should call my child’s cardiologist immediately.",
+       "I understand why my child needs or needed surgery to correct their heart lesion",
+       "I understand what future surgeries/interventions, if any, may be required.",
+       null,
+       "I can confidently describe my child’s heart lesion"
+      ]
+     ]
+    ],
+    "edu.stanford.plainly.spineAI": [
+     [
+      "0",
+      [
+       "How effective was the app in helping to answer your spine-related health question?",
+       "What surprised you about the app’s answer, either positively or negatively?"
+      ]
+     ],
+     [
+      "1",
+      [
+       "How effective was the app in helping to answer your spine-related health question?"
+      ]
+     ],
+     [
+      "2",
+      [
+       "How effective was the app in helping to answer your spine-related health question?"
+      ]
+     ],
+     [
+      "3",
+      [
+       "How effective was the app in helping to answer your spine-related health question?"
+      ]
+     ],
+     [
+      "4",
+      [
+       "How effective was the app in helping to answer your spine-related health question?"
+      ]
+     ],
+     [
+      "5",
+      [
+       "How effective was the app in helping to answer your spine-related health question?"
+      ]
+     ],
+     [
+      "6",
+      [
+       "Compared to health information websites, how do you rate the app’s responses?",
+       "Compared to what your doctor has told you, how do you rate the app’s responses?",
+       "What were the most and least useful features of the app? Do you have any suggestions to share?",
+       "Has using the app changed what you plan to ask or discuss at your upcoming appointment?",
+       "If yes: What will you ask that you would not have asked before?",
+       "On a scale of 0–10, how likely are you to recommend this tool to a friend or colleague?"
+      ]
+     ],
+     [
+      "7",
+      [
+       null,
+       null,
+       "When all is said and done, I am the person who is responsible for managing my spine condition.",
+       "Taking an active role in my spine care affects my back/neck health and ability to function.",
+       "I understand what each of my treatments or medications for my spine condition is for.",
+       "I am confident I can tell my spine care provider concerns I have, even when he or she does not ask.",
+       "I am confident I can tell whether I need to see a doctor for my spine problem or whether I can manage it on my own.",
+       "I am confident I can help prevent or reduce problems associated with my spine condition.",
+       "I know the lifestyle changes — like activity, posture, and exercise — that are recommended for my spine condition.",
+       "I am confident I can follow through on treatments for my spine condition that I may need to do at home (e.g., exercises, stretches).",
+       "I am confident I can take actions that will help prevent or minimize symptoms of my spine condition.",
+       "I am confident I can follow through on recommendations my spine provider makes, such as physical therapy or exercise.",
+       "I understand the nature and causes of my spine condition.",
+       "I know the different treatment options available for my spine condition (e.g., physical therapy, injections, surgery).",
+       "I have been able to keep up with the activity or exercise changes I have made for my spine health.",
+       "I know how to prevent further problems with my spine.",
+       "I know about the self-care and self-treatments for my spine condition.",
+       "I have made the changes in my activity and exercise that are recommended for my spine condition.",
+       "I am confident I can figure out solutions when new problems arise with my spine.",
+       "I am able to handle symptoms of my spine condition on my own at home.",
+       "I am confident I can maintain activity and exercise changes for my spine, even during times of stress.",
+       "I am able to handle flare-ups of my spine condition on my own at home.",
+       "I am confident I can keep my spine problems from interfering with the things I want to do.",
+       "Managing recommendations by my physicians for my spine condition is too hard for me on a daily basis."
+      ]
+     ],
+     [
+      "8",
+      null
+     ]
+    ],
+    "edu.stanford.plainly.usabilityStudy": [
+     [
+      "Welcome",
+      [
+       "How clear and understandable was the summary provided by the app?"
+      ]
+     ],
+     [
+      "2",
+      [
+       "How effective is this feature for interpreting and evaluating your medical information?"
+      ]
+     ],
+     [
+      "3",
+      [
+       "How effective are these recommendations in helping you make decisions about your health?"
+      ]
+     ],
+     [
+      "4",
+      [
+       "How effective was the LLM in helping to answer your health question?",
+       "What surprised you about the LLM's answer, either positively or negatively?"
+      ]
+     ],
+     [
+      "5",
+      [
+       "Compared to other sources of health information (e.g., websites, doctors), how do you rate the LLM's responses?",
+       "What were the most and least useful features of the LLM? Do you have any suggestions to share?",
+       "How has the LLM impacted your ability to manage your health?",
+       "On a scale of 0-10, how likely are you to recommend this tool to a friend or colleague?"
+      ]
+     ],
+     [
+      "6",
+      [
+       "How easy would it be to access or obtain information about your medical condition?",
+       "How frequently do you anticipate having problems learning about your medical condition because of difficulty understanding written information?",
+       "How confident would you be in filling out medical forms by yourself?",
+       "How often do you think you would have someone help you read hospital materials?"
+      ]
+     ]
+    ],
+    "edu.stanford.plainly.voiceDemo": []
+   }
+  },
+  {
+   "commits": [
+    "0b4c43950a09f5b0bb72906c1ca26df03e318169",
+    "9987e969d847333d6638beb0324fb3f269343d87"
+   ],
+   "firstDeployed": "2026-09-21T07:37:11Z",
+   "reportsApp": true,
+   "studies": {
+    "edu.stanford.plainly.gynStudy": [
+     [
+      "0",
+      [
+       "How effective was the LLM in helping to answer your health question?"
+      ]
+     ],
+     [
+      "1",
+      [
+       "How effective was the LLM in helping to answer your health question?"
+      ]
+     ],
+     [
+      "2",
+      [
+       "How effective was the LLM in helping to answer your health question?"
+      ]
+     ],
+     [
+      "3",
+      [
+       "How effective was the LLM in helping to answer your health question?"
+      ]
+     ],
+     [
+      "4",
+      [
+       "How effective was the LLM in helping to answer your health question?"
+      ]
+     ],
+     [
+      "5",
+      [
+       "How effective was the LLM in helping to answer your health question?",
+       "What surprised you about the LLM’s answer, either positively or negatively",
+       "Compared to other sources of health information (e.g. websites, informational leaflets, doctors) how do you rate the LLM’s responses?",
+       "What were the most and least useful features of the LLM? Do you have any suggestions to share",
+       "How has the LLM impacted your ability to manage your health?",
+       "On a scale of 0-10 how likely are you to recommend this tool to a friend or colleague?"
+      ]
+     ],
+     [
+      "6",
+      [
+       null,
+       "How easy would it be to access or obtain information about your medical condition?",
+       "How frequently do you anticipate having problems learning about your medical condition because of difficulty understanding written information?",
+       "How confident would you be in filling out medical forms by yourself?",
+       "How often do you think you would have someone help you read hospital materials?",
+       "How often would you turn to Plainly with questions before reaching out to a healthcare professional through myHealth?",
+       "What questions would you feel confident consulting a chatbot like Plainly with access to your personal health record for?",
+       "What questions would you NOT feel confident consulting a chatbot like Plainly with access to your electronic health record for?"
+      ]
+     ],
+     [
+      "7",
+      [
+       null,
+       "When all is said and done, ultimately, I am responsible for managing my reproductive journey",
+       "I know what my next steps at the REI clinic are",
+       "Taking an active role in my health care is the most important thing that affects my reproductive health and ability to function",
+       "I know/ knew what the clinic needs from my partner in order to proceed",
+       "I know what each of my prescribed medications do and how to take them",
+       "I know which supplements and vitamins I need to take",
+       "I know what my hormone levels (e.g. AMH) signify",
+       "I am confident that I can tell my health care provider/ doctor concerns I have even when he or she does not ask",
+       "I am confident that I can tell whether I need to go get medical care or go to the doctor after my medical procedure",
+       "I understand the description of my ultrasound",
+       "I am confident that I know how to interpret bleedings after procedures or during my cycle and when to go see a doctor",
+       "I know the lifestyle changes like diet and exercise that are recommended",
+       "I am confident that I can follow through on medical treatments I may need to do at home",
+       "I am confident that I can follow through on recommendations my health care provider makes, such as changing my diet or doing regular exercise",
+       "I have been able to maintain (keep up with) lifestyle changes that I have made for my health, like eating right or exercising",
+       "I understand the nature and causes of my health condition(s)",
+       "I am aware of the treatment options available throughout my reproductive journey",
+       "I know how to prevent further problems with my reproductive health"
+      ]
+     ]
+    ],
+    "edu.stanford.plainly.languageStudy": [],
+    "edu.stanford.plainly.pedCardioStudy": [
+     [
+      "0",
+      [
+       "How effective was the LLM in helping to answer your questions concerning your child’s health?"
+      ]
+     ],
+     [
+      "1",
+      [
+       "How effective was the LLM in helping to answer your questions concerning your child’s health?"
+      ]
+     ],
+     [
+      "2",
+      [
+       "How effective was the LLM in helping to answer your questions concerning your child’s health?"
+      ]
+     ],
+     [
+      "3",
+      [
+       "How effective was the LLM in helping to answer your questions concerning your child’s health?",
+       "What surprised you about the LLM’s answer, either positively or negatively",
+       "Compared to other sources of health information (e.g. websites, doctors), how do you rate the LLM’s responses?",
+       "What were the most and least useful features of the LLM? Do you have any suggestions to share?",
+       "How has the LLM impacted your ability to manage your child’s health?",
+       "On a scale of 0-10 how likely are you to recommend this tool to a friend, colleague or other parents in general?"
+      ]
+     ],
+     [
+      "4",
+      [
+       null,
+       "How easy would it be to access or obtain information about your child’s medical condition?",
+       "How frequently do you anticipate having problems learning about your child’s medical condition because of difficulty understanding written information?",
+       "How confident would you be in filling out medical forms for your child by yourself?",
+       "How often do you think you would have someone help you read hospital materials?",
+       "How often would you turn to Plainly with small questions before reaching out to a healthcare professional?"
+      ]
+     ],
+     [
+      "5",
+      [
+       null,
+       "When all is said and done, I am the person who is responsible for taking care of my / my child’s health",
+       "Taking an active role in my/ my child’s health care is the most important thing that affects my health and ability to function",
+       "I know what each of my/ my child’s prescribed medications do and what the major or common side effects are",
+       "I am confident that I can tell my/ my child’s health care provider/ doctor concerns I have even when he or she does not ask",
+       "I am confident that I can tell whether I/ my child need to go get medical care to go to the doctor or whether I can take care of a health problem",
+       "I am confident I can help prevent or reduce problems associated with my/ my child’s health",
+       "I know the lifestyle changes like diet and exercise that are recommended for my/ my child’s health condition",
+       "I am confident that I/ my child can follow through on medical treatments I/ my child may need to do at home",
+       "I am confident that I can take actions that will help prevent or minimize some symptoms or problems associated with my/ my child’s health condition",
+       "I am confident that I/ my child can follow through on medical recommendations my/ my child’s health care provider makes, such as changing my diet or doing regular exercise",
+       "I understand the nature and causes of my/ my child’s health condition(s)",
+       "I know the different medical treatment options available for my/ my child’s health condition",
+       "I have / My child has been able to maintain (keep up with) lifestyle changes that I have/ my child has made for my/ my child’s health, like eating right or exercising",
+       "I know how to prevent further problems with my/ my child’s health",
+       "I know about the self-treatments for my/ my child’s health condition",
+       "I have made the changes in my/ my child’s lifestyle like diet and exercise that are recommended for my/ my child’s health condition",
+       "I am confident I can figure out solutions when new problems arise with my/ my child’s health",
+       "I am able to handle symptoms of my/ my child’s health condition on my own at home",
+       "I am confident that I/ my child can maintain lifestyle changes, like eating right and exercising, even during times of stress",
+       "I am able to handle problems of my/ my child’s health condition on my own at home",
+       "I am confident I can keep my/ my child’s health problems from interfering with the things I/ my child want(s) to do",
+       "Maintaining the lifestyle changes that are recommended for my/ my child’s health condition is too hard on a daily basis",
+       "I understand the trajectory of my child’s condition and why they need lifelong cardiology care.",
+       "I know what symptoms for which I should call my child’s cardiologist immediately.",
+       "I understand why my child needs or needed surgery to correct their heart lesion",
+       "I understand what future surgeries/interventions, if any, may be required.",
+       null,
+       "I can confidently describe my child’s heart lesion"
+      ]
+     ]
+    ],
+    "edu.stanford.plainly.spineAI": [
+     [
+      "0",
+      [
+       "How effective was the app in helping to answer your spine-related health question?",
+       "What surprised you about the app’s answer, either positively or negatively?"
+      ]
+     ],
+     [
+      "1",
+      [
+       "How effective was the app in helping to answer your spine-related health question?"
+      ]
+     ],
+     [
+      "2",
+      [
+       "How effective was the app in helping to answer your spine-related health question?"
+      ]
+     ],
+     [
+      "3",
+      [
+       "How effective was the app in helping to answer your spine-related health question?"
+      ]
+     ],
+     [
+      "4",
+      [
+       "How effective was the app in helping to answer your spine-related health question?"
+      ]
+     ],
+     [
+      "5",
+      [
+       "How effective was the app in helping to answer your spine-related health question?",
+       "How well did SpineAI’s answer acknowledge what worries you?",
+       "What, if anything, did SpineAI say that helped, or that felt off?"
+      ]
+     ],
+     [
+      "6",
+      [
+       "Compared to health information websites, how do you rate the app’s responses?",
+       "Compared to what your doctor has told you, how do you rate the app’s responses?",
+       "What were the most and least useful features of the app? Do you have any suggestions to share?",
+       "Has using the app changed what you plan to ask or discuss at your upcoming appointment?",
+       "If yes: What will you ask that you would not have asked before?",
+       "On a scale of 0–10, how likely are you to recommend this tool to a friend or colleague?"
+      ]
+     ],
+     [
+      "7",
+      [
+       null,
+       null,
+       "When all is said and done, I am the person who is responsible for managing my spine condition.",
+       "Taking an active role in my spine care affects my back/neck health and ability to function.",
+       "I understand what each of my treatments or medications for my spine condition is for.",
+       "I am confident I can tell my spine care provider concerns I have, even when he or she does not ask.",
+       "I am confident I can tell whether I need to see a doctor for my spine problem or whether I can manage it on my own.",
+       "I am confident I can help prevent or reduce problems associated with my spine condition.",
+       "I know the lifestyle changes — like activity, posture, and exercise — that are recommended for my spine condition.",
+       "I am confident I can follow through on treatments for my spine condition that I may need to do at home (e.g., exercises, stretches).",
+       "I am confident I can take actions that will help prevent or minimize symptoms of my spine condition.",
+       "I am confident I can follow through on recommendations my spine provider makes, such as physical therapy or exercise.",
+       "I understand the nature and causes of my spine condition.",
+       "I know the different treatment options available for my spine condition (e.g., physical therapy, injections, surgery).",
+       "I have been able to keep up with the activity or exercise changes I have made for my spine health.",
+       "I know how to prevent further problems with my spine.",
+       "I know about the self-care and self-treatments for my spine condition.",
+       "I have made the changes in my activity and exercise that are recommended for my spine condition.",
+       "I am confident I can figure out solutions when new problems arise with my spine.",
+       "I am able to handle symptoms of my spine condition on my own at home.",
+       "I am confident I can maintain activity and exercise changes for my spine, even during times of stress.",
+       "I am able to handle flare-ups of my spine condition on my own at home.",
+       "I am confident I can keep my spine problems from interfering with the things I want to do.",
+       "Managing recommendations by my physicians for my spine condition is too hard for me on a daily basis."
+      ]
+     ],
+     [
+      "8",
+      null
+     ]
+    ],
+    "edu.stanford.plainly.usabilityStudy": [
+     [
+      "Welcome",
+      [
+       "How clear and understandable was the summary provided by the app?"
+      ]
+     ],
+     [
+      "2",
+      [
+       "How effective is this feature for interpreting and evaluating your medical information?"
+      ]
+     ],
+     [
+      "3",
+      [
+       "How effective are these recommendations in helping you make decisions about your health?"
+      ]
+     ],
+     [
+      "4",
+      [
+       "How effective was the LLM in helping to answer your health question?",
+       "What surprised you about the LLM's answer, either positively or negatively?"
+      ]
+     ],
+     [
+      "5",
+      [
+       "Compared to other sources of health information (e.g., websites, doctors), how do you rate the LLM's responses?",
+       "What were the most and least useful features of the LLM? Do you have any suggestions to share?",
+       "How has the LLM impacted your ability to manage your health?",
+       "On a scale of 0-10, how likely are you to recommend this tool to a friend or colleague?"
+      ]
+     ],
+     [
+      "6",
+      [
+       "How easy would it be to access or obtain information about your medical condition?",
+       "How frequently do you anticipate having problems learning about your medical condition because of difficulty understanding written information?",
+       "How confident would you be in filling out medical forms by yourself?",
+       "How often do you think you would have someone help you read hospital materials?"
+      ]
+     ]
+    ],
+    "edu.stanford.plainly.voiceDemo": []
+   }
+  }
+ ]
+}

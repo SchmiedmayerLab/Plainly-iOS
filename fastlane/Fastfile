@@ -172,7 +172,8 @@ platform :ios do
         "PlainlyUITests/FirebaseEndToEndTests/testChatErrorThroughFirebaseEmulators",
         "PlainlyUITests/FirebaseEndToEndTests/testChatErrorAfterStreamStartsThroughFirebaseEmulators",
         "PlainlyUITests/FirebaseEndToEndTests/testFailedReportUploadIsRetainedAndRetried",
-        "PlainlyUITests/FirebaseEndToEndTests/testRetainedReportUploadsWhenAuthenticationIsSlow"
+        "PlainlyUITests/FirebaseEndToEndTests/testRetainedReportUploadsWhenAuthenticationIsSlow",
+        "PlainlyUITests/StudySurveyTests/testClosingTheSurveyDoesNotSkipTheTask"
       ],
       concurrent_workers: 1,
       max_concurrent_simulators: 1,
