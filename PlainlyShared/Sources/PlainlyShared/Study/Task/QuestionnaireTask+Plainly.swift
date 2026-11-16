@@ -24,12 +24,17 @@ extension Questionnaire.Task {
     }
 
     /// A question answered with free text.
+    ///
+    /// The field has room for several lines: the studies ask for feedback in it, and a single line shows only part
+    /// of a longer answer, typed or dictated.
     public static func freeText(_ text: String, isOptional: Bool = false) -> Self {
-        Self(
+        // Validation matches the whole string, so this rejects an answer that is only whitespace. Only where an
+        // answer is required: in a multi-line field Return adds a line break, which would block an optional answer.
+        let regex = isOptional ? nil : try? NSRegularExpression(pattern: "(?s).*\\S.*")
+        return Self(
             id: unassignedId,
             title: text,
-            // Validation matches the whole string, so this rejects an answer that is only whitespace.
-            kind: .freeText(.init(regex: try? NSRegularExpression(pattern: "(?s).*\\S.*"))),
+            kind: .freeText(.init(regex: regex, isMultiline: true)),
             isOptional: isOptional
         )
     }

@@ -129,6 +129,24 @@ struct StudyTests {
         #expect(chatting.map(\.hasChat) == [true, true])
     }
 
+    /// Free-text answers have room for several lines, and a line break alone only blocks an answer that is required.
+    @Test
+    func freeTextQuestionsAreMultiline() {
+        func config(_ question: Questionnaire.Task) -> Questionnaire.Task.Kind.FreeTextConfig? {
+            guard case let .freeText(config) = question.kind.variant else {
+                return nil
+            }
+            return config
+        }
+        let required = config(.freeText("Why?"))
+        let optional = config(.freeText("Why?", isOptional: true))
+
+        #expect(required?.isMultiline == true)
+        #expect(optional?.isMultiline == true)
+        #expect(required?.regex != nil)
+        #expect(optional?.regex == nil)
+    }
+
     /// The recommendation question reports the number picked, so its range stays comparable.
     @Test
     func recommendationQuestionReportsTheScore() throws {
