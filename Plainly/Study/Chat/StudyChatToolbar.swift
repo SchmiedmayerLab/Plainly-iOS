@@ -43,18 +43,14 @@ struct StudyChatToolbar: ToolbarContent {
                 .accessibilityLabel("Dismiss")
         }
         .disabled(model.isProcessing)
-        .confirmationDialog(
-            "Going back will reset your chat history.",
-            isPresented: $model.isDismissDialogPresented,
-            titleVisibility: .visible,
-            actions: {
-                Button("Yes", role: .destructive, action: onDismiss)
-                Button("No", role: .cancel) {}
-            },
-            message: {
-                Text("Do you want to continue?")
-            }
-        )
+        // An alert rather than a confirmation dialog: anchored to a toolbar button, a dialog shows only its destructive
+        // button, and the way to stay is a tap beside it that participants do not find.
+        .alert("Leave This Session?", isPresented: $model.isDismissDialogPresented) {
+            Button("Stay in Chat", role: .cancel) {}
+            Button("Leave and Delete Chat", role: .destructive, action: onDismiss)
+        } message: {
+            Text("This chat and the answers you gave in it will be deleted and not sent to the study team.")
+        }
     }
 
     private var explanationLevelButton: some View {
