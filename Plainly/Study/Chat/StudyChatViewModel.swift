@@ -788,9 +788,9 @@ extension StudyChatViewModel {
             let value = responses?.responses[Study.Task.questionId(at: index) as Questionnaire.Task.ID].value
             // Instructions have no display title, but their text still belongs in the report.
             let questionText = if case .instructional(let text) = question.kind.variant {
-                text
+                text.base
             } else {
-                question.title
+                question.title.base
             }
             return StudyReport.TimelineEvent.SurveyQuestion(
                 questionText: questionText,

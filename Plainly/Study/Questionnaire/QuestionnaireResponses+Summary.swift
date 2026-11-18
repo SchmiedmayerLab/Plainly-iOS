@@ -38,7 +38,7 @@ extension QuestionnaireResponses {
         }
         var summary = "The following is a summary of the user's responses to the intake questionnaire:\n"
         for (task, taskSummary) in taskSummaries {
-            summary.append("\n\nQUESTION: \(task.title)")
+            summary.append("\n\nQUESTION: \(task.title.base)")
             summary.append("\nANSWER: \(taskSummary)")
         }
         return summary
@@ -80,8 +80,8 @@ extension QuestionnaireResponses.Response {
             return "\(value)"
         case let .quantity(value, unitCode):
             let config = task.kind.config(as: Questionnaire.Task.Kind.NumericTaskConfig.self)
-            let unit = config?.unitOptions.first(where: { $0.code == unitCode })?.display
-                ?? (config?.unitCode == unitCode ? config?.unit : nil)
+            let unit = config?.unitOptions.first(where: { $0.code == unitCode })?.display.base
+                ?? (config?.unitCode == unitCode ? config?.unit.base : nil)
                 ?? unitCode
             return unit.isEmpty ? "\(value)" : "\(value) \(unit)"
         case .choice(let response):
@@ -92,7 +92,7 @@ extension QuestionnaireResponses.Response {
                 return nil
             }
             var options = response.selectedOptions.compactMap { id in
-                config.options.first { $0.id == id }?.title
+                config.options.first { $0.id == id }?.title.base
             }
             if let freeTextOtherResponse = response.freeTextOtherResponse {
                 options.append(freeTextOtherResponse)

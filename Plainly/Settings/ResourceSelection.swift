@@ -78,8 +78,11 @@ struct ResourceSelection: View {
             guard let firstMockPatient = bundles.first else {
                 return
             }
-            store.removeAllResources()
-            store.load(bundle: firstMockPatient)
+            do {
+                try store.replaceContents(with: firstMockPatient)
+            } catch {
+                AppDiagnostics.healthRecords.logError(error, context: "Loading mock patient")
+            }
         }
     }
     

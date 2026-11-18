@@ -60,7 +60,7 @@ public final class SingleFHIRResourceInterpreter: Sendable {
         isolation: isolated (any Actor)? = #isolation,
         forResource resource: FHIRResource
     ) async -> String? {
-        await resourceProcessor.results[resource.id]
+        await resourceProcessor.results[resource.id.description]
     }
     
     /// Adjust the LLM schema and prompt used by the interpreter.

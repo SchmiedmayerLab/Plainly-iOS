@@ -86,7 +86,7 @@ struct ScreeningOutcomeTests {
 
     private static func screeningQuestionnaire() throws -> GroveQuestionnaire.Questionnaire {
         let resource = try JSONDecoder().decode(ModelsR4.Questionnaire.self, from: Data(screeningFixture.utf8))
-        return try GroveQuestionnaire.Questionnaire(resource)
+        return try GroveQuestionnaire.Questionnaire(resource, clock: .live(in: .current))
     }
 
     private static func responses(selecting code: String?) throws -> QuestionnaireResponses {
@@ -134,7 +134,10 @@ struct ScreeningOutcomeTests {
           { "linkId": "g", "type": "group", "text": "G", "item": [{ "linkId": "q", "type": "boolean", "text": "Q" }] }
         ] }
         """
-        let questionnaire = try GroveQuestionnaire.Questionnaire(JSONDecoder().decode(ModelsR4.Questionnaire.self, from: Data(json.utf8)))
+        let questionnaire = try GroveQuestionnaire.Questionnaire(
+            JSONDecoder().decode(ModelsR4.Questionnaire.self, from: Data(json.utf8)),
+            clock: .live(in: .current)
+        )
         #expect(questionnaire.screeningOutcomeTask == nil)
         #expect(try ScreeningAnswers.responses(to: questionnaire, choosing: [:]).screeningOutcome() == nil)
     }

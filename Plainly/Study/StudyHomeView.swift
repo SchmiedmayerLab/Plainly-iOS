@@ -337,7 +337,11 @@ extension StudyHomeView {
             fhirInterpretationModule.currentStudy = preloadedStudy
         }
         if FeatureFlags.usesSampleHealthRecords {
-            await fhirInterpretationModule.multipleResourceInterpreter.fhirStore.loadTestingResources()
+            do {
+                try await fhirInterpretationModule.multipleResourceInterpreter.fhirStore.loadTestingResources()
+            } catch {
+                AppDiagnostics.healthRecords.logError(error, context: "Loading sample health records")
+            }
         } else {
             await standard.fetchRecordsFromHealthKit()
         }

@@ -10,6 +10,7 @@ import GroveLLM
 import GroveLLMOpenAI
 import GroveQuestionnaire
 import GroveQuestionnaireFHIR
+import GroveQuestionnaireUI
 import GroveViews
 import struct ModelsR4.QuestionnaireResponse
 import PlainlyShared
@@ -26,6 +27,7 @@ private enum QuestionnaireLoadState {
 struct IntakeQuestionnaireSheet: View {
     @Environment(\.dismiss) var dismiss
     @Environment(LLMRunner.self) private var llmRunner
+    @Environment(\.locale) private var locale
     
     private let inProgressStudy: InProgressStudy
 
@@ -112,7 +114,12 @@ struct IntakeQuestionnaireSheet: View {
         do {
             // Kept before the summary is requested: a failing summary must not discard answers the
             // participant already gave, which the report carries even when the summary is missing.
-            let response = try ModelsR4.QuestionnaireResponse(groveResponses)
+            let response = try ModelsR4.QuestionnaireResponse(
+                groveResponses,
+                renderedIn: locale,
+                authored: .now,
+                authoredTimeZone: .current
+            )
             let outcome = try groveResponses.screeningOutcome()
             // Only now: a response the home can see is a completed intake, which an unreadable outcome is not.
             fhirResponse = response
