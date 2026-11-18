@@ -19,19 +19,19 @@
 # Node for the Firebase emulators.
 #
 # Usage:
-#   scripts/readme-screenshots.sh [--device "iPhone 17 Pro"]
+#   scripts/readme-screenshots.sh
 set -euo pipefail
 SCRIPT=${0:A}
 ROOT=${SCRIPT:h:h}
 ROCKETSIM=/Applications/RocketSim.app/Contents/Helpers/rocketsim
-DEVICE_TYPE="iPhone 17 Pro"
-SIMULATOR_NAME="README Screenshots"
+# Every README picture shares one device frame, so the device is fixed.
+DEVICE_TYPE="iPhone 18 Pro"
+SIMULATOR_NAME="README Screenshots ($DEVICE_TYPE)"
 DERIVED_DATA="$ROOT/.derivedData/readme-screenshots"
 OUTPUT="$ROOT/docs/screenshots"
 
 while (( $# > 0 )); do
   case $1 in
-    --device) DEVICE_TYPE=$2; shift 2;;
     -h|--help) sed -n '9,20p' "$0" | sed 's/^# \{0,1\}//'; exit 0;;
     *) print -u2 "unknown option: $1"; exit 1;;
   esac
@@ -77,8 +77,13 @@ import json, sys
 for devices in json.load(sys.stdin)['devices'].values():
     for device in devices:
         if device['name'] == '$SIMULATOR_NAME' and device['isAvailable']:
-            print(device['udid']); sys.exit()
+            print(device['udid'], device['deviceTypeIdentifier']); sys.exit()
 ")
+if [[ -n $UDID ]]; then
+  [[ ${UDID#* } == com.apple.CoreSimulator.SimDeviceType.${DEVICE_TYPE// /-} ]] \
+    || fail "$SIMULATOR_NAME is not an $DEVICE_TYPE; delete it and run again."
+  UDID=${UDID%% *}
+fi
 # Reused across runs: RocketSim only shoots simulators it knew when it launched, so a fresh device needs a
 # RocketSim relaunch once, and never an erase, after which it answers with empty pictures.
 if [[ -z $UDID ]]; then
@@ -192,7 +197,7 @@ if [[ -z ${PLAINLY_README_SCREENSHOTS_EMULATED:-} ]]; then
   log "starting the Firebase emulators"
   cd "$firebase_root"
   # The pinned CLI through npx, as run-firebase-e2e.sh does; a Homebrew firebase on the PATH may die at launch.
-  exec npx --yes firebase-tools@15.25.1 emulators:exec --project demo-plainly --only auth,functions,firestore,storage "$SCRIPT --device $(printf '%q' "$DEVICE_TYPE")"
+  exec npx --yes firebase-tools@15.25.1 emulators:exec --project demo-plainly --only auth,functions,firestore,storage "$SCRIPT"
 fi
 capture light
 capture dark

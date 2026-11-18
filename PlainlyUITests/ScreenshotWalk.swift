@@ -94,16 +94,17 @@ enum ScreenshotWalk {
         XCTAssertTrue(startSession.waitForExistence(timeout: 10))
         startSession.tap()
         XCTAssertTrue(app.staticTexts["Welcome"].waitForExistence(timeout: 30))
+        // The summary loads behind the instructions, and the picture shows it there.
+        let summary = ProcessInfo.processInfo.environment["PLAINLY_MOCK_CHAT_RESPONSE"] ?? ""
+        XCTAssertFalse(summary.isEmpty, "PLAINLY_MOCK_CHAT_RESPONSE names the summary the emulator answers with.")
+        let response = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", summary)).firstMatch
+        XCTAssertTrue(response.waitForExistence(timeout: 30))
         snapshot("04_Instructions")
 
         // The chat's own close button sits above the sheet's; the sheet's is the lower one.
         let closeButtons = app.buttons.matching(identifier: "Close").allElementsBoundByIndex
         let sheetClose = try XCTUnwrap(closeButtons.max { $0.frame.minY < $1.frame.minY })
         sheetClose.tap()
-        let summary = ProcessInfo.processInfo.environment["PLAINLY_MOCK_CHAT_RESPONSE"] ?? ""
-        XCTAssertFalse(summary.isEmpty, "PLAINLY_MOCK_CHAT_RESPONSE names the summary the emulator answers with.")
-        let response = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", summary)).firstMatch
-        XCTAssertTrue(response.waitForExistence(timeout: 30))
         let messageField = app.textFields["Message Input Textfield"]
         XCTAssertTrue(messageField.waitForExistence(timeout: 5))
         try messageField.enter(value: "What does my most recent diagnosis mean for me?", options: [.disableKeyboardDismiss])

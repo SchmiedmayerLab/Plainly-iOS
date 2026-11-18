@@ -105,7 +105,7 @@ platform :ios do
       derived_data_path: ".derivedData",
       xcargs: "-collect-test-diagnostics never",
       devices: [
-        "iPhone 17 Pro Max",
+        "iPhone 18 Pro Max",
         "iPad Pro 13-inch (M5)"
       ],
       languages: [
@@ -133,7 +133,7 @@ platform :ios do
     end
 
     expected_sizes = {
-      "iPhone 17 Pro Max" => [1320, 2868],
+      "iPhone 18 Pro Max" => [1320, 2868],
       "iPad Pro 13-inch (M5)" => [2752, 2064]
     }
     expected_sizes.each do |device, expected_size|
@@ -164,7 +164,7 @@ platform :ios do
       testplan: "Plainly Firebase End-to-End",
       configuration: "Release",
       derived_data_path: ".derivedData/firebase-e2e",
-      devices: ["iPhone 17 Pro"],
+      devices: ["iPhone 18 Pro"],
       only_testing: [
         "PlainlyUITests/FirebaseEndToEndTests/testChatAndReportUploadThroughFirebaseEmulators",
         "PlainlyUITests/FirebaseEndToEndTests/testResponsesFunctionCallRoundTripThroughFirebaseEmulators",
