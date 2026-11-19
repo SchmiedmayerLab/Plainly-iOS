@@ -1,4 +1,4 @@
-// swift-tools-version: 6.4
+// swift-tools-version: 6.3
 //
 // This source file is part of the Plainly iOS open-source project
 //
