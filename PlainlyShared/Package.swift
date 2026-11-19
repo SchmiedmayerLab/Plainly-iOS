@@ -24,7 +24,7 @@ let package = Package(
         .executable(name: "PlainlyCLI", targets: ["PlainlyCLI"])
     ],
     dependencies: [
-        .package(url: "https://github.com/SchmiedmayerLab/Grove.git", revision: "39c714b5a7ebc17fad1f554d6b84f94e255b99bb"),
+        .package(url: "https://github.com/SchmiedmayerLab/Grove.git", revision: "168fb4afceb4627bd67b02bb07f73f533b8dc1b4"),
         .package(url: "https://github.com/apple/FHIRModels.git", .upToNextMinor(from: "0.9.4")),
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.7.0")
     ],
