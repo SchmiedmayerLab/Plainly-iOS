@@ -18,10 +18,19 @@ class OnboardingTests: XCTestCase, Sendable {
         continueAfterFailure = false
     }
     
+    /// The iOS 27.1 and later simulators ship without the Health Records sample accounts, so a test cannot add one.
+    /// See https://github.com/SchmiedmayerLab/Plainly-iOS/issues/48.
+    private func skipWhereSampleHealthRecordAccountsAreMissing() throws {
+        if #available(iOS 27.1, *) {
+            throw XCTSkip("This simulator runtime has no Health Records sample accounts (#48).")
+        }
+    }
+    
     
     /// Onboarding goes straight from the disclaimer to health records: inference is configured by the
     /// study and served by the Firebase function, so there is nothing for the participant to set up.
     func testOnboardingFlow() throws {
+        try skipWhereSampleHealthRecordAccountsAreMissing()
         let app = XCUIApplication()
         app.resetAuthorizationStatus(for: .health)
         app.launchArguments = ["--resetPreferences", "--showOnboarding", "--mode", "study"]
@@ -67,6 +76,7 @@ class OnboardingTests: XCTestCase, Sendable {
     }
 
     func testOnboardingContinuesWhenNoHealthRecordsAreShared() throws {
+        try skipWhereSampleHealthRecordAccountsAreMissing()
         let app = XCUIApplication()
         app.resetAuthorizationStatus(for: .health)
         app.launchArguments = ["--resetPreferences", "--showOnboarding", "--mode", "study"]
