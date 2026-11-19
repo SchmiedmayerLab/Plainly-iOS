@@ -326,7 +326,10 @@ final class StudyChatViewModel: Sendable {
     /// Advances the user's progression within the study.
     ///
     /// Depending on the current ``navigationState``, this function will either advance within the current task (e.g., move from the chat phase to the survey)
-    /// or advance within the overall study (e.g., move from task N's survey to task N+1's instructions).
+    /// or, for a task without questions, advance within the overall study (e.g., move to task N+1's instructions).
+    ///
+    /// A task with questions is only ever left by submitting them, through ``submitSurveyResponses(_:for:)``. While
+    /// its questions are due, advancing presents them again instead.
     ///
     /// If the study is already completed, this function does nothing.
     func advance() {
@@ -350,8 +353,9 @@ final class StudyChatViewModel: Sendable {
                     advanceToNextTask()
                 }
             case .answeringSurvey:
-                // we're answering the survey, so advancing from there means going to the next task
-                advanceToNextTask()
+                // The participant closed the questions without submitting them, so they are what comes next.
+                // Moving on from here would skip them, and past the last task upload the report without them.
+                presentedSheet = .survey
             }
         case .completed:
             // if we've already completed the survey, there is nowhere else to go
