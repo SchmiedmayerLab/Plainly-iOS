@@ -37,7 +37,6 @@ struct StudyHomeView: View {
     @State private var isPresentingQRCodeScanner = false
     
     @State private var isPresentingStudyChatView = false
-    @State private var primaryActionState: ViewState = .idle
     /// What the intake questionnaire decided, when it stopped the study; ``Screening`` keeps it from then on.
     @State private var screeningOutcome: ScreeningOutcome?
     private let sessionStartTime = Date.now
@@ -237,7 +236,7 @@ struct StudyHomeView: View {
     }
 
     private var primaryAction: some View {
-        PageActions(viewState: $primaryActionState) {
+        PageActions {
             primaryActionTitle
         } action: {
             do {
