@@ -31,16 +31,21 @@ import process from "node:process";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
+const scopes = ["answer", "conversation"] as const;
+type Scope = (typeof scopes)[number];
+
 interface Args {
   inputs: string[];
   output: string;
   template: string;
+  scope?: Scope;
 }
 
 function parseArgs(argv: string[]): Args {
   const inputs: string[] = [];
   let output = "conversation-feedback.html";
   let template = join(here, "template.html");
+  let scope: Scope | undefined;
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "-o" || a === "--output") {
@@ -55,6 +60,15 @@ function parseArgs(argv: string[]): Args {
         printUsageAndExit(1);
       }
       template = argv[++i];
+    } else if (a === "--clinician") {
+      template = join(here, "clinician-template.html");
+    } else if (a === "--scope") {
+      const value = argv[++i];
+      if (!scopes.includes(value as Scope)) {
+        console.error(`Error: --scope takes one of ${scopes.join(", ")}.`);
+        printUsageAndExit(1);
+      }
+      scope = value as Scope;
     } else if (a === "-h" || a === "--help") {
       printUsageAndExit(0);
     } else if (a.startsWith("-")) {
@@ -72,18 +86,20 @@ function parseArgs(argv: string[]): Args {
     console.error("Error: -o/--output requires a path.");
     process.exit(1);
   }
-  return { inputs, output, template };
+  return { inputs, output, template, scope };
 }
 
 function printUsageAndExit(code: number): never {
   console.log(
     [
-      "Usage: npx tsx build.ts <dir-or-file...> [-o output.html] [-t template.html]",
+      "Usage: npx tsx build.ts <dir-or-file...> [-o output.html] [-t template.html | --clinician] [--scope answer|conversation]",
       "",
       "  <dir-or-file...>  One or more StudyReport .json files, or directories",
       "                    containing them (searched non-recursively).",
       "  -o, --output      Output HTML path (default: conversation-feedback.html).",
       "  -t, --template    Template HTML path (default: ./template.html).",
+      "  --clinician       Use the clinician evaluation template (./clinician-template.html).",
+      "  --scope           Give feedback on each answer (default) or once per whole conversation.",
     ].join("\n"),
   );
   process.exit(code);
@@ -129,7 +145,7 @@ function looksLikeStudyReport(json: unknown): boolean {
 }
 
 function main(): void {
-  const { inputs, output, template } = parseArgs(process.argv.slice(2));
+  const { inputs, output, template, scope } = parseArgs(process.argv.slice(2));
 
   const files = collectJsonFiles(inputs);
   if (!files.length) {
@@ -149,6 +165,15 @@ function main(): void {
   if (!placeholder.test(templateHtml)) {
     console.error('Error: template is missing the <script id="conversations-data"> placeholder.');
     process.exit(1);
+  }
+
+  if (scope) {
+    const scopeMarker = /<meta name="evaluation-scope" content="[^"]*" \/>/;
+    if (!scopeMarker.test(templateHtml)) {
+      console.error("Error: --scope needs a template with an evaluation scope; this one has none.");
+      process.exit(1);
+    }
+    templateHtml = templateHtml.replace(scopeMarker, () => `<meta name="evaluation-scope" content="${scope}" />`);
   }
 
   const conversations: EmbeddedConversation[] = [];
@@ -183,7 +208,8 @@ function main(): void {
   // Escape "</script" so the embedded JSON can't terminate the host <script> tag.
   const dataJson = JSON.stringify(conversations).replace(/<\/(script)/gi, "<\\/$1");
   const block = `<script id="conversations-data" type="application/json">${dataJson}</script>`;
-  const html = templateHtml.replace(placeholder, block);
+  // A replacer function, so a "$&" or "$'" in a conversation is not read as a replacement pattern.
+  const html = templateHtml.replace(placeholder, () => block);
 
   const outPath = resolve(output);
   writeFileSync(outPath, html, "utf8");

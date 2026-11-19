@@ -12,6 +12,8 @@ SPDX-License-Identifier: MIT
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<!-- build.ts --scope sets whether feedback is given once per answer or once per conversation. -->
+<meta name="evaluation-scope" content="answer" />
 <title>Conversation Feedback</title>
 <style>
   :root {
@@ -311,6 +313,16 @@ SPDX-License-Identifier: MIT
   }
   textarea.fb:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
   .fb-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .overall {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 18px;
+    overflow: hidden;
+  }
+  .overall h2 { font-size: 15px; margin: 0 0 4px; }
+  .scope-note { font-size: 12.5px; color: var(--muted); margin-bottom: 12px; }
 
   .anno-list { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
   .anno-chip {
@@ -384,7 +396,7 @@ SPDX-License-Identifier: MIT
 <body>
 <header class="app">
   <div class="header-inner">
-    <div class="brand">Conversation Feedback<small>SpineAI / Plainly review</small></div>
+    <div class="brand">Conversation Feedback<small id="scopeLabel">SpineAI / Plainly review</small></div>
     <div class="reviewer-fields">
       <input id="reviewerName" type="text" placeholder="Your name" autocomplete="name" aria-label="Your name" />
       <input id="reviewerEmail" type="email" placeholder="Your email" autocomplete="email" aria-label="Your email" />
@@ -412,12 +424,19 @@ SPDX-License-Identifier: MIT
 (function () {
   const SAT_OPTIONS = ["very dissatisfied", "dissatisfied", "neutral", "satisfied", "very satisfied"];
   const SCHEMA_VERSION = 2;
-  const STORAGE_PREFIX = "convFeedback:v1:";
+  // "answer": feedback is given on every answer; "conversation": once for the whole conversation.
+  const SCOPE = (document.querySelector('meta[name="evaluation-scope"]') || {}).content === "conversation" ? "conversation" : "answer";
+  // The answer scope keeps the key it always had, so reviews already saved in a browser still load.
+  const STORAGE_PREFIX = SCOPE === "conversation" ? "convFeedback:v1:conversation:" : "convFeedback:v1:";
+  const CONVERSATION_KEY = "conversation";
 
   // ---------- State ----------
   /** conversations: [{ id, patient, studyID, model, temperature, startTime, systemPrompt, resources, turns:[{index, question, questionTs, answer, answerTs, context:[...], sources:[...]}] }] */
   let conversations = [];
-  /** feedback keyed by conversationId -> answerIndex -> {satisfaction, whatWasGood, whatWasBad, resourcesToMention, furtherComments, inlineAnnotations:[]} */
+  /**
+   * feedback keyed by conversationId -> answerIndex -> {satisfaction, whatWasGood, whatWasBad, resourcesToMention, furtherComments, inlineAnnotations:[]};
+   * in the conversation scope the fields live under conversationId -> "conversation" and answers only hold their inline notes.
+   */
   let feedback = {};
   let reviewer = { name: "", email: "" };
   let activeConvId = null;
@@ -599,10 +618,14 @@ SPDX-License-Identifier: MIT
   }
   function convCounts(conv) {
     const fbc = feedback[conv.id] || {};
+    if (SCOPE === "conversation") return { done: answerIsAnswered(fbc[CONVERSATION_KEY]) ? 1 : 0, total: 1 };
     let done = 0;
     for (let i = 0; i < conv.turns.length; i++) if (answerIsAnswered(fbc[i])) done++;
     return { done, total: conv.turns.length };
   }
+  const countLabel = (cc) => SCOPE === "conversation"
+    ? (cc.done ? "<b>answered</b>" : "not answered yet")
+    : `<b>${cc.done}</b> / ${cc.total} answered`;
   function totalCounts() {
     let done = 0, total = 0;
     for (const c of conversations) { const cc = convCounts(c); done += cc.done; total += cc.total; }
@@ -648,9 +671,31 @@ SPDX-License-Identifier: MIT
   }
 
   // ---------- Export / Import ----------
+  /** The feedback fields as exported, for one answer or, in the conversation scope, the whole conversation. */
+  function exportFields(fb) {
+    return {
+      satisfaction: fb.satisfaction || null,
+      whatWasGood: fb.whatWasGood || "",
+      whatWasBad: fb.whatWasBad || "",
+      resourcesToMention: fb.resourcesToMention || "",
+      furtherComments: fb.furtherComments || "",
+    };
+  }
+  function importFields(fields, annotations) {
+    const f = fields || {};
+    return {
+      satisfaction: f.satisfaction || null,
+      whatWasGood: f.whatWasGood || "",
+      whatWasBad: f.whatWasBad || "",
+      resourcesToMention: f.resourcesToMention || "",
+      furtherComments: f.furtherComments || "",
+      inlineAnnotations: Array.isArray(annotations) ? annotations.slice() : [],
+    };
+  }
   function buildExport() {
     return {
       schemaVersion: SCHEMA_VERSION,
+      scope: SCOPE,
       exportedAt: new Date().toISOString(),
       reviewer: { name: reviewer.name || "", email: reviewer.email || "" },
       conversations: conversations.map((conv) => ({
@@ -659,6 +704,7 @@ SPDX-License-Identifier: MIT
         studyID: conv.studyID,
         patientBundle: conv.patientBundle,
         model: conv.model,
+        ...(SCOPE === "conversation" ? { feedback: exportFields(getFb(conv.id, CONVERSATION_KEY)) } : {}),
         answers: conv.turns.map((t) => {
           const fb = getFb(conv.id, t.index);
           return {
@@ -675,11 +721,7 @@ SPDX-License-Identifier: MIT
               else if (s.file) out.file = s.file;
               return out;
             }),
-            satisfaction: fb.satisfaction || null,
-            whatWasGood: fb.whatWasGood || "",
-            whatWasBad: fb.whatWasBad || "",
-            resourcesToMention: fb.resourcesToMention || "",
-            furtherComments: fb.furtherComments || "",
+            ...(SCOPE === "answer" ? exportFields(fb) : {}),
             inlineAnnotations: (fb.inlineAnnotations || []).map((a) => ({ quote: a.quote, start: a.start, end: a.end, comment: a.comment })),
           };
         }),
@@ -692,27 +734,29 @@ SPDX-License-Identifier: MIT
     const url = URL.createObjectURL(blob);
     const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
     const namePart = (reviewer.name || "reviewer").trim().replace(/[^a-z0-9]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase() || "reviewer";
-    const a = el("a", { href: url, download: `conversation-feedback-${namePart}-${stamp}.json` });
+    const scopePart = SCOPE === "conversation" ? "per-conversation-" : "";
+    const a = el("a", { href: url, download: `conversation-feedback-${scopePart}${namePart}-${stamp}.json` });
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   function importExport(data) {
     if (!data || !Array.isArray(data.conversations)) { alert("Not a valid feedback export file."); return; }
+    // Exports from before the conversation scope carry no scope; they were all given per answer.
+    if (data.form || (data.scope || "answer") !== SCOPE) {
+      const other = data.form ? "a different feedback form"
+        : (data.scope || "answer") === "conversation" ? "feedback on whole conversations" : "feedback on each answer";
+      alert(`This file is ${other}; this page collects feedback on ${SCOPE === "conversation" ? "whole conversations" : "each answer"}.`);
+      return;
+    }
     if (data.reviewer) {
       reviewer = { name: data.reviewer.name || "", email: data.reviewer.email || "" };
     }
     for (const c of data.conversations) {
       if (!c || !c.conversationId) continue;
       feedback[c.conversationId] = feedback[c.conversationId] || {};
+      if (SCOPE === "conversation") feedback[c.conversationId][CONVERSATION_KEY] = importFields(c.feedback, []);
       for (const a of (c.answers || [])) {
-        feedback[c.conversationId][a.index] = {
-          satisfaction: a.satisfaction || null,
-          whatWasGood: a.whatWasGood || "",
-          whatWasBad: a.whatWasBad || "",
-          resourcesToMention: a.resourcesToMention || "",
-          furtherComments: a.furtherComments || "",
-          inlineAnnotations: Array.isArray(a.inlineAnnotations) ? a.inlineAnnotations.slice() : [],
-        };
+        feedback[c.conversationId][a.index] = importFields(SCOPE === "answer" ? a : null, a.inlineAnnotations);
       }
     }
     saveNow();
@@ -854,7 +898,7 @@ SPDX-License-Identifier: MIT
       item.addEventListener("click", () => { activeConvId = conv.id; renderApp(); window.scrollTo({ top: 0 }); });
       item.appendChild(el("div", { class: "c-title", text: conv.title }));
       item.appendChild(el("div", { class: "c-sub", text: conv.comment ? conv.patient + " · " + conv.id : conv.id }));
-      item.appendChild(el("div", { class: "c-count", html: `<b>${cc.done}</b> / ${cc.total} answered` }));
+      item.appendChild(el("div", { class: "c-count", html: countLabel(cc) }));
       list.appendChild(item);
     }
     nav.appendChild(list);
@@ -910,6 +954,16 @@ SPDX-License-Identifier: MIT
 
     // turns
     for (const turn of conv.turns) content.appendChild(renderTurn(conv, turn));
+
+    if (SCOPE === "conversation") {
+      const overall = el("div", { class: "overall" });
+      const form = el("div", { class: "feedback" });
+      form.appendChild(el("h2", { text: "Feedback on the whole conversation" }));
+      form.appendChild(el("div", { class: "scope-note", text: "Give your feedback on the assistant's answers across the whole conversation above." }));
+      renderFeedbackFields(form, getFb(conv.id, CONVERSATION_KEY));
+      overall.appendChild(form);
+      content.appendChild(overall);
+    }
   }
 
   function renderTurn(conv, turn) {
@@ -976,7 +1030,21 @@ SPDX-License-Identifier: MIT
 
   function renderFeedbackForm(conv, turn, fb, bubble) {
     const form = el("div", { class: "feedback" });
+    if (SCOPE === "answer") renderFeedbackFields(form, fb);
 
+    // inline annotations list
+    const annoRow = el("div", { class: "fb-row" });
+    annoRow.appendChild(el("span", { class: "fb-label", html: 'Inline notes <span class="opt">— select any text in the answer above to add one</span>' }));
+    const listWrap = el("div", { class: "anno-list" });
+    renderAnnoList(listWrap, fb, bubble);
+    annoRow.appendChild(listWrap);
+    form.appendChild(annoRow);
+
+    return form;
+  }
+
+  /** Satisfaction and the free-text fields, appended to `form`. */
+  function renderFeedbackFields(form, fb) {
     // satisfaction
     const satRow = el("div", { class: "fb-row" });
     satRow.appendChild(el("span", { class: "fb-label", text: "Satisfaction with the answer" }));
@@ -995,24 +1063,14 @@ SPDX-License-Identifier: MIT
 
     // good / bad
     const two = el("div", { class: "fb-row fb-two" });
-    two.appendChild(textField("What was good", fb, "whatWasGood", conv, turn));
-    two.appendChild(textField("What was bad", fb, "whatWasBad", conv, turn));
+    two.appendChild(textField("What was good", fb, "whatWasGood"));
+    two.appendChild(textField("What was bad", fb, "whatWasBad"));
     form.appendChild(two);
 
     // resources
-    form.appendChild(textFieldRow("Resources that should be mentioned", fb, "resourcesToMention", conv, turn));
+    form.appendChild(textFieldRow("Resources that should be mentioned", fb, "resourcesToMention"));
     // further comments
-    form.appendChild(textFieldRow("Further comments", fb, "furtherComments", conv, turn, true));
-
-    // inline annotations list
-    const annoRow = el("div", { class: "fb-row" });
-    annoRow.appendChild(el("span", { class: "fb-label", html: 'Inline notes <span class="opt">— select any text in the answer above to add one</span>' }));
-    const listWrap = el("div", { class: "anno-list" });
-    renderAnnoList(listWrap, fb, bubble);
-    annoRow.appendChild(listWrap);
-    form.appendChild(annoRow);
-
-    return form;
+    form.appendChild(textFieldRow("Further comments", fb, "furtherComments", true));
   }
 
   function renderAnnoList(listWrap, fb, bubble) {
@@ -1042,7 +1100,7 @@ SPDX-License-Identifier: MIT
     }
   }
 
-  function textField(label, fb, key, conv, turn) {
+  function textField(label, fb, key) {
     const wrap = el("div");
     wrap.appendChild(el("label", { class: "fb-label", text: label }));
     const ta = el("textarea", { class: "fb", placeholder: label + "…" });
@@ -1051,7 +1109,7 @@ SPDX-License-Identifier: MIT
     wrap.appendChild(ta);
     return wrap;
   }
-  function textFieldRow(label, fb, key, conv, turn, optional) {
+  function textFieldRow(label, fb, key, optional) {
     const row = el("div", { class: "fb-row" });
     row.appendChild(el("label", { class: "fb-label", html: label + (optional ? ' <span class="opt">(optional)</span>' : "") }));
     const ta = el("textarea", { class: "fb", placeholder: label + "…" });
@@ -1074,14 +1132,14 @@ SPDX-License-Identifier: MIT
       if (!conv) return;
       const cc = convCounts(conv);
       const c = item.querySelector(".c-count");
-      if (c) c.innerHTML = `<b>${cc.done}</b> / ${cc.total} answered`;
+      if (c) c.innerHTML = countLabel(cc);
     });
   }
 
   function renderProgress() {
     const { done, total } = totalCounts();
     const chip = $("#progressChip");
-    if (chip) chip.innerHTML = `<b>${done}</b> / ${total} answered`;
+    if (chip) chip.innerHTML = `<b>${done}</b> / ${total} ${SCOPE === "conversation" ? "conversations" : "answers"} answered`;
   }
 
   // ---------- File loading ----------
@@ -1142,6 +1200,7 @@ SPDX-License-Identifier: MIT
   // ---------- Boot ----------
   function boot() {
     wireHeader();
+    $("#scopeLabel").textContent = SCOPE === "conversation" ? "One review per conversation" : "One review per answer";
     let embedded = [];
     try {
       const raw = $("#conversations-data").textContent.trim();

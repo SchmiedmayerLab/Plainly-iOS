@@ -27,6 +27,7 @@ exports as a JSON file we can read programmatically.
 | File            | Purpose                                                                 |
 | --------------- | ----------------------------------------------------------------------- |
 | `template.html` | The review app (all CSS/JS inline). Ships with an empty data block.     |
+| `clinician-template.html` | The clinician evaluation variant (see [Clinician evaluation](#clinician-evaluation)). |
 | `build.ts`      | Generator that bakes conversations into a ready-to-send copy of the app.|
 
 ## Generating a file to send
@@ -45,6 +46,22 @@ npx tsx build.ts \
   `.json` files.
 - `-o` sets the output path (default `conversation-feedback.html`).
 - `-t` overrides the template path (default `./template.html`).
+- `--clinician` uses the clinician evaluation template instead of the feedback form.
+- `--scope answer|conversation` picks, for either template, whether the reviewer fills the form in
+  for every answer (default) or once per conversation, below its last answer. Answers keep their
+  inline notes in both scopes.
+
+| Version                           | Flags                                  |
+| --------------------------------- | -------------------------------------- |
+| Feedback form, per answer         | (none)                                 |
+| Feedback form, per conversation   | `--scope conversation`                 |
+| Clinician evaluation, per answer  | `--clinician`                          |
+| Clinician evaluation, per conversation | `--clinician --scope conversation` |
+
+To build the file straight from the reports participants uploaded to a study, use
+`scripts/build-feedback-from-uploads.sh <study id>|all -o reviewer.html` from the repository root.
+It downloads the reports, keeps those picked by `--since <YYYY-MM-DD>` and `--latest <n>`, and
+passes `--clinician` and `--scope` through.
 
 Then email `reviewer.html` to the reviewer. They open it, fill it in, click **Export
 JSON**, and send the JSON back.
@@ -111,6 +128,12 @@ The reviewer can also **drag additional `StudyReport` JSON files** onto the page
 `satisfaction` is one of `very dissatisfied`, `dissatisfied`, `neutral`, `satisfied`,
 `very satisfied`, or `null`. Field names map 1:1 to the old Excel columns.
 
+The export also carries `"scope": "answer"` or `"scope": "conversation"`. In the `conversation`
+scope, the five fields sit once per conversation under `feedback`, and answers only keep
+`inlineAnnotations`. An export without `scope` predates it and is an `answer` export. Each scope
+saves to its own browser storage (the `answer` scope keeps the key it always had), and the page
+refuses to import an export of the other scope or of the clinician evaluation.
+
 `sources` is copied from the answer's `citations` in the StudyReport, so the export can be read
 on its own without joining it back. Each entry has a `title` plus at most one of `url` (a page
 on the web) or `file` (a document the model was given); an entry carries neither when the
@@ -120,3 +143,56 @@ with no sources, and for any report exported before reports carried them (`schem
 Each conversation's display title is the session's free-form **`comment`** (propagated to
 `metadata.userInfo.comment` in the StudyReport). When no comment is present, the title
 falls back to the patient bundle name.
+
+## Clinician evaluation
+
+`clinician-template.html` replaces the satisfaction and free-text fields with the rubric of the
+clinician evaluation sheet: 14 criteria (scientific consensus, extent and likelihood of harm,
+evidence of correct and incorrect comprehension, retrieval and reasoning, inappropriate and missing
+content, possibility of bias, capturing the user's intent, helpfulness), each rated on one scale:
+`1` Not at all, `2` To a small extent, `3` To a moderate extent, `4` To a large extent,
+`5` Extremely. An optional comment and inline notes stay. The criteria live in the `CRITERIA` array
+at the top of the template's script.
+
+Like the feedback form, it comes in the `answer` and `conversation` scopes. Each scope saves to its own browser storage, and the page refuses to import an export of the other
+scope or of the feedback form. The export carries the form, scope, criteria and scale, and puts each
+rubric under `evaluation`: on the conversation in the `conversation` scope, on every answer in the
+`answer` scope.
+
+```json
+{
+  "form": "clinician-evaluation",
+  "scope": "answer",
+  "schemaVersion": 1,
+  "exportedAt": "2026-09-28T12:00:00.000Z",
+  "reviewer": { "name": "...", "email": "..." },
+  "criteria": [{ "key": "scientificConsensus", "label": "Scientific consensus", "question": "..." }],
+  "scale": [{ "value": 1, "label": "Not at all" }],
+  "conversations": [
+    {
+      "conversationId": "...",
+      "patient": "Rickie717_Ebert178",
+      "pid": "",
+      "studyID": "edu.stanford.plainly.spineAI",
+      "answers": [
+        {
+          "index": 0,
+          "question": "...",
+          "answer": "...",
+          "sources": [],
+          "evaluation": {
+            "ratings": { "scientificConsensus": 4, "extentOfHarm": 1, "helpfulness": null },
+            "comment": "...",
+            "evaluatedAt": "2026-09-28T11:58:02.000Z"
+          },
+          "inlineAnnotations": []
+        }
+      ]
+    }
+  ]
+}
+```
+
+`ratings` holds every criterion's key, with `null` for one not rated yet. `evaluatedAt` is when the
+rubric was last changed. `patient` is the synthetic patient bundle, or the participant's `pid` for
+reports uploaded from the app.
