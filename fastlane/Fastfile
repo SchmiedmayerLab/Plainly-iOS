@@ -281,6 +281,7 @@ platform :ios do
       screenshots unless options[:skip_screenshots]
       deliver(
         app_identifier: appidentifier,
+        app_rating_config_path: File.expand_path("metadata/age_rating.json", __dir__),
         release_notes: {
           'en-US' => releasenotes
         },
