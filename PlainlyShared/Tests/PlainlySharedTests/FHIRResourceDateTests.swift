@@ -25,7 +25,7 @@ struct FHIRResourceDateTests {
             id: ModelsR4.FHIRString("observation").asPrimitive(),
             status: ModelsR4.ObservationStatus.final.asPrimitive()
         )
-        let resource = FHIRResource(resource: observation, displayName: "Observation")
+        let resource = try FHIRResource(resource: observation, displayName: "Observation")
 
         #expect(resource.date == (try start.asNSDate()))
     }
@@ -40,7 +40,7 @@ struct FHIRResourceDateTests {
             patient: ModelsDSTU2.Reference(),
             status: ModelsDSTU2.MedicationStatementStatus.active.asPrimitive()
         )
-        let resource = FHIRResource(resource: medicationStatement, displayName: "Medication Statement")
+        let resource = try FHIRResource(resource: medicationStatement, displayName: "Medication Statement")
 
         #expect(resource.date == (try start.asNSDate()))
     }

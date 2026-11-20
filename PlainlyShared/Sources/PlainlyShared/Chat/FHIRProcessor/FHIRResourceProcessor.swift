@@ -14,7 +14,8 @@ public import GroveLocalStorage
 
 
 public actor FHIRResourceProcessor<Content: Codable & LosslessStringConvertible> {
-    public typealias Results = [FHIRResource.ID: Content]
+    /// Results keyed by the description of each resource's ``FHIRResource/ID``.
+    public typealias Results = [String: Content]
     
     private let localStorage: LocalStorage?
     private let llmRunner: LLMRunner
@@ -60,10 +61,10 @@ public actor FHIRResourceProcessor<Content: Codable & LosslessStringConvertible>
     
     @discardableResult
     public func process(resource: FHIRResource, forceReload: Bool = false) async throws -> Content {
-        if let result = results[resource.id], !result.description.isEmpty, !forceReload {
+        if let result = results[resource.id.description], !result.description.isEmpty, !forceReload {
             return result
         }
-        let prompt = summarizationPrompt.prompt(withFHIRResource: resource.jsonDescription)
+        let prompt = summarizationPrompt.prompt(withFHIRResource: try resource.jsonDescription)
         let chatStreamResult: String = try await llmRunner.oneShot(
             with: llmSchema,
             context: Self.inferenceContext(prompt: prompt)
@@ -71,7 +72,7 @@ public actor FHIRResourceProcessor<Content: Codable & LosslessStringConvertible>
         guard let content = Content(chatStreamResult) else {
             throw FHIRResourceProcessorError.notParsableAsAString
         }
-        results[resource.id] = content
+        results[resource.id.description] = content
         return content
     }
 }

@@ -27,7 +27,7 @@ actor QuestionnaireLoader {
             let data = try Data(contentsOf: url)
             let fhirQuestionnaire = try JSONDecoder().decode(ModelsR4.Questionnaire.self, from: data)
             try Task.checkCancellation()
-            let questionnaire = try GroveQuestionnaire.Questionnaire(fhirQuestionnaire)
+            let questionnaire = try GroveQuestionnaire.Questionnaire(fhirQuestionnaire, clock: .live(in: .current))
             cache[url] = questionnaire
             return questionnaire
         } catch let error as CancellationError {

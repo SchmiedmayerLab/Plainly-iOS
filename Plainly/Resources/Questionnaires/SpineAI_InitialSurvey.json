@@ -1,6 +1,7 @@
 {
   "resourceType": "Questionnaire",
   "id": "lumbar-spine-module",
+  "language": "en",
   "name": "LumbarSpineTriageAndPhenotyping",
   "title": "SpineAI Questionnaire",
   "description": "Triage and phenotyping questionnaire for lumbar spine conditions including axial back pain and radiculopathy.",

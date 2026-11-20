@@ -20,14 +20,14 @@ extension Questionnaire.Task {
     /// A question that only presents text and collects no answer.
     public static func instructional(_ text: String) -> Self {
         // The instructional body renders the text; a title would display it a second time.
-        Self(id: unassignedId, title: "", kind: .instructional(text), isOptional: true)
+        Self(id: unassignedId, title: "", kind: .instructional(.init(text)), isOptional: true)
     }
 
     /// A question answered with free text.
     public static func freeText(_ text: String, isOptional: Bool = false) -> Self {
         Self(
             id: unassignedId,
-            title: text,
+            title: .init(text),
             // Validation matches the whole string, so this rejects an answer that is only whitespace.
             kind: .freeText(.init(regex: try? NSRegularExpression(pattern: "(?s).*\\S.*"))),
             isOptional: isOptional
@@ -39,7 +39,7 @@ extension Questionnaire.Task {
     /// Options are identified by their one-based position, which is the value the study reports.
     public static func scale(_ text: String, options: Study.Task.AnswerOptions, isOptional: Bool = false) -> Self {
         let choices = options.enumerated().map { index, option in
-            Kind.ChoiceConfig.Option(id: "\(index + 1)", title: option)
+            Kind.ChoiceConfig.Option(id: "\(index + 1)", title: .init(option))
         }
         return choice(text, options: choices, isOptional: isOptional)
     }
@@ -61,7 +61,7 @@ extension Questionnaire.Task {
         let options = range.map { value in
             Kind.ChoiceConfig.Option(
                 id: "\(value)",
-                title: labels[value].map { "\(value) (\($0))" } ?? "\(value)"
+                title: .init(labels[value].map { "\(value) (\($0))" } ?? "\(value)")
             )
         }
         return choice(text, options: options, isOptional: isOptional)
@@ -74,7 +74,7 @@ extension Questionnaire.Task {
     ) -> Self {
         Self(
             id: unassignedId,
-            title: text,
+            title: .init(text),
             kind: .choice(.init(options: options, allowsMultipleSelection: false)),
             isOptional: isOptional
         )

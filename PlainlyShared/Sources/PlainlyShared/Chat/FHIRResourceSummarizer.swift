@@ -112,7 +112,7 @@ public final class FHIRResourceSummarizer: Sendable {
         isolation: isolated (any Actor)? = #isolation,
         forResource resource: FHIRResource
     ) async -> Summary? {
-        await resourceProcessor.results[resource.id]
+        await resourceProcessor.results[resource.id.description]
     }
     
     /// Adjust the LLM schema used by the summarizer.

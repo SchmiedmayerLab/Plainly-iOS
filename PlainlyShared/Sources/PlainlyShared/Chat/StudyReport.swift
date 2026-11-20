@@ -19,7 +19,9 @@ public struct StudyReport: Encodable, Sendable {
     /// The version of the ``StudyReport`` definition.
     ///
     /// Not used anywhere in the code, but included when the type is encoded, so that any downstream processing code can decode it in a resilient way, if we make changes down the road.
-    private let version = 1
+    ///
+    /// Version 2 encodes a FHIR resource's `id` as a string instead of an object.
+    private let version = 2
     private let metadata: Metadata
     private let initialQuestionnaireResponse: ModelsR4.QuestionnaireResponse?
     private let fhirResources: FHIRResources
@@ -126,14 +128,14 @@ extension StudyReport {
 
     /// A partial representation of an FHIR resource.
     public struct PartialFHIRResource: Encodable, Sendable {
-        private let id: FHIRResource.ID
+        private let id: String
         private let resourceType: String
         private let displayName: String
         private let dateDescription: String?
         private let summary: String?
         
         public init(id: FHIRResource.ID, resourceType: String, displayName: String, dateDescription: String?, summary: String?) {
-            self.id = id
+            self.id = id.description
             self.resourceType = resourceType
             self.displayName = displayName
             self.dateDescription = dateDescription

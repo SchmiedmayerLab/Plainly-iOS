@@ -70,8 +70,8 @@ extension Study.Task {
             return question
         }
         return Questionnaire(
-            metadata: .init(id: id, url: nil, title: title, explainer: instructions ?? ""),
-            sections: [.init(id: id, title: self.title ?? "", tasks: tasks)]
+            metadata: .init(id: id, url: nil, title: .init(title), explainer: .init(instructions ?? "")),
+            sections: [.init(id: id, title: .init(self.title ?? ""), tasks: tasks)]
         )
     }
 }

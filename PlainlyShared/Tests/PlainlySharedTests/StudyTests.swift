@@ -77,13 +77,13 @@ struct StudyTests {
         let questionnaire = task.questionnaire(title: "Task 8 of 8")
         let instruction = try #require(questionnaire.sections.first?.tasks.first)
 
-        #expect(instruction.title.isEmpty)
+        #expect(instruction.title.base.isEmpty)
         guard case .instructional(let text) = instruction.kind.variant else {
             Issue.record("The closing survey must begin with its instructions.")
             return
         }
-        #expect(text.hasPrefix("Please complete the survey below.\nThank you!\n\n"))
-        #expect(text.contains("**with access to an application**"))
+        #expect(text.base.hasPrefix("Please complete the survey below.\nThank you!\n\n"))
+        #expect(text.base.contains("**with access to an application**"))
     }
 
     /// The closing questionnaires have no chat, so the app presents them without returning to it.
@@ -133,7 +133,7 @@ struct StudyTests {
     @Test
     func recommendationQuestionReportsTheScore() throws {
         let questions = Study.gynStudy.tasks.flatMap(\.questions)
-        let question = try #require(questions.first { $0.title.hasPrefix("On a scale of 0-10") })
+        let question = try #require(questions.first { $0.title.base.hasPrefix("On a scale of 0-10") })
 
         guard case let .choice(config) = question.kind.variant else {
             Issue.record("The recommendation question is no longer a choice question.")

@@ -55,8 +55,7 @@ struct SessionSimulator: ~Copyable {
     
     private consuming func _run() async throws -> StudyReport {
         let startTime = Date()
-        await fhirStore.removeAllResources()
-        await fhirStore.load(bundle: config.bundle)
+        try await fhirStore.replaceContents(with: config.bundle)
         await coordinator.prepareForUse()
         for question in config.userQuestions {
             await MainActor.run {
@@ -122,12 +121,17 @@ extension SessionSimulator {
         func handleNewSamples<Sample>(
             _ addedSamples: some Collection<Sample> & Sendable,
             ofType sampleType: SampleType<Sample>
-        ) {}
+        ) -> HealthKitAnchorCommitAction? {
+            nil
+        }
         
         func handleDeletedObjects<Sample>(
             _ deletedObjects: some Collection<HKDeletedObject> & Sendable,
-            ofType sampleType: SampleType<Sample>
-        ) {}
+            ofType sampleType: SampleType<Sample>,
+            deletedAfter: Date?
+        ) -> HealthKitAnchorCommitAction? {
+            nil
+        }
     }
     
     @MainActor

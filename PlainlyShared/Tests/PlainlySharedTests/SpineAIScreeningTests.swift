@@ -41,7 +41,7 @@ struct SpineAIScreeningTests {
         }
         url.append(path: "Plainly/Resources/Questionnaires/SpineAI_InitialSurvey.json")
         let resource = try JSONDecoder().decode(ModelsR4.Questionnaire.self, from: Data(contentsOf: url))
-        return try GroveQuestionnaire.Questionnaire(resource)
+        return try GroveQuestionnaire.Questionnaire(resource, clock: .live(in: .current))
     }
 
     /// Answers the triage questions with nothing that flags, then applies the overrides.
