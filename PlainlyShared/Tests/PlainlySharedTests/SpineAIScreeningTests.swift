@@ -255,6 +255,27 @@ struct SpineAIScreeningTests {
         try Self.expectShown(["7", "8"], hidden: ["5", "6"], in: responses)
     }
 
+    /// Symptoms overlap, so the first question takes every one that applies; back and leg together open both modules,
+    /// and the leg module then reminds the patient to answer only about the legs.
+    @Test
+    func backAndLegSymptomsTogetherOpenBothModules() throws {
+        let both = try Self.responses(["1.1": ["\(Self.symptoms)|low-back-only", "\(Self.symptoms)|leg-pain"]])
+        #expect(try both.screeningOutcome() == .eligible)
+        try Self.expectShown(["6", "7"], hidden: ["5", "8"], in: both)
+        #expect(try Self.isAsked("7-overlap", in: both))
+        let legOnly = try Self.responses(["1.1": ["\(Self.symptoms)|leg-pain"]])
+        #expect(try !Self.isAsked("7-overlap", in: legOnly))
+        #expect(try !Self.isAsked("7-overlap", in: Self.responses()))
+    }
+
+    /// The surgery details have a free-text box, asked only when the patient had surgery or is not sure.
+    @Test
+    func surgeryDetailsAreAskedOnlyAfterYesOrNotSure() throws {
+        #expect(try Self.isAsked("1.9a", in: Self.responses(["1.9": [Self.yes]])))
+        #expect(try Self.isAsked("1.9a", in: Self.responses(["1.9": ["\(Self.snomed)|261665006"]])))
+        #expect(try !Self.isAsked("1.9a", in: Self.responses()))
+    }
+
     /// Severe leg weakness counts only where the leg module asked about it.
     @Test
     func legWeaknessOnAPageNotShownIsNoStop() throws {
